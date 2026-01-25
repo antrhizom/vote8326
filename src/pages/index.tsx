@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { signInAnonymously } from 'firebase/auth'
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
 import { doc, setDoc, getDoc, query, collection, where, getDocs } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
 import { BookOpen, LogIn, UserPlus, AlertCircle, ArrowRight, Award, FileText, Key } from 'lucide-react'
@@ -67,31 +67,19 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      // Find user by code
-      const usersRef = collection(db, 'users')
-      const q = query(usersRef, where('code', '==', formData.code))
-      const querySnapshot = await getDocs(q)
+      // Use code as both email identifier and password
+      const email = `user${formData.code}@abstimmung.local`
+      const password = formData.code // Code is also the password!
       
-      if (querySnapshot.empty) {
-        setError('Dieser Code wurde nicht gefunden. Bitte überprüfen Sie Ihren Code oder registrieren Sie sich.')
-        setLoading(false)
-        return
-      }
-
-      // Sign in anonymously with Firebase (we just need authentication)
-      await signInAnonymously(auth)
-      
-      // Get the user document by code
-      const userDocData = querySnapshot.docs[0].data()
-      
-      // Store code in session for identification
-      sessionStorage.setItem('userCode', formData.code)
-      sessionStorage.setItem('userId', querySnapshot.docs[0].id)
-      
+      await signInWithEmailAndPassword(auth, email, password)
       router.push('/dashboard')
     } catch (err: any) {
       console.error('Login error:', err)
-      setError('Anmeldefehler. Bitte versuchen Sie es erneut.')
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        setError('Dieser Code wurde nicht gefunden. Bitte überprüfen Sie Ihren Code.')
+      } else {
+        setError('Anmeldefehler. Bitte versuchen Sie es erneut.')
+      }
     } finally {
       setLoading(false)
     }
@@ -103,13 +91,17 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      // Sign in anonymously with Firebase
-      const userCredential = await signInAnonymously(auth)
+      // Use code as both email identifier and password
+      const email = `user${formData.code}@abstimmung.local`
+      const password = formData.code // Code is also the password!
       
-      // Create user document in Firestore with code as identifier
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+      
+      // Create user document in Firestore
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         lernname: formData.lernname,
         code: formData.code,
+        email: email,
         totalPoints: 0,
         overallProgress: 0,
         createdAt: new Date().toISOString(),
@@ -122,14 +114,14 @@ export default function LoginPage() {
         }
       })
       
-      // Store code in session
-      sessionStorage.setItem('userCode', formData.code)
-      sessionStorage.setItem('userId', userCredential.user.uid)
-      
       router.push('/dashboard')
     } catch (err: any) {
       console.error('Registration error:', err)
-      setError('Registrierungsfehler. Bitte versuchen Sie es erneut.')
+      if (err.code === 'auth/email-already-in-use') {
+        setError('Dieser Code ist bereits registriert.')
+      } else {
+        setError('Registrierungsfehler. Bitte versuchen Sie es erneut.')
+      }
     } finally {
       setLoading(false)
     }

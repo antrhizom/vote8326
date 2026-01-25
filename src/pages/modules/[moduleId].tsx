@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { doc, updateDoc, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
-import { ArrowLeft, CheckCircle2, Clock, Trophy, Award } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Clock, Trophy, Award, AlertCircle } from 'lucide-react'
 import { moduleData, setupH5PListener, H5PEvent } from '@/lib/abstimmungModuleContent'
 
 export default function ModulePage() {
@@ -305,11 +305,27 @@ export default function ModulePage() {
                   title={module.title}
                   allow="autoplay; fullscreen"
                   sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"
+                  onError={(e) => {
+                    console.error('iframe error:', e)
+                  }}
                 />
               </div>
             ) : (
-              <div className="text-center py-12 text-gray-500">
-                <p>Keine H5P-Inhalte verfügbar</p>
+              <div className="text-center py-12 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg border-2 border-teal-200">
+                <div className="inline-block bg-white p-4 rounded-full mb-4">
+                  <AlertCircle className="h-12 w-12 text-teal-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  H5P-Inhalte folgen bald
+                </h3>
+                <p className="text-gray-600 max-w-md mx-auto mb-4">
+                  Dieses Modul ist in Vorbereitung. Die interaktiven H5P-Inhalte werden in Kürze verfügbar sein.
+                </p>
+                <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Tipp:</strong> Das Modul "3. Umfrage Lernset" ist bereits verfügbar und kann getestet werden!
+                  </p>
+                </div>
               </div>
             )}
           </div>

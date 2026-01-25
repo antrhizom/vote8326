@@ -416,7 +416,13 @@ export default function AbstimmungDashboard() {
             progress={areaProgress}
             modules={userData.modules}
             userData={userData}
-            onModuleClick={(moduleId) => router.push(`/modules/${moduleId}`)}
+            onModuleClick={(moduleId) => {
+              if (moduleId === 'procontra') {
+                router.push('/custom-modules/procontra')
+              } else {
+                router.push(`/modules/${moduleId}`)
+              }
+            }}
             onCertificateClick={() => router.push('/certificate/abstimmung2026')}
             router={router}
           />

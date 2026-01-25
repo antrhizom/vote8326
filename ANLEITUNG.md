@@ -16,9 +16,10 @@ Entpacken Sie das ZIP in einen Ordner.
 ### B) Authentication aktivieren:
 1. Im linken Menü: "Authentication"
 2. "Get started" klicken
-3. "Email/Password" wählen
-4. "Email/Password" aktivieren (Schalter auf AN)
-5. "Speichern"
+3. **"Anonymous"** wählen und aktivieren (Schalter auf AN) ✅
+4. "Speichern"
+
+**WICHTIG:** Wir verwenden Anonymous Auth, NICHT Email/Password!
 
 ### C) Firestore erstellen:
 1. Im linken Menü: "Firestore Database"

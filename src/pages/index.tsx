@@ -1,27 +1,26 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
+import { signInAnonymously } from 'firebase/auth'
 import { doc, setDoc, getDoc, query, collection, where, getDocs } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
-import { BookOpen, LogIn, UserPlus, AlertCircle, ArrowRight, Award, FileText } from 'lucide-react'
+import { BookOpen, LogIn, UserPlus, AlertCircle, ArrowRight, Award, FileText, Key } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
   const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [registrationStep, setRegistrationStep] = useState(1) // 1 = Code, 2 = Name & Password
+  const [registrationStep, setRegistrationStep] = useState(1) // 1 = Code wird angezeigt, 2 = Name eingeben
   const [assignedCode, setAssignedCode] = useState('')
   
   const [formData, setFormData] = useState({
     lernname: '',
-    code: '',
-    password: ''
+    code: ''
   })
 
-  // Generate unique code on component mount
+  // Generate unique 6-digit code on component mount
   useEffect(() => {
-    if (!isLogin && registrationStep === 1) {
+    if (!isLogin && registrationStep === 1 && !assignedCode) {
       generateUniqueCode()
     }
   }, [isLogin, registrationStep])
@@ -30,22 +29,23 @@ export default function LoginPage() {
     // Generate a random 6-digit code
     const code = Math.floor(100000 + Math.random() * 900000).toString()
     
-    // Check if code exists in database
-    const usersRef = collection(db, 'users')
-    const q = query(usersRef, where('code', '==', code))
-    const querySnapshot = await getDocs(q)
-    
-    if (querySnapshot.empty) {
+    try {
+      // Check if code exists in database
+      const usersRef = collection(db, 'users')
+      const q = query(usersRef, where('code', '==', code))
+      const querySnapshot = await getDocs(q)
+      
+      if (querySnapshot.empty) {
+        setAssignedCode(code)
+      } else {
+        // If code exists, generate a new one
+        generateUniqueCode()
+      }
+    } catch (error) {
+      console.error('Error checking code:', error)
+      // Even if check fails, use the generated code
       setAssignedCode(code)
-    } else {
-      // If code exists, generate a new one
-      generateUniqueCode()
     }
-  }
-
-  const generateEmail = (lernname: string, code: string) => {
-    // Generate a unique email from code (email is invisible to user)
-    return `user.${code}@abstimmung-lernumgebung.local`
   }
 
   const handleNextStep = () => {
@@ -57,65 +57,79 @@ export default function LoginPage() {
 
   const handleBackToStep1 = () => {
     setRegistrationStep(1)
-    setFormData({ ...formData, lernname: '', password: '' })
+    setFormData({ ...formData, lernname: '' })
     setError('')
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
 
     try {
-      if (isLogin) {
-        // Login - use code to find user
-        const email = generateEmail(formData.lernname, formData.code)
-        const userCredential = await signInWithEmailAndPassword(auth, email, formData.password)
-        
-        // Check if user data exists
-        const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid))
-        if (userDoc.exists()) {
-          router.push('/dashboard')
-        } else {
-          setError('Benutzerdaten nicht gefunden')
-        }
-      } else {
-        // Registration
-        const email = generateEmail(formData.lernname, formData.code)
-        const userCredential = await createUserWithEmailAndPassword(auth, email, formData.password)
-        
-        // Create user document in Firestore
-        await setDoc(doc(db, 'users', userCredential.user.uid), {
-          lernname: formData.lernname,
-          code: formData.code,
-          email: email,
-          totalPoints: 0,
-          overallProgress: 0,
-          createdAt: new Date().toISOString(),
-          modules: {
-            grundlagen: { completed: false, score: 0, progress: 0 },
-            vertiefung: { completed: false, score: 0, progress: 0 },
-            umfrage: { completed: false, score: 0, progress: 0 },
-            procontra: { completed: false, score: 0, progress: 0 },
-            lernkontrolle: { completed: false, score: 0, progress: 0 }
-          }
-        })
-        
-        router.push('/dashboard')
+      // Find user by code
+      const usersRef = collection(db, 'users')
+      const q = query(usersRef, where('code', '==', formData.code))
+      const querySnapshot = await getDocs(q)
+      
+      if (querySnapshot.empty) {
+        setError('Dieser Code wurde nicht gefunden. Bitte überprüfen Sie Ihren Code oder registrieren Sie sich.')
+        setLoading(false)
+        return
       }
+
+      // Sign in anonymously with Firebase (we just need authentication)
+      await signInAnonymously(auth)
+      
+      // Get the user document by code
+      const userDocData = querySnapshot.docs[0].data()
+      
+      // Store code in session for identification
+      sessionStorage.setItem('userCode', formData.code)
+      sessionStorage.setItem('userId', querySnapshot.docs[0].id)
+      
+      router.push('/dashboard')
     } catch (err: any) {
-      console.error('Auth error:', err)
-      if (err.code === 'auth/user-not-found') {
-        setError('Benutzer nicht gefunden. Bitte überprüfen Sie Ihren Lerncode.')
-      } else if (err.code === 'auth/wrong-password') {
-        setError('Falsches Passwort')
-      } else if (err.code === 'auth/email-already-in-use') {
-        setError('Dieser Code ist bereits vergeben. Bitte wenden Sie sich an den Support.')
-      } else if (err.code === 'auth/weak-password') {
-        setError('Passwort muss mindestens 6 Zeichen lang sein')
-      } else {
-        setError(err.message || 'Ein Fehler ist aufgetreten')
-      }
+      console.error('Login error:', err)
+      setError('Anmeldefehler. Bitte versuchen Sie es erneut.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      // Sign in anonymously with Firebase
+      const userCredential = await signInAnonymously(auth)
+      
+      // Create user document in Firestore with code as identifier
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        lernname: formData.lernname,
+        code: formData.code,
+        totalPoints: 0,
+        overallProgress: 0,
+        createdAt: new Date().toISOString(),
+        modules: {
+          grundlagen: { completed: false, score: 0, progress: 0 },
+          vertiefung: { completed: false, score: 0, progress: 0 },
+          umfrage: { completed: false, score: 0, progress: 0 },
+          procontra: { completed: false, score: 0, progress: 0 },
+          lernkontrolle: { completed: false, score: 0, progress: 0 }
+        }
+      })
+      
+      // Store code in session
+      sessionStorage.setItem('userCode', formData.code)
+      sessionStorage.setItem('userId', userCredential.user.uid)
+      
+      router.push('/dashboard')
+    } catch (err: any) {
+      console.error('Registration error:', err)
+      setError('Registrierungsfehler. Bitte versuchen Sie es erneut.')
     } finally {
       setLoading(false)
     }
@@ -146,7 +160,7 @@ export default function LoginPage() {
                 setIsLogin(true)
                 setRegistrationStep(1)
                 setError('')
-                setFormData({ lernname: '', code: '', password: '' })
+                setFormData({ lernname: '', code: '' })
               }}
               className={`flex-1 py-4 text-center font-semibold transition-colors ${
                 isLogin
@@ -164,7 +178,7 @@ export default function LoginPage() {
                 setIsLogin(false)
                 setRegistrationStep(1)
                 setError('')
-                setFormData({ lernname: '', code: '', password: '' })
+                setFormData({ lernname: '', code: '' })
                 generateUniqueCode()
               }}
               className={`flex-1 py-4 text-center font-semibold transition-colors ${
@@ -191,49 +205,35 @@ export default function LoginPage() {
 
             {/* LOGIN FORM */}
             {isLogin && (
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleLogin} className="space-y-4">
                 <div>
                   <label htmlFor="code-login" className="block text-sm font-medium text-gray-700 mb-2">
-                    Lerncode
+                    Lerncode eingeben
                   </label>
                   <input
                     type="text"
                     id="code-login"
                     required
+                    maxLength={6}
                     value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition-colors"
-                    placeholder="Ihr persönlicher Code"
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value.replace(/\D/g, '') })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition-colors text-center text-2xl font-bold tracking-widest"
+                    placeholder="000000"
                   />
-                  <p className="mt-1 text-xs text-gray-500">
-                    Geben Sie Ihren Lerncode ein
+                  <p className="mt-2 text-xs text-gray-500">
+                    Geben Sie Ihren 6-stelligen Lerncode ein
                   </p>
-                </div>
-
-                <div>
-                  <label htmlFor="password-login" className="block text-sm font-medium text-gray-700 mb-2">
-                    Passwort
-                  </label>
-                  <input
-                    type="password"
-                    id="password-login"
-                    required
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition-colors"
-                    placeholder="Ihr Passwort"
-                  />
                 </div>
 
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || formData.code.length !== 6}
                   className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      <span>Bitte warten...</span>
+                      <span>Anmelden...</span>
                     </>
                   ) : (
                     <>
@@ -250,12 +250,12 @@ export default function LoginPage() {
               <div className="space-y-6">
                 <div className="bg-teal-50 border-2 border-teal-200 rounded-xl p-6 text-center">
                   <div className="inline-block bg-white p-3 rounded-full mb-4">
-                    <Award className="h-8 w-8 text-teal-600" />
+                    <Key className="h-8 w-8 text-teal-600" />
                   </div>
                   <h3 className="text-lg font-bold text-gray-900 mb-2">
                     Ihr persönlicher Lerncode
                   </h3>
-                  <div className="text-5xl font-bold text-teal-600 mb-3 tracking-wider">
+                  <div className="text-5xl font-bold text-teal-600 mb-3 tracking-widest">
                     {assignedCode || '------'}
                   </div>
                   <p className="text-sm text-gray-600 mb-4">
@@ -266,7 +266,8 @@ export default function LoginPage() {
                       ⚠️ Wichtig: Notieren Sie sich diesen Code!
                     </p>
                     <p className="text-xs text-gray-600">
-                      Sie benötigen diesen Code zum Anmelden. Bewahren Sie ihn sicher auf.
+                      Sie benötigen diesen Code zum Anmelden. Bewahren Sie ihn sicher auf.<br />
+                      <strong>Kein Passwort erforderlich!</strong>
                     </p>
                   </div>
                 </div>
@@ -282,13 +283,13 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* REGISTRATION FORM - STEP 2: NAME & PASSWORD */}
+            {/* REGISTRATION FORM - STEP 2: NAME ONLY */}
             {!isLogin && registrationStep === 2 && (
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleRegister} className="space-y-4">
                 <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 mb-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Ihr Lerncode:</span>
-                    <span className="text-lg font-bold text-teal-600">{formData.code}</span>
+                    <span className="text-lg font-bold text-teal-600 tracking-wider">{formData.code}</span>
                   </div>
                 </div>
 
@@ -319,24 +320,6 @@ export default function LoginPage() {
                       </div>
                     </div>
                   </div>
-                </div>
-
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                    Passwort *
-                  </label>
-                  <input
-                    type="password"
-                    id="password"
-                    required
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition-colors"
-                    placeholder="Mindestens 6 Zeichen"
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    Mindestens 6 Zeichen erforderlich
-                  </p>
                 </div>
 
                 <div className="flex gap-3">
@@ -370,7 +353,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Info Box - nur bei Login sichtbar */}
+        {/* Info Box */}
         {isLogin && (
           <div className="mt-6 bg-white border-2 border-gray-200 rounded-xl p-4 text-sm text-gray-700">
             <h3 className="font-semibold mb-2 flex items-center gap-2">
@@ -378,14 +361,13 @@ export default function LoginPage() {
               Hinweise zur Anmeldung
             </h3>
             <ul className="space-y-1 text-xs text-gray-600">
-              <li>• Verwenden Sie Ihren persönlichen Lerncode</li>
-              <li>• Bei Problemen wenden Sie sich an den Support</li>
+              <li>• Verwenden Sie Ihren 6-stelligen Lerncode</li>
+              <li>• <strong>Kein Passwort erforderlich!</strong></li>
               <li>• Ihr Fortschritt wird automatisch gespeichert</li>
             </ul>
           </div>
         )}
 
-        {/* Info Box - nur bei Registrierung sichtbar */}
         {!isLogin && (
           <div className="mt-6 bg-white border-2 border-gray-200 rounded-xl p-4 text-sm text-gray-700">
             <h3 className="font-semibold mb-2 flex items-center gap-2">
@@ -393,10 +375,10 @@ export default function LoginPage() {
               Hinweise zur Registrierung
             </h3>
             <ul className="space-y-1 text-xs text-gray-600">
-              <li>• Sie erhalten einen automatisch generierten Code</li>
-              <li>• Ihr Code identifiziert Sie eindeutig</li>
+              <li>• Sie erhalten einen automatisch generierten 6-stelligen Code</li>
+              <li>• <strong>Speichern Sie diesen Code!</strong> Er ist Ihr Login</li>
+              <li>• <strong>Kein Passwort nötig</strong> - nur Ihr Code!</li>
               <li>• Wählen Sie einen Namen für Ihre Zertifikate</li>
-              <li>• Ihre Fortschritte werden automatisch gespeichert</li>
             </ul>
           </div>
         )}

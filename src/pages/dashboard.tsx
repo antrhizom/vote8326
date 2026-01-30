@@ -4,7 +4,7 @@ import { signOut } from 'firebase/auth'
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
 import { BookOpen, Trophy, LogOut, Award, ChevronRight, CheckCircle2, TrendingUp, Users, Star, Info } from 'lucide-react'
-import { learningAreas, moduleData } from '@/lib/abstimmungModuleContent'
+import { learningAreas, getAreaProgress, moduleData } from '@/lib/abstimmungModuleContent'
 
 interface UserData {
   lernname: string

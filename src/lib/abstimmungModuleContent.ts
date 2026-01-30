@@ -97,6 +97,9 @@ export function calculateAreaProgress(userModules: any, areaId: string): number 
   return Math.round((completedModules / area.modules.length) * 100)
 }
 
+// Alias for backward compatibility
+export const getAreaProgress = calculateAreaProgress
+
 // Get total possible points for an area
 export function getTotalPossiblePoints(areaId: string): number {
   const area = learningAreas[areaId as keyof typeof learningAreas]

@@ -7,7 +7,7 @@ export interface ModuleData {
   estimatedTime: string
   maxPoints: number
   type: 'h5p' | 'quiz' | 'interactive'
-  h5pUrl?: string // Path to H5P HTML file
+  h5pUrl?: string | null
 }
 
 export const moduleData: { [key: string]: ModuleData } = {
@@ -33,37 +33,37 @@ export const moduleData: { [key: string]: ModuleData } = {
     h5pUrl: '/h5p/vertiefung.html'
   },
   
-  // 3. Umfrage Lernset
+  // 3. Pro- und Contra
+  procontra: {
+    id: 'procontra',
+    title: '3. Pro- und Contra',
+    description: 'Schauen Sie ein Video zur Bargeldinitiative und bearbeiten Sie eine interaktive Aufgabe.',
+    estimatedTime: '10 Min',
+    maxPoints: 100,
+    type: 'interactive',
+    h5pUrl: null // Uses custom page
+  },
+  
+  // 4. Lernkontrolle
+  lernkontrolle: {
+    id: 'lernkontrolle',
+    title: '4. Lernkontrolle',
+    description: 'Testen Sie Ihr Gesamtwissen in einer abschließenden Lernkontrolle.',
+    estimatedTime: '15 Min',
+    maxPoints: 100,
+    type: 'h5p',
+    h5pUrl: '/h5p/lernkontrolle.html'
+  },
+  
+  // 5. Umfrage Lernset (vorher Modul 3)
   umfrage: {
     id: 'umfrage',
-    title: '3. Umfrage Lernset',
+    title: '5. Umfrage Lernset',
     description: 'Nehmen Sie an einer Umfrage teil und reflektieren Sie über das Gelernte.',
     estimatedTime: '10 Min',
     maxPoints: 100,
     type: 'h5p',
-    h5pUrl: '/h5p/68fb34ef86d593ad28dc1d00.html' // Ihre hochgeladene H5P-Datei
-  },
-  
-  // 4. Pro- und Contra
-  procontra: {
-    id: 'procontra',
-    title: '4. Pro- und Contra',
-    description: 'Erkunden Sie verschiedene Perspektiven und Argumente zur Abstimmung.',
-    estimatedTime: '15 Min',
-    maxPoints: 100,
-    type: 'h5p',
-    h5pUrl: '/h5p/procontra.html'
-  },
-  
-  // 5. Lernkontrolle
-  lernkontrolle: {
-    id: 'lernkontrolle',
-    title: '5. Lernkontrolle',
-    description: 'Testen Sie Ihr Wissen in einer abschließenden Lernkontrolle.',
-    estimatedTime: '20 Min',
-    maxPoints: 100,
-    type: 'h5p',
-    h5pUrl: '/h5p/lernkontrolle.html'
+    h5pUrl: '/h5p/68fb34ef86d593ad28dc1d00.html'
   }
 }
 
@@ -80,119 +80,62 @@ export const learningAreas = {
     id: 'abstimmung2026',
     title: 'Abstimmung 2026 - Lernumgebung',
     description: 'Bereiten Sie sich optimal auf die kommende Abstimmung vor.',
-    modules: ['grundlagen', 'vertiefung', 'umfrage', 'procontra', 'lernkontrolle'],
+    modules: ['grundlagen', 'vertiefung', 'procontra', 'lernkontrolle', 'umfrage'],
     color: 'teal'
   }
 }
 
-export function getAreaProgress(
-  modules: { [key: string]: { completed: boolean; score: number; progress: number } },
-  areaId: string
-) {
+// Calculate progress for a learning area
+export function calculateAreaProgress(userModules: any, areaId: string): number {
   const area = learningAreas[areaId as keyof typeof learningAreas]
-  if (!area) {
-    return { progress: 0, points: 0, maxPoints: 0, completed: 0, total: 0 }
-  }
-
-  let totalPoints = 0
-  let maxPoints = 0
-  let completedCount = 0
-
-  area.modules.forEach(moduleId => {
-    const module = modules[moduleId]
-    const moduleInfo = moduleData[moduleId]
-    
-    if (module && moduleInfo) {
-      totalPoints += module.score || 0
-      maxPoints += moduleInfo.maxPoints
-      if (module.completed) {
-        completedCount++
-      }
-    }
-  })
-
-  const progress = maxPoints > 0 ? Math.round((totalPoints / maxPoints) * 100) : 0
-
-  return {
-    progress,
-    points: totalPoints,
-    maxPoints,
-    completed: completedCount,
-    total: area.modules.length
-  }
+  if (!area) return 0
+  
+  const completedModules = area.modules.filter(
+    moduleId => userModules[moduleId]?.completed
+  ).length
+  
+  return Math.round((completedModules / area.modules.length) * 100)
 }
 
-// H5P Event Listener Types
-export interface H5PEvent {
-  type: 'completed' | 'progress' | 'scored'
-  data: {
-    score?: number
-    maxScore?: number
-    percentage?: number
-    progress?: number
-  }
+// Get total possible points for an area
+export function getTotalPossiblePoints(areaId: string): number {
+  const area = learningAreas[areaId as keyof typeof learningAreas]
+  if (!area) return 0
+  
+  return area.modules.reduce((sum, moduleId) => {
+    const module = moduleData[moduleId]
+    return sum + (module?.maxPoints || 0)
+  }, 0)
 }
 
-// H5P Integration Helper
+// Setup H5P event listener
 export function setupH5PListener(
-  iframeElement: HTMLIFrameElement | null,
-  onEvent: (event: H5PEvent) => void
+  onScoreUpdate: (score: number, maxScore: number) => void,
+  onCompleted: () => void
 ) {
-  if (!iframeElement) return
-
-  const handleMessage = (event: MessageEvent) => {
-    // H5P sendet xAPI-Events
+  const handleH5PEvent = (event: MessageEvent) => {
     if (event.data && event.data.statement) {
       const statement = event.data.statement
       
-      // Completion Event
+      // Handle different xAPI verbs
       if (statement.verb?.id === 'http://adlnet.gov/expapi/verbs/completed') {
-        const score = statement.result?.score?.scaled || 0
-        const maxScore = statement.result?.score?.max || 100
-        
-        onEvent({
-          type: 'completed',
-          data: {
-            score: Math.round(score * maxScore),
-            maxScore: maxScore,
-            percentage: Math.round(score * 100)
-          }
-        })
-      }
-      
-      // Progress Event
-      if (statement.verb?.id === 'http://adlnet.gov/expapi/verbs/progressed') {
-        const progress = statement.result?.extensions?.['http://id.tincanapi.com/extension/ending-point'] || 0
-        
-        onEvent({
-          type: 'progress',
-          data: {
-            progress: progress
-          }
-        })
-      }
-      
-      // Answered/Scored Event
-      if (statement.verb?.id === 'http://adlnet.gov/expapi/verbs/answered') {
         const score = statement.result?.score?.raw || 0
         const maxScore = statement.result?.score?.max || 100
-        
-        onEvent({
-          type: 'scored',
-          data: {
-            score: score,
-            maxScore: maxScore,
-            percentage: maxScore > 0 ? Math.round((score / maxScore) * 100) : 0
-          }
-        })
+        onScoreUpdate(score, maxScore)
+        onCompleted()
+      } else if (statement.verb?.id === 'http://adlnet.gov/expapi/verbs/answered') {
+        const score = statement.result?.score?.raw || 0
+        const maxScore = statement.result?.score?.max || 100
+        onScoreUpdate(score, maxScore)
+      } else if (statement.verb?.id === 'http://adlnet.gov/expapi/verbs/progressed') {
+        // Handle progress updates
+        const progress = statement.result?.extensions?.['http://id.tincanapi.com/extension/ending-point'] || 0
+        // Optional: track progress
       }
     }
   }
-
-  window.addEventListener('message', handleMessage)
   
-  // Cleanup function
-  return () => {
-    window.removeEventListener('message', handleMessage)
-  }
+  window.addEventListener('message', handleH5PEvent)
+  
+  return () => window.removeEventListener('message', handleH5PEvent)
 }

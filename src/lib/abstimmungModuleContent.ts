@@ -85,20 +85,53 @@ export const learningAreas = {
   }
 }
 
-// Calculate progress for a learning area
-export function calculateAreaProgress(userModules: any, areaId: string): number {
+// Interface for area progress
+export interface AreaProgress {
+  progress: number
+  points: number
+  maxPoints: number
+  completed: number
+  total: number
+}
+
+// Calculate progress for a learning area - returns full object
+export function getAreaProgress(userModules: any, areaId: string): AreaProgress {
   const area = learningAreas[areaId as keyof typeof learningAreas]
-  if (!area) return 0
+  if (!area) {
+    return { progress: 0, points: 0, maxPoints: 0, completed: 0, total: 0 }
+  }
   
   const completedModules = area.modules.filter(
     moduleId => userModules[moduleId]?.completed
   ).length
   
-  return Math.round((completedModules / area.modules.length) * 100)
+  const totalModules = area.modules.length
+  const progress = Math.round((completedModules / totalModules) * 100)
+  
+  // Calculate points
+  const points = area.modules.reduce((sum, moduleId) => {
+    const moduleProgress = userModules[moduleId]
+    return sum + (moduleProgress?.score || 0)
+  }, 0)
+  
+  const maxPoints = area.modules.reduce((sum, moduleId) => {
+    const module = moduleData[moduleId]
+    return sum + (module?.maxPoints || 0)
+  }, 0)
+  
+  return {
+    progress,
+    points,
+    maxPoints,
+    completed: completedModules,
+    total: totalModules
+  }
 }
 
-// Alias for backward compatibility
-export const getAreaProgress = calculateAreaProgress
+// Legacy function for backward compatibility (returns only number)
+export function calculateAreaProgress(userModules: any, areaId: string): number {
+  return getAreaProgress(userModules, areaId).progress
+}
 
 // Get total possible points for an area
 export function getTotalPossiblePoints(areaId: string): number {
@@ -111,11 +144,21 @@ export function getTotalPossiblePoints(areaId: string): number {
   }, 0)
 }
 
+// H5P Event Interface
+export interface H5PEvent {
+  type: 'completed' | 'progress' | 'scored'
+  data: {
+    score?: number
+    maxScore?: number
+    progress?: number
+  }
+}
+
 // Setup H5P event listener
 export function setupH5PListener(
-  onScoreUpdate: (score: number, maxScore: number) => void,
-  onCompleted: () => void
-) {
+  iframe: HTMLIFrameElement | null,
+  onEvent: (event: H5PEvent) => void
+): () => void {
   const handleH5PEvent = (event: MessageEvent) => {
     if (event.data && event.data.statement) {
       const statement = event.data.statement
@@ -124,16 +167,44 @@ export function setupH5PListener(
       if (statement.verb?.id === 'http://adlnet.gov/expapi/verbs/completed') {
         const score = statement.result?.score?.raw || 0
         const maxScore = statement.result?.score?.max || 100
-        onScoreUpdate(score, maxScore)
-        onCompleted()
+        onEvent({
+          type: 'completed',
+          data: { score, maxScore }
+        })
       } else if (statement.verb?.id === 'http://adlnet.gov/expapi/verbs/answered') {
         const score = statement.result?.score?.raw || 0
         const maxScore = statement.result?.score?.max || 100
-        onScoreUpdate(score, maxScore)
+        onEvent({
+          type: 'scored',
+          data: { score, maxScore }
+        })
       } else if (statement.verb?.id === 'http://adlnet.gov/expapi/verbs/progressed') {
-        // Handle progress updates
         const progress = statement.result?.extensions?.['http://id.tincanapi.com/extension/ending-point'] || 0
-        // Optional: track progress
+        onEvent({
+          type: 'progress',
+          data: { progress }
+        })
+      }
+    }
+    
+    // Also handle direct H5P events (non-xAPI)
+    if (event.data && event.data.context === 'h5p') {
+      if (event.data.action === 'completed') {
+        onEvent({
+          type: 'completed',
+          data: {
+            score: event.data.score || 0,
+            maxScore: event.data.maxScore || 100
+          }
+        })
+      } else if (event.data.action === 'scored') {
+        onEvent({
+          type: 'scored',
+          data: {
+            score: event.data.score || 0,
+            maxScore: event.data.maxScore || 100
+          }
+        })
       }
     }
   }

@@ -3,9 +3,9 @@ import { useRouter } from 'next/router'
 import { doc, updateDoc, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
 import { 
-  ArrowLeft, ArrowRight, CheckCircle2, Award, Clock, XCircle, 
+  ArrowLeft, ArrowRight, CheckCircle2, Award, XCircle, 
   Play, Building2, Users, MapPin, ThumbsUp, ThumbsDown,
-  Eye, EyeOff, Quote, BookOpen, Lightbulb, AlertCircle, ChevronRight, X
+  Eye, EyeOff, Quote, BookOpen, Lightbulb, ChevronRight, X, Video
 } from 'lucide-react'
 
 // ===========================================
@@ -73,7 +73,7 @@ interface Section {
   intro: string
   videoUrl: string
   videoTitle: string
-  videoDuration: string
+  videoPoints: number
   slides: Slide[]
   totalPoints: number
 }
@@ -95,8 +95,8 @@ const SECTIONS: Section[] = [
     intro: 'Der Bundesrat unter Führung von Finanzministerin Karin Keller-Sutter befürwortet die Individualbesteuerung. Er sieht darin eine Chance, die sogenannte "Heiratsstrafe" abzuschaffen und Erwerbsanreize zu schaffen.',
     videoUrl: 'https://www.srf.ch/play/embed?urn=urn:srf:video:77a83d61-aeb0-4984-8e7b-37291a89b62c&startTime=12',
     videoTitle: 'Bundesrat präsentiert Position',
-    videoDuration: '3 Min',
-    totalPoints: 40,
+    videoPoints: 10,
+    totalPoints: 50,
     slides: [
       {
         type: 'quote_reveal',
@@ -186,8 +186,8 @@ const SECTIONS: Section[] = [
     intro: 'Ein breites Komitee von Parteien und Verbänden unterstützt die Individualbesteuerung. Sie sehen darin einen wichtigen Schritt zur Gleichstellung und zur Förderung der Erwerbstätigkeit von Frauen.',
     videoUrl: '[PLATZHALTER]',
     videoTitle: 'Befürworter:innen präsentieren Argumente',
-    videoDuration: '2 Min',
-    totalPoints: 30,
+    videoPoints: 10,
+    totalPoints: 40,
     slides: [
       {
         type: 'term_reveal',
@@ -228,7 +228,7 @@ const SECTIONS: Section[] = [
     ]
   },
 
-  // 3. KOMITEE GEGNER:INNEN (mit Inhalten aus TXT-Transkript)
+  // 3. KOMITEE GEGNER:INNEN
   {
     id: 'gegner',
     title: 'Komitee Gegner:innen',
@@ -240,8 +240,8 @@ const SECTIONS: Section[] = [
     intro: 'Ein Komitee aus SVP, EVP, EDU und Mitte hat das Referendum ergriffen. Sie kritisieren, dass vor allem reiche Doppelverdiener profitieren würden und warnen vor Mehraufwand und neuen Ungerechtigkeiten.',
     videoUrl: 'https://www.srf.ch/play/embed?urn=urn:srf:video:76af4420-abff-4a34-8aab-9941193b223e',
     videoTitle: 'Kontra-Komitee präsentiert Argumente',
-    videoDuration: '2 Min',
-    totalPoints: 40,
+    videoPoints: 10,
+    totalPoints: 50,
     slides: [
       {
         type: 'quote_reveal',
@@ -327,7 +327,7 @@ const SECTIONS: Section[] = [
     ]
   },
 
-  // 4. KANTONE (Kantonsreferendum)
+  // 4. KANTONE
   {
     id: 'kantone',
     title: 'Kantone (Kantonsreferendum)',
@@ -339,8 +339,8 @@ const SECTIONS: Section[] = [
     intro: 'Die Kantone haben gemeinsam mit dem Nein-Komitee das Referendum ergriffen. Sie befürchten massive Steuerausfälle und einen hohen Umsetzungsaufwand bei der Umstellung des Steuersystems.',
     videoUrl: '[PLATZHALTER]',
     videoTitle: 'Kantone erklären ihre Position',
-    videoDuration: '2 Min',
-    totalPoints: 30,
+    videoPoints: 10,
+    totalPoints: 40,
     slides: [
       {
         type: 'info',
@@ -402,30 +402,43 @@ const IconMap: { [key: string]: any } = { Building2, Users, MapPin, ThumbsUp, Th
 // ===========================================
 
 // Info Slide
-function InfoSlideComponent({ slide, onNext }: { slide: InfoSlide; onNext: () => void }) {
+function InfoSlideComponent({ slide, onComplete }: { slide: InfoSlide; onComplete: () => void }) {
+  const [read, setRead] = useState(false)
+  
   return (
-    <div className="p-6">
-      <h3 className="text-xl font-bold text-gray-900 mb-4">{slide.title}</h3>
-      <p className="text-gray-700 mb-4 leading-relaxed">{slide.content}</p>
+    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+      <h4 className="font-bold text-gray-900 mb-2">{slide.title}</h4>
+      <p className="text-gray-700 text-sm mb-3">{slide.content}</p>
       {slide.highlight && (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-          <div className="flex items-start gap-3">
-            <Lightbulb className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-            <p className="text-yellow-800 font-medium">{slide.highlight}</p>
-          </div>
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-3">
+          <p className="text-yellow-800 text-sm font-medium">{slide.highlight}</p>
         </div>
       )}
-      <button onClick={onNext} className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg flex items-center justify-center gap-2">
-        Weiter <ArrowRight className="h-5 w-5" />
-      </button>
+      {!read ? (
+        <button onClick={() => { setRead(true); onComplete(); }} className="text-sm text-teal-600 font-semibold hover:text-teal-700">
+          ✓ Gelesen
+        </button>
+      ) : (
+        <span className="text-sm text-green-600 font-semibold flex items-center gap-1">
+          <CheckCircle2 className="h-4 w-4" /> Erledigt
+        </span>
+      )}
     </div>
   )
 }
 
 // Quote Reveal Slide
-function QuoteRevealSlideComponent({ slide, onComplete }: { slide: QuoteRevealSlide; onComplete: (correct: boolean) => void }) {
+function QuoteRevealSlideComponent({ slide, onComplete }: { slide: QuoteRevealSlide; onComplete: () => void }) {
   const [revealed, setRevealed] = useState<Set<number>>(new Set())
+  const [completed, setCompleted] = useState(false)
   const allRevealed = revealed.size === slide.quotes.length
+
+  useEffect(() => {
+    if (allRevealed && !completed) {
+      setCompleted(true)
+      onComplete()
+    }
+  }, [allRevealed, completed, onComplete])
 
   const toggleReveal = (index: number) => {
     const newRevealed = new Set(revealed)
@@ -434,174 +447,145 @@ function QuoteRevealSlideComponent({ slide, onComplete }: { slide: QuoteRevealSl
   }
 
   return (
-    <div className="p-6">
-      <h3 className="text-xl font-bold text-gray-900 mb-2">{slide.title}</h3>
-      <p className="text-gray-600 mb-4">{slide.instruction}</p>
+    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="font-bold text-gray-900">{slide.title}</h4>
+        {completed && <span className="text-xs text-green-600 font-semibold flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> +{slide.points}P</span>}
+      </div>
+      <p className="text-gray-600 text-sm mb-3">{slide.instruction}</p>
       
-      <div className="space-y-4 mb-6">
+      <div className="space-y-2">
         {slide.quotes.map((q, index) => (
           <button
             key={index}
             onClick={() => toggleReveal(index)}
-            className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+            className={`w-full text-left p-3 rounded-lg border transition-all ${
               revealed.has(index) 
-                ? 'border-teal-400 bg-teal-50' 
-                : 'border-gray-200 bg-gray-50 hover:border-teal-300 hover:bg-white'
+                ? 'border-teal-300 bg-teal-50' 
+                : 'border-gray-200 bg-white hover:border-teal-200'
             }`}
           >
-            <div className="flex items-start gap-3">
-              <div className={`p-2 rounded-full flex-shrink-0 ${revealed.has(index) ? 'bg-teal-500' : 'bg-gray-300'}`}>
-                {revealed.has(index) ? <Eye className="h-4 w-4 text-white" /> : <EyeOff className="h-4 w-4 text-white" />}
+            {revealed.has(index) ? (
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Quote className="h-3 w-3 text-teal-600" />
+                  <span className="font-semibold text-gray-900 text-sm">{q.author}</span>
+                </div>
+                <p className="text-gray-700 italic text-sm mb-2">"{q.quote}"</p>
+                <span className="bg-teal-100 text-teal-800 text-xs px-2 py-0.5 rounded-full">💡 {q.key_point}</span>
               </div>
-              <div className="flex-1 min-w-0">
-                {revealed.has(index) ? (
-                  <>
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <Quote className="h-4 w-4 text-teal-600 flex-shrink-0" />
-                      <span className="font-semibold text-gray-900">{q.author}</span>
-                    </div>
-                    <p className="text-gray-700 italic mb-2 text-sm">"{q.quote}"</p>
-                    <div className="bg-teal-100 text-teal-800 text-xs px-3 py-1 rounded-full inline-block">
-                      💡 {q.key_point}
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-gray-500">
-                    <span className="font-medium">Zitat {index + 1}</span>
-                    <p className="text-sm mt-1">Klicken zum Aufdecken...</p>
-                  </div>
-                )}
+            ) : (
+              <div className="flex items-center gap-2 text-gray-500">
+                <EyeOff className="h-4 w-4" />
+                <span className="text-sm">Zitat {index + 1} aufdecken...</span>
               </div>
-            </div>
+            )}
           </button>
         ))}
       </div>
-
-      <button
-        onClick={() => onComplete(true)}
-        disabled={!allRevealed}
-        className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {allRevealed ? 'Weiter' : `Noch ${slide.quotes.length - revealed.size} aufdecken`}
-      </button>
     </div>
   )
 }
 
 // Term Reveal Slide
-function TermRevealSlideComponent({ slide, onComplete }: { slide: TermRevealSlide; onComplete: (correct: boolean) => void }) {
+function TermRevealSlideComponent({ slide, onComplete }: { slide: TermRevealSlide; onComplete: () => void }) {
   const [revealed, setRevealed] = useState<Set<number>>(new Set())
+  const [completed, setCompleted] = useState(false)
   const allRevealed = revealed.size === slide.terms.length
 
-  const toggleReveal = (index: number) => {
-    const newRevealed = new Set(revealed)
-    newRevealed.add(index)
-    setRevealed(newRevealed)
-  }
+  useEffect(() => {
+    if (allRevealed && !completed) {
+      setCompleted(true)
+      onComplete()
+    }
+  }, [allRevealed, completed, onComplete])
 
   return (
-    <div className="p-6">
-      <h3 className="text-xl font-bold text-gray-900 mb-2">{slide.title}</h3>
-      <p className="text-gray-600 mb-4">{slide.instruction}</p>
+    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="font-bold text-gray-900">{slide.title}</h4>
+        {completed && <span className="text-xs text-green-600 font-semibold flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> +{slide.points}P</span>}
+      </div>
+      <p className="text-gray-600 text-sm mb-3">{slide.instruction}</p>
       
-      <div className="space-y-3 mb-6">
+      <div className="space-y-2">
         {slide.terms.map((t, index) => (
-          <div key={index} className="border-2 border-gray-200 rounded-xl overflow-hidden">
+          <div key={index} className="border border-gray-200 rounded-lg overflow-hidden bg-white">
             <button
-              onClick={() => toggleReveal(index)}
-              className={`w-full text-left p-4 flex items-center justify-between ${
-                revealed.has(index) ? 'bg-teal-50' : 'bg-gray-50 hover:bg-gray-100'
-              }`}
+              onClick={() => {
+                const newRevealed = new Set(revealed)
+                newRevealed.add(index)
+                setRevealed(newRevealed)
+              }}
+              className={`w-full text-left p-3 flex items-center justify-between ${revealed.has(index) ? 'bg-teal-50' : 'hover:bg-gray-50'}`}
             >
-              <div className="flex items-center gap-3">
-                <BookOpen className={`h-5 w-5 flex-shrink-0 ${revealed.has(index) ? 'text-teal-600' : 'text-gray-400'}`} />
-                <span className="font-bold text-gray-900">{t.term}</span>
+              <div className="flex items-center gap-2">
+                <BookOpen className={`h-4 w-4 ${revealed.has(index) ? 'text-teal-600' : 'text-gray-400'}`} />
+                <span className="font-semibold text-gray-900 text-sm">{t.term}</span>
               </div>
-              {revealed.has(index) ? (
-                <CheckCircle2 className="h-5 w-5 text-teal-600 flex-shrink-0" />
-              ) : (
-                <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
-              )}
+              {revealed.has(index) ? <CheckCircle2 className="h-4 w-4 text-teal-600" /> : <ChevronRight className="h-4 w-4 text-gray-400" />}
             </button>
             {revealed.has(index) && (
-              <div className="p-4 bg-white border-t border-gray-100">
-                <p className="text-gray-700 mb-2 text-sm">{t.definition}</p>
-                {t.example && (
-                  <div className="bg-gray-100 p-3 rounded-lg text-xs text-gray-600">
-                    <strong>Beispiel:</strong> {t.example}
-                  </div>
-                )}
+              <div className="p-3 border-t border-gray-100 bg-white">
+                <p className="text-gray-700 text-sm mb-2">{t.definition}</p>
+                {t.example && <p className="text-xs text-gray-500 bg-gray-100 p-2 rounded"><strong>Beispiel:</strong> {t.example}</p>}
               </div>
             )}
           </div>
         ))}
       </div>
-
-      <button
-        onClick={() => onComplete(true)}
-        disabled={!allRevealed}
-        className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {allRevealed ? 'Weiter' : `Noch ${slide.terms.length - revealed.size} aufdecken`}
-      </button>
     </div>
   )
 }
 
 // Definition Match Slide
-function DefinitionMatchSlideComponent({ slide, onComplete }: { slide: DefinitionMatchSlide; onComplete: (correct: boolean) => void }) {
+function DefinitionMatchSlideComponent({ slide, onComplete }: { slide: DefinitionMatchSlide; onComplete: () => void }) {
   const [answers, setAnswers] = useState<{ [key: number]: string }>({})
   const [showResults, setShowResults] = useState(false)
+  const [completed, setCompleted] = useState(false)
   
   const options = Array.from(new Set(slide.pairs.map(p => p.definition)))
   const allAnswered = Object.keys(answers).length === slide.pairs.length
 
-  const handleAnswer = (index: number, value: string) => {
-    if (showResults) return
-    setAnswers({ ...answers, [index]: value })
-  }
-
   const handleSubmit = () => {
     setShowResults(true)
-    const allCorrect = slide.pairs.every((p, i) => answers[i] === p.definition)
-    setTimeout(() => onComplete(allCorrect), 2000)
+    if (!completed) {
+      setCompleted(true)
+      onComplete()
+    }
   }
 
   return (
-    <div className="p-6">
-      <h3 className="text-xl font-bold text-gray-900 mb-2">{slide.title}</h3>
-      <p className="text-gray-600 mb-4">{slide.instruction}</p>
+    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="font-bold text-gray-900">{slide.title}</h4>
+        {completed && <span className="text-xs text-green-600 font-semibold flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> +{slide.points}P</span>}
+      </div>
+      <p className="text-gray-600 text-sm mb-3">{slide.instruction}</p>
       
-      <div className="space-y-3 mb-6">
+      <div className="space-y-2 mb-3">
         {slide.pairs.map((pair, index) => {
           const answer = answers[index]
           const isCorrect = showResults && answer === pair.definition
           const isWrong = showResults && answer && answer !== pair.definition
           
           return (
-            <div 
-              key={index}
-              className={`p-3 rounded-xl border-2 ${
-                isCorrect ? 'border-green-400 bg-green-50' :
-                isWrong ? 'border-red-400 bg-red-50' :
-                'border-gray-200 bg-white'
-              }`}
-            >
-              <p className="font-medium text-gray-900 mb-2 text-sm">{pair.term}</p>
+            <div key={index} className={`p-2 rounded-lg border ${isCorrect ? 'border-green-300 bg-green-50' : isWrong ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'}`}>
+              <p className="font-medium text-gray-900 text-sm mb-2">{pair.term}</p>
               <div className="flex gap-2">
                 {options.map((opt) => (
                   <button
                     key={opt}
-                    onClick={() => handleAnswer(index, opt)}
+                    onClick={() => !showResults && setAnswers({ ...answers, [index]: opt })}
                     disabled={showResults}
-                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
+                    className={`flex-1 px-2 py-1.5 rounded text-xs font-semibold transition-all ${
                       answer === opt
                         ? showResults
                           ? opt === pair.definition ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
                           : 'bg-teal-500 text-white'
                         : showResults && opt === pair.definition
                           ? 'bg-green-200 text-green-800'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                          : 'bg-gray-100 hover:bg-gray-200'
                     }`}
                   >
                     {opt}
@@ -613,13 +597,9 @@ function DefinitionMatchSlideComponent({ slide, onComplete }: { slide: Definitio
         })}
       </div>
 
-      {!showResults && (
-        <button
-          onClick={handleSubmit}
-          disabled={!allAnswered}
-          className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg disabled:opacity-50"
-        >
-          Antworten prüfen
+      {!showResults && allAnswered && (
+        <button onClick={handleSubmit} className="w-full py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-semibold rounded-lg">
+          Prüfen
         </button>
       )}
     </div>
@@ -627,60 +607,66 @@ function DefinitionMatchSlideComponent({ slide, onComplete }: { slide: Definitio
 }
 
 // Quiz Slide
-function QuizSlideComponent({ slide, onComplete }: { slide: QuizSlide; onComplete: (correct: boolean) => void }) {
+function QuizSlideComponent({ slide, onComplete }: { slide: QuizSlide; onComplete: () => void }) {
   const [selected, setSelected] = useState<number | null>(null)
   const [showResult, setShowResult] = useState(false)
+  const [completed, setCompleted] = useState(false)
 
   const handleSubmit = () => {
     if (selected === null) return
     setShowResult(true)
-    setTimeout(() => onComplete(slide.options[selected].correct), 2000)
+    if (!completed) {
+      setCompleted(true)
+      onComplete()
+    }
   }
 
   return (
-    <div className="p-6">
-      <h3 className="text-xl font-bold text-gray-900 mb-2">{slide.title}</h3>
-      <p className="text-gray-700 mb-4">{slide.question}</p>
+    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="font-bold text-gray-900">{slide.title}</h4>
+        {completed && <span className="text-xs text-green-600 font-semibold flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> +{slide.points}P</span>}
+      </div>
+      <p className="text-gray-700 text-sm mb-3">{slide.question}</p>
       
-      <div className="space-y-2 mb-6">
+      <div className="space-y-2 mb-3">
         {slide.options.map((opt, index) => {
           const isSelected = selected === index
-          const isCorrect = opt.correct
-          const showCorrect = showResult && isCorrect
-          const showWrong = showResult && isSelected && !isCorrect
+          const showCorrect = showResult && opt.correct
+          const showWrong = showResult && isSelected && !opt.correct
           
           return (
             <button
               key={index}
               onClick={() => !showResult && setSelected(index)}
               disabled={showResult}
-              className={`w-full text-left p-3 rounded-lg border-2 transition-all flex items-center gap-3 ${
-                showCorrect ? 'border-green-500 bg-green-50' :
-                showWrong ? 'border-red-500 bg-red-50' :
-                isSelected ? 'border-teal-500 bg-teal-50' :
-                'border-gray-200 hover:border-teal-300'
+              className={`w-full text-left p-2 rounded-lg border transition-all flex items-center gap-2 ${
+                showCorrect ? 'border-green-400 bg-green-50' :
+                showWrong ? 'border-red-400 bg-red-50' :
+                isSelected ? 'border-teal-400 bg-teal-50' :
+                'border-gray-200 bg-white hover:border-gray-300'
               }`}
             >
-              <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                 showCorrect ? 'bg-green-500 text-white' :
                 showWrong ? 'bg-red-500 text-white' :
                 isSelected ? 'bg-teal-500 text-white' : 'bg-gray-200'
               }`}>{String.fromCharCode(65 + index)}</span>
               <span className="flex-1 text-sm">{opt.text}</span>
-              {showCorrect && <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />}
-              {showWrong && <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />}
+              {showCorrect && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+              {showWrong && <XCircle className="h-4 w-4 text-red-500" />}
             </button>
           )
         })}
       </div>
 
       {showResult ? (
-        <div className={`p-4 rounded-lg ${slide.options[selected!].correct ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
-          <p className="text-sm">{slide.explanation}</p>
+        <div className={`p-2 rounded-lg text-sm ${slide.options[selected!].correct ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
+          {slide.explanation}
         </div>
-      ) : (
-        <button onClick={handleSubmit} disabled={selected === null} className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg disabled:opacity-50">
-          Antwort prüfen
+      ) : selected !== null && (
+        <button onClick={handleSubmit} className="w-full py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-semibold rounded-lg">
+          Prüfen
         </button>
       )}
     </div>
@@ -688,38 +674,47 @@ function QuizSlideComponent({ slide, onComplete }: { slide: QuizSlide; onComplet
 }
 
 // True/False Slide
-function TrueFalseSlideComponent({ slide, onComplete }: { slide: TrueFalseSlide; onComplete: (correct: boolean) => void }) {
+function TrueFalseSlideComponent({ slide, onComplete }: { slide: TrueFalseSlide; onComplete: () => void }) {
   const [answers, setAnswers] = useState<{ [key: number]: boolean | null }>({})
   const [showResults, setShowResults] = useState(false)
+  const [completed, setCompleted] = useState(false)
   const allAnswered = Object.keys(answers).filter(k => answers[parseInt(k)] !== null).length === slide.statements.length
-
-  const handleAnswer = (index: number, value: boolean) => {
-    if (showResults) return
-    setAnswers({ ...answers, [index]: value })
-  }
 
   const handleSubmit = () => {
     setShowResults(true)
-    const allCorrect = slide.statements.every((s, i) => answers[i] === s.correct)
-    setTimeout(() => onComplete(allCorrect), 2500)
+    if (!completed) {
+      setCompleted(true)
+      onComplete()
+    }
   }
 
   return (
-    <div className="p-6">
-      <h3 className="text-xl font-bold text-gray-900 mb-4">{slide.title}</h3>
+    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="font-bold text-gray-900">{slide.title}</h4>
+        {completed && <span className="text-xs text-green-600 font-semibold flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> +{slide.points}P</span>}
+      </div>
       
-      <div className="space-y-4 mb-6">
+      <div className="space-y-3 mb-3">
         {slide.statements.map((s, index) => {
           const answer = answers[index]
           const isCorrect = showResults && answer === s.correct
           const isWrong = showResults && answer !== null && answer !== s.correct
           
           return (
-            <div key={index} className={`p-4 rounded-xl border-2 ${isCorrect ? 'border-green-400 bg-green-50' : isWrong ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}>
-              <p className="text-gray-800 mb-3 text-sm">{s.text}</p>
+            <div key={index} className={`p-3 rounded-lg border ${isCorrect ? 'border-green-300 bg-green-50' : isWrong ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'}`}>
+              <p className="text-gray-800 text-sm mb-2">{s.text}</p>
               <div className="flex gap-2">
-                <button onClick={() => handleAnswer(index, true)} disabled={showResults} className={`flex-1 py-2 rounded-lg font-semibold text-sm transition-all ${answer === true ? showResults ? s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>✓ Richtig</button>
-                <button onClick={() => handleAnswer(index, false)} disabled={showResults} className={`flex-1 py-2 rounded-lg font-semibold text-sm transition-all ${answer === false ? showResults ? !s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>✗ Falsch</button>
+                <button 
+                  onClick={() => !showResults && setAnswers({ ...answers, [index]: true })} 
+                  disabled={showResults}
+                  className={`flex-1 py-1.5 rounded text-xs font-semibold ${answer === true ? showResults ? s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+                >✓ Richtig</button>
+                <button 
+                  onClick={() => !showResults && setAnswers({ ...answers, [index]: false })} 
+                  disabled={showResults}
+                  className={`flex-1 py-1.5 rounded text-xs font-semibold ${answer === false ? showResults ? !s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+                >✗ Falsch</button>
               </div>
               {showResults && <p className={`mt-2 text-xs ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>{s.explanation}</p>}
             </div>
@@ -727,82 +722,144 @@ function TrueFalseSlideComponent({ slide, onComplete }: { slide: TrueFalseSlide;
         })}
       </div>
 
-      {!showResults && <button onClick={handleSubmit} disabled={!allAnswered} className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg disabled:opacity-50">Antworten prüfen</button>}
+      {!showResults && allAnswered && (
+        <button onClick={handleSubmit} className="w-full py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-semibold rounded-lg">
+          Prüfen
+        </button>
+      )}
     </div>
   )
 }
 
-// Video Section
-function VideoSection({ section, onComplete }: { section: Section; onComplete: () => void }) {
-  const [watched, setWatched] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const isPlaceholder = section.videoUrl.includes('PLATZHALTER')
-  const requiredTime = 15
+// ===========================================
+// SECTION VIEW (Video + Aufgaben auf einer Seite)
+// ===========================================
 
+function SectionView({ 
+  section, 
+  onClose, 
+  onComplete,
+  initialVideoWatched,
+  initialCompletedSlides
+}: { 
+  section: Section
+  onClose: () => void
+  onComplete: (videoWatched: boolean, completedSlides: Set<number>) => void
+  initialVideoWatched: boolean
+  initialCompletedSlides: Set<number>
+}) {
+  const [videoWatched, setVideoWatched] = useState(initialVideoWatched)
+  const [completedSlides, setCompletedSlides] = useState<Set<number>>(initialCompletedSlides)
+  const isPlaceholder = section.videoUrl.includes('PLATZHALTER')
+
+  const handleVideoConfirm = () => {
+    setVideoWatched(true)
+  }
+
+  const handleSlideComplete = (index: number) => {
+    const newCompleted = new Set(completedSlides)
+    newCompleted.add(index)
+    setCompletedSlides(newCompleted)
+  }
+
+  const allSlidesCompleted = completedSlides.size === section.slides.length
+  const earnedPoints = (videoWatched ? section.videoPoints : 0) + 
+    section.slides.reduce((sum, slide, i) => completedSlides.has(i) ? sum + (('points' in slide ? slide.points : 0) || 0) : sum, 0)
+
+  // Auto-save on changes
   useEffect(() => {
-    if (!watched && !isPlaceholder) {
-      const interval = setInterval(() => {
-        setProgress(prev => {
-          if (prev >= requiredTime) {
-            setWatched(true)
-            clearInterval(interval)
-            return requiredTime
-          }
-          return prev + 1
-        })
-      }, 1000)
-      return () => clearInterval(interval)
+    onComplete(videoWatched, completedSlides)
+  }, [videoWatched, completedSlides])
+
+  const renderSlide = (slide: Slide, index: number) => {
+    const isCompleted = completedSlides.has(index)
+    
+    switch (slide.type) {
+      case 'info': return <InfoSlideComponent key={index} slide={slide} onComplete={() => handleSlideComplete(index)} />
+      case 'quiz': return <QuizSlideComponent key={index} slide={slide} onComplete={() => handleSlideComplete(index)} />
+      case 'truefalse': return <TrueFalseSlideComponent key={index} slide={slide} onComplete={() => handleSlideComplete(index)} />
+      case 'quote_reveal': return <QuoteRevealSlideComponent key={index} slide={slide} onComplete={() => handleSlideComplete(index)} />
+      case 'term_reveal': return <TermRevealSlideComponent key={index} slide={slide} onComplete={() => handleSlideComplete(index)} />
+      case 'definition_match': return <DefinitionMatchSlideComponent key={index} slide={slide} onComplete={() => handleSlideComplete(index)} />
+      default: return null
     }
-  }, [watched, isPlaceholder])
+  }
 
   return (
-    <div>
-      {/* Video */}
-      <div className="bg-gray-900">
-        {isPlaceholder ? (
-          <div className="aspect-video flex items-center justify-center text-gray-400">
-            <div className="text-center">
-              <Play className="h-16 w-16 mx-auto mb-4 opacity-50" />
-              <p className="text-lg">{section.videoTitle}</p>
-              <p className="text-sm text-gray-500 mt-2">Video-Platzhalter</p>
-              <button onClick={() => setWatched(true)} className="mt-4 px-6 py-2 bg-teal-600 hover:bg-teal-700 rounded-lg text-sm font-semibold text-white">
-                Überspringen
-              </button>
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+      {/* Header */}
+      <header className={`bg-gradient-to-r ${section.colorClass} text-white sticky top-0 z-10`}>
+        <div className="max-w-4xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <button onClick={onClose} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
+              <X className="h-5 w-5" /><span>Schliessen</span>
+            </button>
+            <div className="flex items-center gap-2 text-sm">
+              <Award className="h-4 w-4" />
+              <span className="font-semibold">{earnedPoints} / {section.totalPoints} Punkte</span>
             </div>
           </div>
-        ) : (
-          <iframe className="w-full aspect-video" src={section.videoUrl} title={section.videoTitle} frameBorder="0" allow="autoplay; fullscreen" allowFullScreen />
-        )}
-      </div>
-
-      {/* Progress / Status */}
-      <div className={`px-4 py-3 ${watched ? 'bg-green-100' : 'bg-amber-50'}`}>
-        {watched ? (
-          <div className="flex items-center gap-2 text-green-700">
-            <CheckCircle2 className="h-5 w-5" />
-            <span className="font-medium">Video angeschaut</span>
-          </div>
-        ) : !isPlaceholder ? (
-          <div>
-            <div className="flex items-center justify-between text-sm text-amber-700 mb-1">
-              <span className="flex items-center gap-2"><AlertCircle className="h-4 w-4" /> Bitte Video anschauen</span>
-              <span>{Math.round((progress / requiredTime) * 100)}%</span>
-            </div>
-            <div className="h-2 bg-amber-200 rounded-full overflow-hidden">
-              <div className="h-full bg-amber-500 transition-all" style={{ width: `${(progress / requiredTime) * 100}%` }} />
-            </div>
-          </div>
-        ) : null}
-      </div>
-
-      {/* Weiter Button */}
-      {watched && (
-        <div className="p-4">
-          <button onClick={onComplete} className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg flex items-center justify-center gap-2">
-            Zu den Aufgaben <ArrowRight className="h-5 w-5" />
-          </button>
+          <h1 className="text-lg font-bold mt-1">{section.title}</h1>
         </div>
-      )}
+      </header>
+
+      <main className="max-w-4xl mx-auto px-4 py-4">
+        {/* Intro */}
+        <div className="bg-white rounded-xl shadow-sm p-4 mb-4">
+          <p className="text-gray-700 text-sm">{section.intro}</p>
+        </div>
+
+        {/* Video */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-4">
+          <div className="bg-gray-900">
+            {isPlaceholder ? (
+              <div className="aspect-video flex items-center justify-center text-gray-400">
+                <div className="text-center">
+                  <Play className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">{section.videoTitle}</p>
+                  <p className="text-xs text-gray-500 mt-1">Video-Platzhalter</p>
+                </div>
+              </div>
+            ) : (
+              <iframe className="w-full aspect-video" src={section.videoUrl} title={section.videoTitle} frameBorder="0" allow="autoplay; fullscreen" allowFullScreen />
+            )}
+          </div>
+          
+          {/* Video Bestätigung */}
+          <div className={`p-3 border-t ${videoWatched ? 'bg-green-50' : 'bg-gray-50'}`}>
+            {videoWatched ? (
+              <div className="flex items-center gap-2 text-green-700">
+                <CheckCircle2 className="h-5 w-5" />
+                <span className="font-medium text-sm">Video angeschaut</span>
+                <span className="ml-auto text-xs font-semibold">+{section.videoPoints} Punkte</span>
+              </div>
+            ) : (
+              <button 
+                onClick={handleVideoConfirm}
+                className="w-full flex items-center justify-center gap-2 py-2 bg-teal-500 hover:bg-teal-600 text-white font-semibold rounded-lg text-sm"
+              >
+                <Video className="h-4 w-4" />
+                Video angeschaut (+{section.videoPoints} Punkte)
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Aufgaben direkt unter dem Video */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-bold text-gray-900">Interaktive Aufgaben</h3>
+          {section.slides.map((slide, index) => renderSlide(slide, index))}
+        </div>
+
+        {/* Abschluss */}
+        {videoWatched && allSlidesCompleted && (
+          <div className="bg-green-100 border border-green-300 rounded-xl p-4 mt-6 text-center">
+            <CheckCircle2 className="h-8 w-8 text-green-600 mx-auto mb-2" />
+            <p className="text-green-800 font-semibold">Sektion abgeschlossen!</p>
+            <p className="text-green-700 text-sm">Sie haben {earnedPoints} Punkte erreicht.</p>
+          </div>
+        )}
+      </main>
     </div>
   )
 }
@@ -815,9 +872,7 @@ export default function ProContraPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [activeSection, setActiveSection] = useState<string | null>(null)
-  const [currentSlide, setCurrentSlide] = useState(-1)
-  const [completedSections, setCompletedSections] = useState<Set<string>>(new Set())
-  const [sectionScores, setSectionScores] = useState<{ [key: string]: number }>({})
+  const [sectionData, setSectionData] = useState<{ [key: string]: { videoWatched: boolean; completedSlides: number[] } }>({})
   const [totalScore, setTotalScore] = useState(0)
 
   const maxPoints = SECTIONS.reduce((sum, s) => sum + s.totalPoints, 0)
@@ -833,8 +888,7 @@ export default function ProContraPage() {
           const data = userDoc.data().modules?.procontra
           if (data) {
             setTotalScore(data.score || 0)
-            setCompletedSections(new Set(data.completedSections || []))
-            setSectionScores(data.sectionScores || {})
+            setSectionData(data.sectionData || {})
           }
         }
       } catch (e) { console.error(e) }
@@ -843,31 +897,38 @@ export default function ProContraPage() {
     load()
   }, [router])
 
-  const handleSlideComplete = async (correct: boolean) => {
-    const section = SECTIONS.find(s => s.id === activeSection)!
-    const isLast = currentSlide === section.slides.length - 1
+  const handleSectionComplete = async (sectionId: string, videoWatched: boolean, completedSlides: Set<number>) => {
+    const section = SECTIONS.find(s => s.id === sectionId)!
     
-    if (isLast) {
-      const newCompleted = new Set(completedSections)
-      newCompleted.add(section.id)
-      setCompletedSections(newCompleted)
-      
-      const newScores = { ...sectionScores, [section.id]: section.totalPoints }
-      setSectionScores(newScores)
-      
-      const newTotal = Object.values(newScores).reduce((s, v) => s + v, 0)
-      setTotalScore(newTotal)
-      
-      await saveProgress(newTotal, newCompleted, newScores)
-      
-      setActiveSection(null)
-      setCurrentSlide(-1)
-    } else {
-      setCurrentSlide(currentSlide + 1)
+    const newSectionData = {
+      ...sectionData,
+      [sectionId]: {
+        videoWatched,
+        completedSlides: Array.from(completedSlides)
+      }
     }
+    setSectionData(newSectionData)
+
+    // Calculate total score
+    let newTotal = 0
+    SECTIONS.forEach(s => {
+      const data = newSectionData[s.id]
+      if (data) {
+        if (data.videoWatched) newTotal += s.videoPoints
+        s.slides.forEach((slide, i) => {
+          if (data.completedSlides.includes(i) && 'points' in slide) {
+            newTotal += slide.points || 0
+          }
+        })
+      }
+    })
+    setTotalScore(newTotal)
+
+    // Save to Firebase
+    await saveProgress(newTotal, newSectionData)
   }
 
-  const saveProgress = async (score: number, completed: Set<string>, scores: typeof sectionScores) => {
+  const saveProgress = async (score: number, data: typeof sectionData) => {
     const user = auth.currentUser
     if (!user) return
     
@@ -878,14 +939,18 @@ export default function ProContraPage() {
       if (userDoc.exists()) {
         const userData = userDoc.data()
         const modules = userData.modules || {}
-        const isComplete = completed.size === SECTIONS.length
+        
+        // Check if all sections are complete
+        const allComplete = SECTIONS.every(s => {
+          const d = data[s.id]
+          return d && d.videoWatched && d.completedSlides.length === s.slides.length
+        })
         
         modules.procontra = {
-          completed: isComplete,
+          completed: allComplete,
           score,
-          progress: Math.round((completed.size / SECTIONS.length) * 100),
-          completedSections: Array.from(completed),
-          sectionScores: scores,
+          progress: Math.round((score / maxPoints) * 100),
+          sectionData: data,
           lastUpdated: new Date().toISOString()
         }
         
@@ -897,81 +962,47 @@ export default function ProContraPage() {
         
         await updateDoc(userRef, { modules, totalPoints, overallProgress })
         
-        if (isComplete && !userData.badges?.procontra) {
+        if (allComplete && !userData.badges?.procontra) {
           await updateDoc(userRef, { [`badges.procontra`]: { moduleId: 'procontra', moduleName: '3. Pro- und Contra', lerncode: userData.code, issuedAt: new Date().toISOString() } })
         }
       }
     } catch (e) { console.error(e) }
   }
 
-  const renderSlide = () => {
-    const section = SECTIONS.find(s => s.id === activeSection)!
-    if (currentSlide === -1) return <VideoSection section={section} onComplete={() => setCurrentSlide(0)} />
+  const getSectionProgress = (sectionId: string) => {
+    const section = SECTIONS.find(s => s.id === sectionId)!
+    const data = sectionData[sectionId]
+    if (!data) return { earned: 0, total: section.totalPoints, complete: false }
     
-    const slide = section.slides[currentSlide]
-    switch (slide.type) {
-      case 'info': return <InfoSlideComponent slide={slide} onNext={() => handleSlideComplete(true)} />
-      case 'quiz': return <QuizSlideComponent slide={slide} onComplete={handleSlideComplete} />
-      case 'truefalse': return <TrueFalseSlideComponent slide={slide} onComplete={handleSlideComplete} />
-      case 'quote_reveal': return <QuoteRevealSlideComponent slide={slide} onComplete={handleSlideComplete} />
-      case 'term_reveal': return <TermRevealSlideComponent slide={slide} onComplete={handleSlideComplete} />
-      case 'definition_match': return <DefinitionMatchSlideComponent slide={slide} onComplete={handleSlideComplete} />
-      default: return null
-    }
+    let earned = data.videoWatched ? section.videoPoints : 0
+    section.slides.forEach((slide, i) => {
+      if (data.completedSlides.includes(i) && 'points' in slide) {
+        earned += slide.points || 0
+      }
+    })
+    
+    const complete = data.videoWatched && data.completedSlides.length === section.slides.length
+    return { earned, total: section.totalPoints, complete }
   }
 
   if (loading) return <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div></div>
 
-  const isComplete = completedSections.size === SECTIONS.length
-
-  // Einzelne Sektion anzeigen
+  // Section View
   if (activeSection) {
     const section = SECTIONS.find(s => s.id === activeSection)!
+    const data = sectionData[activeSection]
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
-        {/* Header */}
-        <header className={`bg-gradient-to-r ${section.colorClass} text-white sticky top-0 z-10`}>
-          <div className="max-w-4xl mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <button onClick={() => { setActiveSection(null); setCurrentSlide(-1) }} className="flex items-center gap-2 text-white/80 hover:text-white">
-                <X className="h-5 w-5" /><span>Schliessen</span>
-              </button>
-              <div className="flex items-center gap-2">
-                <Award className="h-5 w-5" /><span className="font-semibold">{section.totalPoints} Punkte</span>
-              </div>
-            </div>
-            <h1 className="text-xl font-bold mt-2">{section.title}</h1>
-          </div>
-        </header>
-
-        <main className="max-w-4xl mx-auto px-4 py-6">
-          {/* Einleitung (vor Video) */}
-          {currentSlide === -1 && (
-            <div className="bg-white rounded-xl shadow-md p-4 mb-4">
-              <p className="text-gray-700">{section.intro}</p>
-            </div>
-          )}
-
-          {/* Aufgaben-Fortschritt */}
-          {currentSlide >= 0 && (
-            <div className="bg-white rounded-t-xl shadow-md px-4 py-3 border-b">
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-600">Aufgabe {currentSlide + 1} / {section.slides.length}</span>
-                <div className="flex-1 h-2 bg-gray-200 rounded-full">
-                  <div className={`h-full ${section.bgColor} rounded-full transition-all`} style={{ width: `${((currentSlide + 1) / section.slides.length) * 100}%` }} />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Content */}
-          <div className={`bg-white ${currentSlide >= 0 ? 'rounded-b-xl' : 'rounded-xl'} shadow-md overflow-hidden`}>
-            {renderSlide()}
-          </div>
-        </main>
-      </div>
+      <SectionView 
+        section={section}
+        onClose={() => setActiveSection(null)}
+        onComplete={(v, c) => handleSectionComplete(activeSection, v, c)}
+        initialVideoWatched={data?.videoWatched || false}
+        initialCompletedSlides={new Set(data?.completedSlides || [])}
+      />
     )
   }
+
+  const isComplete = SECTIONS.every(s => getSectionProgress(s.id).complete)
 
   // Übersicht
   return (
@@ -991,14 +1022,14 @@ export default function ProContraPage() {
         {/* Titel */}
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Pro und Contra</h1>
-          <p className="text-gray-600">Verschiedene Positionen zur Individualbesteuerung</p>
+          <p className="text-gray-600">Abstimmung vom 8. März 2026: Individualbesteuerung</p>
         </div>
 
         {/* Intro */}
         <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-6">
           <p className="text-amber-800">
             <strong>📣 Bei Abstimmungen gehen die Meinungen auseinander.</strong><br />
-            Lernen Sie die verschiedenen Akteure und ihre Argumente kennen. Klicken Sie auf eine Karte, um zu starten.
+            Lernen Sie die verschiedenen Akteure und ihre Argumente kennen.
           </p>
         </div>
 
@@ -1006,45 +1037,35 @@ export default function ProContraPage() {
         <div className="grid grid-cols-2 gap-4 mb-6">
           {SECTIONS.map((section) => {
             const Icon = IconMap[section.icon] || Users
-            const isDone = completedSections.has(section.id)
+            const progress = getSectionProgress(section.id)
             
             return (
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
                 className={`p-4 rounded-xl border-2 transition-all text-left hover:shadow-lg ${
-                  isDone 
+                  progress.complete 
                     ? 'bg-green-50 border-green-300' 
                     : 'bg-white border-gray-200 hover:border-gray-300'
                 }`}
               >
                 <div className="flex items-center gap-3 mb-2">
-                  <div className={`p-2 rounded-lg ${isDone ? 'bg-green-500' : section.bgColor}`}>
+                  <div className={`p-2 rounded-lg ${progress.complete ? 'bg-green-500' : section.bgColor}`}>
                     <Icon className="h-5 w-5 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-gray-900 text-sm">{section.shortTitle}</h3>
-                    <p className="text-xs text-gray-500">{section.totalPoints} Punkte</p>
+                    <p className="text-xs text-gray-500">{progress.earned} / {progress.total} Punkte</p>
                   </div>
-                  {isDone && <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />}
+                  {progress.complete && <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />}
                 </div>
-                {!isDone && (
-                  <p className="text-xs text-gray-500 line-clamp-2">{section.intro.substring(0, 80)}...</p>
-                )}
+                {/* Progress bar */}
+                <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                  <div className={`h-full ${progress.complete ? 'bg-green-500' : section.bgColor} transition-all`} style={{ width: `${(progress.earned / progress.total) * 100}%` }} />
+                </div>
               </button>
             )
           })}
-        </div>
-
-        {/* Fortschritt */}
-        <div className="bg-white rounded-xl shadow-md p-4 mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Fortschritt</span>
-            <span className="text-sm font-bold text-teal-600">{completedSections.size} / {SECTIONS.length}</span>
-          </div>
-          <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-teal-500 to-cyan-500 transition-all" style={{ width: `${(completedSections.size / SECTIONS.length) * 100}%` }} />
-          </div>
         </div>
 
         {/* Abschluss */}

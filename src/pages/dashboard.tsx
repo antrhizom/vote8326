@@ -269,8 +269,8 @@ export default function AbstimmungDashboard() {
             </div>
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold">18.</div>
-                <div className="text-sm text-red-100">Mai 2025</div>
+                <div className="text-3xl font-bold">8.</div>
+                <div className="text-sm text-red-100">März 2026</div>
               </div>
               <div className="hidden md:block h-12 w-px bg-white/30"></div>
               <div className="text-center hidden md:block">

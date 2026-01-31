@@ -48,12 +48,9 @@ export default function ProContraPage() {
     loadProgress()
   }, [router])
 
-  // Listen for H5P events from Lumi
+  // Listen for H5P events from local file
   useEffect(() => {
     const handleH5PEvent = async (event: MessageEvent) => {
-      // Lumi sends messages from their domain
-      if (event.origin !== 'https://app.lumi.education') return
-      
       try {
         // Check if this is an H5P xAPI statement
         if (event.data && event.data.statement) {
@@ -85,10 +82,20 @@ export default function ProContraPage() {
           }
         }
         
-        // Also listen for Lumi-specific completion messages
-        if (event.data && event.data.context === 'h5p' && event.data.action === 'completed') {
-          console.log('Lumi completion event received')
-          setH5pCompleted(true)
+        // Also listen for direct H5P events (non-xAPI)
+        if (event.data && event.data.context === 'h5p') {
+          if (event.data.action === 'completed') {
+            console.log('H5P completion event received')
+            const score = event.data.score || 100
+            setH5pScore(score)
+            setH5pCompleted(true)
+            
+            if (videoWatched) {
+              await saveProgress(score, true, true)
+            } else {
+              await saveProgress(score, false, true)
+            }
+          }
         }
       } catch (error) {
         console.error('Error processing H5P event:', error)
@@ -221,9 +228,9 @@ export default function ProContraPage() {
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Module Header */}
         <div className="bg-white rounded-xl shadow-md p-8 mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">3. Pro- und Contra: Bargeldinitiative</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">3. Pro- und Contra: Individualbesteuerung</h1>
           <p className="text-lg text-gray-600 mb-6">
-            Informieren Sie sich über die Argumente zur Bargeldinitiative und testen Sie Ihr Wissen
+            Informieren Sie sich über die Argumente zur Individualbesteuerung und testen Sie Ihr Wissen
           </p>
           
           {/* Progress Indicators */}
@@ -256,20 +263,20 @@ export default function ProContraPage() {
           
           {/* Infotext */}
           <div className="bg-teal-50 border-l-4 border-teal-500 p-6 rounded-r-lg">
-            <h2 className="text-xl font-bold text-teal-900 mb-3">📋 Über die Bargeldinitiative</h2>
+            <h2 className="text-xl font-bold text-teal-900 mb-3">📋 Über die Individualbesteuerung</h2>
             <div className="text-teal-800 space-y-3">
               <p>
                 <strong>[PLATZHALTER - Hier kommt Ihr Einführungstext]</strong>
               </p>
               <p>
-                Die Bargeldinitiative fordert, dass Bargeld als gesetzliches Zahlungsmittel in der Schweiz 
-                erhalten bleibt. Informieren Sie sich über die verschiedenen Perspektiven zu diesem wichtigen Thema.
+                Die Initiative zur Individualbesteuerung fordert, dass Ehepaare künftig einzeln besteuert werden.
+                Informieren Sie sich über die verschiedenen Perspektiven zu diesem wichtigen Thema.
               </p>
               <p>
                 <strong>Aufgabe:</strong>
               </p>
               <ol className="list-decimal list-inside space-y-2 ml-4">
-                <li>Schauen Sie sich das SRF-Video aufmerksam an (ca. 5 Minuten)</li>
+                <li>Schauen Sie sich das SRF-Video aufmerksam an</li>
                 <li>Bearbeiten Sie anschließend die interaktive Aufgabe</li>
                 <li>Ihre Punkte werden automatisch gespeichert</li>
               </ol>
@@ -279,14 +286,14 @@ export default function ProContraPage() {
 
         {/* SRF Video */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">🎬 SRF Beitrag: Bargeld-Initiative</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">🎬 SRF Beitrag: Individualbesteuerung</h2>
           
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <iframe 
               ref={videoRef}
               className="w-full aspect-video"
-              src="https://www.srf.ch/play/embed?urn=urn:srf:video:49db5663-1827-4faa-bc6a-75af51f1c8df"
-              title="SRF Beitrag Bargeld-Initiative"
+              src="https://www.srf.ch/play/embed?urn=urn:srf:video:77a83d61-aeb0-4984-8e7b-37291a89b62c&startTime=12"
+              title="SRF Beitrag Individualbesteuerung"
               frameBorder="0"
               allow="autoplay; fullscreen"
               allowFullScreen
@@ -307,7 +314,7 @@ export default function ProContraPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <FileQuestion className="h-6 w-6 text-teal-600" />
-                <h3 className="text-xl font-bold text-gray-900">Aussagen zur Bargeld-Initiative</h3>
+                <h3 className="text-xl font-bold text-gray-900">Aussagen zur Individualbesteuerung</h3>
               </div>
               {h5pCompleted && (
                 <span className="bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2">
@@ -317,17 +324,16 @@ export default function ProContraPage() {
               )}
             </div>
             
-            {/* Lumi H5P Embed */}
+            {/* H5P Local File Embed */}
             <div className="relative">
               <iframe 
                 ref={h5pRef}
-                src="https://app.lumi.education/api/v1/run/UZmjXP/embed" 
+                src="/h5p/befuerworterinnen.html" 
                 className="w-full border-2 border-gray-200 rounded-lg"
                 style={{ minHeight: '720px', height: '720px' }}
-                title="H5P Aufgabe - Aussagen zur Bargeld-Initiative"
+                title="H5P Aufgabe - Individualbesteuerung"
                 frameBorder="0" 
                 allowFullScreen
-                allow="geolocation *; microphone *; camera *; midi *; encrypted-media *"
               />
             </div>
             

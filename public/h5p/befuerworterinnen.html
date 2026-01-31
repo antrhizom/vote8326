@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>H5P Platzhalter - Befürworter:innen</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f0fdfa 0%, #ecfeff 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 40px;
+            text-align: center;
+        }
+        .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #0d9488;
+            margin-bottom: 16px;
+            font-size: 24px;
+        }
+        .info {
+            background: #fef3c7;
+            border: 2px solid #fcd34d;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            color: #92400e;
+            text-align: left;
+        }
+        .info h3 {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .steps {
+            background: #f0fdfa;
+            border: 2px solid #99f6e4;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: left;
+            margin-top: 20px;
+        }
+        .steps h3 {
+            color: #0f766e;
+            margin-bottom: 12px;
+        }
+        .steps ol {
+            margin-left: 20px;
+            color: #115e59;
+        }
+        .steps li {
+            margin-bottom: 8px;
+        }
+        code {
+            background: #e0f2fe;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .demo-btn {
+            background: linear-gradient(135deg, #14b8a6, #0891b2);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+        .demo-btn:hover {
+            transform: scale(1.02);
+        }
+        .success {
+            display: none;
+            background: #dcfce7;
+            border: 2px solid #86efac;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            color: #166534;
+        }
+        .success.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">📝</div>
+        <h1>H5P Platzhalter</h1>
+        <p style="color: #6b7280; margin-bottom: 20px;">
+            Diese Datei ist ein Platzhalter für Ihre H5P-Aufgabe zur Individualbesteuerung.
+        </p>
+        
+        <div class="info">
+            <h3>⚠️ Platzhalter-Datei</h3>
+            <p>
+                Ersetzen Sie diese Datei mit Ihrem echten H5P-Export aus <strong>Lumi Education</strong>.
+            </p>
+        </div>
+        
+        <div class="steps">
+            <h3>So geht's:</h3>
+            <ol>
+                <li>Öffnen Sie <strong>Lumi Education</strong></li>
+                <li>Erstellen Sie Ihre H5P-Aufgabe (z.B. "Drag the Words")</li>
+                <li>Exportieren: <strong>Datei → Exportieren → HTML (All-in-one)</strong></li>
+                <li>Benennen Sie die Datei <code>befuerworterinnen.html</code></li>
+                <li>Laden Sie sie in <code>public/h5p/</code> hoch</li>
+            </ol>
+        </div>
+        
+        <button class="demo-btn" onclick="sendTestScore()">
+            🧪 Test: Punkteübermittlung simulieren
+        </button>
+        
+        <div class="success" id="success">
+            ✅ Test-Punkte wurden an die Lernumgebung gesendet!
+        </div>
+    </div>
+
+    <script>
+        function sendTestScore() {
+            // Simuliere xAPI completion event
+            window.parent.postMessage({
+                statement: {
+                    verb: {
+                        id: 'http://adlnet.gov/expapi/verbs/completed'
+                    },
+                    result: {
+                        score: {
+                            raw: 80,
+                            max: 100
+                        }
+                    }
+                }
+            }, '*');
+            
+            // Auch als h5p context senden
+            window.parent.postMessage({
+                context: 'h5p',
+                action: 'completed',
+                score: 80
+            }, '*');
+            
+            document.getElementById('success').classList.add('show');
+        }
+    </script>
+</body>
+</html>

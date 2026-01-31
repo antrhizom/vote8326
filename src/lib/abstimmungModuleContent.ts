@@ -37,7 +37,7 @@ export const moduleData: { [key: string]: ModuleData } = {
   procontra: {
     id: 'procontra',
     title: '3. Pro- und Contra',
-    description: 'Schauen Sie ein Video zur Bargeldinitiative und bearbeiten Sie eine interaktive Aufgabe.',
+    description: 'Schauen Sie ein Video zur Individualbesteuerung und bearbeiten Sie eine interaktive Aufgabe.',
     estimatedTime: '10 Min',
     maxPoints: 100,
     type: 'interactive',

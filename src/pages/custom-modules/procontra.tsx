@@ -4,8 +4,8 @@ import { doc, updateDoc, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
 import { 
   ArrowLeft, ArrowRight, CheckCircle2, Award, Clock, XCircle, 
-  Play, Building2, Users, MapPin, GraduationCap, ChevronRight,
-  Eye, EyeOff, Quote, BookOpen, Lightbulb, AlertCircle
+  Play, Building2, Users, MapPin, ThumbsUp, ThumbsDown,
+  Eye, EyeOff, Quote, BookOpen, Lightbulb, AlertCircle, ChevronRight, X
 } from 'lucide-react'
 
 // ===========================================
@@ -65,9 +65,12 @@ type Slide = InfoSlide | QuizSlide | TrueFalseSlide | QuoteRevealSlide | TermRev
 interface Section {
   id: string
   title: string
+  shortTitle: string
   icon: string
   color: string
-  description: string
+  colorClass: string
+  bgColor: string
+  intro: string
   videoUrl: string
   videoTitle: string
   videoDuration: string
@@ -76,38 +79,35 @@ interface Section {
 }
 
 // ===========================================
-// SEKTIONEN MIT INHALTEN
+// 4 AKTEURE MIT INHALTEN
 // ===========================================
 
 const SECTIONS: Section[] = [
-  // BUNDESRAT
+  // 1. BUNDESRAT
   {
     id: 'bundesrat',
     title: 'Position Bundesrat',
+    shortTitle: 'Bundesrat',
     icon: 'Building2',
     color: 'blue',
-    description: 'Der Bundesrat und Finanzministerin Karin Keller-Sutter befürworten die Individualbesteuerung',
+    colorClass: 'from-blue-500 to-blue-600',
+    bgColor: 'bg-blue-500',
+    intro: 'Der Bundesrat unter Führung von Finanzministerin Karin Keller-Sutter befürwortet die Individualbesteuerung. Er sieht darin eine Chance, die sogenannte "Heiratsstrafe" abzuschaffen und Erwerbsanreize zu schaffen.',
     videoUrl: 'https://www.srf.ch/play/embed?urn=urn:srf:video:77a83d61-aeb0-4984-8e7b-37291a89b62c&startTime=12',
-    videoTitle: 'Bundesrat präsentiert Position zur Individualbesteuerung',
+    videoTitle: 'Bundesrat präsentiert Position',
     videoDuration: '3 Min',
     totalPoints: 40,
     slides: [
       {
-        type: 'info',
-        title: 'Die Kernaussage des Bundesrats',
-        content: 'Der Bundesrat befürwortet die Individualbesteuerung, weil sie die sogenannte "Heiratsstrafe" abschafft. Heute zahlen viele Ehepaare mehr Steuern als unverheiratete Paare in der gleichen wirtschaftlichen Situation.',
-        highlight: 'Die Ungleichbehandlung aufgrund des Zivilstands soll beseitigt werden.'
-      },
-      {
         type: 'quote_reveal',
-        title: 'Zentrale Zitate aus dem Video',
-        instruction: 'Klicken Sie auf die Karten, um die Zitate der Finanzministerin aufzudecken:',
+        title: 'Zitate der Finanzministerin',
+        instruction: 'Klicken Sie auf die Karten, um die zentralen Aussagen aufzudecken:',
         quotes: [
           {
             author: 'Karin Keller-Sutter',
             role: 'Bundesrätin, Finanzministerin',
             quote: 'Die Beseitigung der Heiratsstrafe schafft einen Erwerbsanreiz. Das heisst, dass sich Leistung lohnt - auch bei den Steuern.',
-            key_point: 'Erwerbsanreiz durch Steuerreform'
+            key_point: 'Leistung soll sich lohnen'
           },
           {
             author: 'Karin Keller-Sutter',
@@ -120,7 +120,7 @@ const SECTIONS: Section[] = [
       },
       {
         type: 'term_reveal',
-        title: 'Schlüsselbegriffe verstehen',
+        title: 'Schlüsselbegriffe',
         instruction: 'Klicken Sie auf die Begriffe, um ihre Bedeutung zu erfahren:',
         terms: [
           {
@@ -135,7 +135,7 @@ const SECTIONS: Section[] = [
           },
           {
             term: 'Steuerprogression',
-            definition: 'Je höher das Einkommen, desto höher der Steuersatz. Bei gemeinsamer Veranlagung von Ehepaaren steigt das Gesamteinkommen.',
+            definition: 'Je höher das Einkommen, desto höher der Steuersatz. Bei gemeinsamer Veranlagung steigt das Gesamteinkommen.',
             example: '80\'000 + 60\'000 = 140\'000 wird höher besteuert als zwei Mal 70\'000 einzeln.'
           }
         ],
@@ -147,11 +147,11 @@ const SECTIONS: Section[] = [
         question: 'Welchen positiven Nebeneffekt erwartet der Bund durch die Individualbesteuerung?',
         options: [
           { text: 'Höhere Steuereinnahmen', correct: false },
-          { text: 'Bis zu 44\'000 neue Vollzeitstellen (v.a. bei Ehefrauen)', correct: true },
-          { text: 'Weniger Bürokratie bei den Steuerbehörden', correct: false },
+          { text: 'Bis zu 44\'000 neue Vollzeitstellen', correct: true },
+          { text: 'Weniger Bürokratie', correct: false },
           { text: 'Tiefere Mieten', correct: false }
         ],
-        explanation: 'Der Bund rechnet damit, dass v.a. Ehefrauen mehr arbeiten würden, weil ihnen mit der individuellen Besteuerung mehr vom Lohn bleiben würde.',
+        explanation: 'Der Bund rechnet damit, dass v.a. Ehefrauen mehr arbeiten würden, weil ihnen mehr vom Lohn bliebe.',
         points: 10
       },
       {
@@ -161,12 +161,7 @@ const SECTIONS: Section[] = [
           { 
             text: 'Der Bundesrat ist gegen die Individualbesteuerung.', 
             correct: false, 
-            explanation: 'Falsch! Der Bundesrat befürwortet die Reform ausdrücklich.' 
-          },
-          { 
-            text: 'Die Abstimmung findet am 18. Mai 2025 statt.', 
-            correct: true, 
-            explanation: 'Richtig! Nach dem erfolgreichen Referendum kommt es zur Volksabstimmung.' 
+            explanation: 'Falsch! Der Bundesrat befürwortet die Reform.' 
           },
           { 
             text: 'Mit der Reform würden Ehepaare weiterhin gemeinsam besteuert.', 
@@ -179,228 +174,218 @@ const SECTIONS: Section[] = [
     ]
   },
 
-  // GEGNER:INNEN - MIT ECHTEM VIDEO
+  // 2. KOMITEE BEFÜRWORTER:INNEN
+  {
+    id: 'befuerworter',
+    title: 'Komitee Befürworter:innen',
+    shortTitle: 'Befürworter:innen',
+    icon: 'ThumbsUp',
+    color: 'green',
+    colorClass: 'from-green-500 to-green-600',
+    bgColor: 'bg-green-500',
+    intro: 'Ein breites Komitee von Parteien und Verbänden unterstützt die Individualbesteuerung. Sie sehen darin einen wichtigen Schritt zur Gleichstellung und zur Förderung der Erwerbstätigkeit von Frauen.',
+    videoUrl: '[PLATZHALTER]',
+    videoTitle: 'Befürworter:innen präsentieren Argumente',
+    videoDuration: '2 Min',
+    totalPoints: 30,
+    slides: [
+      {
+        type: 'term_reveal',
+        title: 'Argumente der Befürworter:innen',
+        instruction: 'Klicken Sie, um die Hauptargumente aufzudecken:',
+        terms: [
+          {
+            term: 'Gleichbehandlung',
+            definition: 'Alle Paare werden gleich besteuert, unabhängig davon, ob sie verheiratet sind oder nicht.',
+            example: 'Ein Konkubinatspaar und ein Ehepaar mit gleichem Einkommen zahlen gleich viel Steuern.'
+          },
+          {
+            term: 'Erwerbsanreiz',
+            definition: 'Zweitverdienende behalten mehr vom Lohn, da ihr Einkommen nicht mehr zum Partner addiert wird.',
+            example: 'Eine Ehefrau mit 50\'000 Fr. Einkommen behält mehr, als wenn das Einkommen zum Mann addiert wird.'
+          },
+          {
+            term: 'Fachkräftemangel bekämpfen',
+            definition: 'Laut Befürworter:innen kann man mit der Individualbesteuerung das Arbeitskräftepotenzial der Frauen besser ausschöpfen.',
+            example: 'Der Bund rechnet mit bis zu 44\'000 zusätzlichen Vollzeitstellen.'
+          }
+        ],
+        points: 15
+      },
+      {
+        type: 'quiz',
+        title: 'Verständnisfrage',
+        question: 'Wer profitiert laut Befürworter:innen am meisten von der Reform?',
+        options: [
+          { text: 'Einverdiener-Ehepaare', correct: false },
+          { text: 'Unverheiratete Singles', correct: false },
+          { text: 'Doppelverdiener-Ehepaare', correct: true },
+          { text: 'Rentner:innen', correct: false }
+        ],
+        explanation: 'Bei Doppelverdiener-Ehepaaren fällt die bisherige Mehrbelastung durch die gemeinsame Veranlagung weg.',
+        points: 15
+      }
+    ]
+  },
+
+  // 3. KOMITEE GEGNER:INNEN (mit Inhalten aus TXT-Transkript)
   {
     id: 'gegner',
-    title: 'Position Gegner:innen',
-    icon: 'Users',
+    title: 'Komitee Gegner:innen',
+    shortTitle: 'Gegner:innen',
+    icon: 'ThumbsDown',
     color: 'red',
-    description: 'SVP, EVP, EDU, Mitte und die Kantone haben das Referendum ergriffen',
+    colorClass: 'from-red-500 to-red-600',
+    bgColor: 'bg-red-500',
+    intro: 'Ein Komitee aus SVP, EVP, EDU und Mitte hat das Referendum ergriffen. Sie kritisieren, dass vor allem reiche Doppelverdiener profitieren würden und warnen vor Mehraufwand und neuen Ungerechtigkeiten.',
     videoUrl: 'https://www.srf.ch/play/embed?urn=urn:srf:video:76af4420-abff-4a34-8aab-9941193b223e',
-    videoTitle: 'Kontra-Komitee präsentiert Argumente gegen die Individualbesteuerung',
+    videoTitle: 'Kontra-Komitee präsentiert Argumente',
     videoDuration: '2 Min',
     totalPoints: 40,
     slides: [
       {
-        type: 'info',
-        title: 'Wer sind die Gegner:innen?',
-        content: 'Gegen die Individualbesteuerung haben die Kantone sowie ein Komitee bestehend aus SVP, EVP, EDU und der Mitte-Partei das Referendum ergriffen. Sie sehen in der Reform mehr Nachteile als Vorteile.',
-        highlight: 'Die Gegner:innen warnen vor Steuerausfällen und neuen Ungerechtigkeiten.'
-      },
-      {
         type: 'quote_reveal',
-        title: 'Argumente der Gegner:innen',
-        instruction: 'Klicken Sie auf die Karten, um die Hauptargumente aufzudecken:',
+        title: 'Aussagen des Nein-Komitees',
+        instruction: 'Klicken Sie auf die Karten, um die Kritikpunkte aufzudecken:',
         quotes: [
           {
-            author: 'Kontra-Komitee',
-            role: 'Referendumskomitee',
-            quote: 'Die Individualbesteuerung schafft neue Ungerechtigkeit, indem sie vor allem Doppelverdiener mit hohen Einkommen belohnt.',
-            key_point: 'Profiteure sind Gutverdienende'
+            author: 'Nein-Komitee',
+            role: 'SVP, EVP, EDU, Mitte',
+            quote: 'Begünstigt werden v.a. Doppelverdiener-Ehepaare mit ähnlichen, aber v.a. mit hohen Einkommen. Belastet werden Einverdiener-Familien und Paare mit ungleicher Einkommensverteilung.',
+            key_point: 'Profiteure sind die reichsten Doppelverdiener'
           },
           {
-            author: 'Kontra-Komitee',
-            role: 'Referendumskomitee',
-            quote: 'Die Reform ist bürokratisch. Zukünftig muss jedes Ehepaar zwei Steuererklärungen ausfüllen.',
-            key_point: 'Mehr Aufwand für alle'
+            author: 'Nein-Komitee',
+            role: 'SVP, EVP, EDU, Mitte',
+            quote: 'Zwei Steuererklärungen auszufüllen, bedeutet einen erheblichen Mehraufwand - einerseits für die Ehepaare, aber dann auch für die Steuerbehörden, die das kontrollieren müssen.',
+            key_point: 'Erheblicher Mehraufwand für alle'
           },
           {
-            author: 'Kantone',
-            role: 'Finanzdirektorenkonferenz',
-            quote: 'Die Reform führt zu massiven Steuerausfällen bei Bund und Kantonen.',
-            key_point: 'Weniger Geld für öffentliche Aufgaben'
+            author: 'Nein-Komitee',
+            role: 'SVP, EVP, EDU, Mitte',
+            quote: 'Ja gut, die Frauen würden ganz leicht mehr arbeiten. Das wäre wirklich nur ein Tropfen auf den heissen Stein. Mit der Zuwanderung kommen jedes Jahr 80\'000 Leute.',
+            key_point: 'Kaum Effekt auf Fachkräftemangel'
           }
         ],
         points: 10
       },
       {
         type: 'term_reveal',
-        title: 'Kritische Begriffe verstehen',
-        instruction: 'Klicken Sie auf die Begriffe, um die Kritikpunkte zu verstehen:',
+        title: 'Kritikpunkte verstehen',
+        instruction: 'Klicken Sie auf die Begriffe, um die Kritik zu verstehen:',
         terms: [
           {
-            term: 'Steuerausfälle',
-            definition: 'Der Bund rechnet mit 630 Mio. Franken weniger pro Jahr allein bei der direkten Bundessteuer.',
-            example: 'Dieses Geld fehlt dann für Bildung, Gesundheit, Infrastruktur etc.'
-          },
-          {
             term: 'Doppelverdiener-Bonus',
-            definition: 'Die Kritik, dass vor allem gut verdienende Paare mit zwei Einkommen profitieren würden.',
-            example: 'Ein Paar mit 2x 150\'000 profitiert mehr als eines mit 1x 100\'000.'
+            definition: 'Das Nein-Komitee kritisiert, dass vor allem gut verdienende Paare mit zwei Einkommen profitieren.',
+            example: 'Ein Paar mit 2x 150\'000 Fr. profitiert mehr als eines mit 1x 100\'000 Fr.'
           },
           {
-            term: 'Familienmodell',
-            definition: 'Gegner:innen argumentieren, dass traditionelle Familienmodelle mit einem Hauptverdiener benachteiligt würden.',
-            example: 'Einverdiener-Ehepaare hätten keinen Vorteil von der Reform.'
+            term: 'Mehraufwand',
+            definition: 'Zukünftig muss jedes Ehepaar zwei Steuererklärungen ausfüllen statt einer.',
+            example: 'Auch die Steuerbehörden müssen doppelt so viele Erklärungen kontrollieren.'
+          },
+          {
+            term: 'Einverdiener-Familien',
+            definition: 'Familien mit nur einem Einkommen hätten keinen Vorteil von der Reform.',
+            example: 'Ein Alleinverdiener mit 120\'000 Fr. wird gleich besteuert wie vorher.'
+          },
+          {
+            term: 'Komplizierte Vorlage',
+            definition: 'Die Gegner:innen sagen, die Vorlage sei zu kompliziert. Der Arbeitsaufwand bei der Steuererklärung würde für Ehepaare steigen.',
+            example: 'Vermögen, Abzüge und Kinder müssten neu aufgeteilt werden.'
           }
         ],
         points: 10
       },
       {
         type: 'definition_match',
-        title: 'Argumente zuordnen',
+        title: 'Pro oder Contra?',
         instruction: 'Ordnen Sie die Argumente der richtigen Seite zu:',
         pairs: [
           { term: 'Beseitigung der Heiratsstrafe', definition: 'PRO' },
-          { term: 'Steuerausfälle von 630 Mio.', definition: 'CONTRA' },
-          { term: 'Erwerbsanreiz für Ehefrauen', definition: 'PRO' },
-          { term: 'Mehr Bürokratie (2 Steuererklärungen)', definition: 'CONTRA' },
+          { term: 'Erheblicher Mehraufwand für Ehepaare', definition: 'CONTRA' },
+          { term: 'Erwerbsanreiz für Frauen', definition: 'PRO' },
+          { term: 'Bevorzugt reiche Doppelverdiener', definition: 'CONTRA' },
           { term: 'Gleichbehandlung aller Paare', definition: 'PRO' },
-          { term: 'Bevorzugt Gutverdienende', definition: 'CONTRA' }
+          { term: 'Nur ein Tropfen auf den heissen Stein', definition: 'CONTRA' }
         ],
         points: 10
       },
       {
         type: 'quiz',
         title: 'Abschlussfrage',
-        question: 'Welche Partei gehört NICHT zum Kontra-Komitee?',
+        question: 'Welche Partei gehört NICHT zum Nein-Komitee?',
         options: [
           { text: 'SVP', correct: false },
           { text: 'SP', correct: true },
           { text: 'EVP', correct: false },
           { text: 'Mitte', correct: false }
         ],
-        explanation: 'Die SP unterstützt die Individualbesteuerung. Das Kontra-Komitee besteht aus SVP, EVP, EDU und Mitte, zusammen mit den Kantonen.',
+        explanation: 'Das Nein-Komitee besteht aus SVP, EVP, EDU und Mitte. Die SP unterstützt die Vorlage.',
         points: 10
       }
     ]
   },
 
-  // PARLAMENT (Platzhalter)
+  // 4. KANTONE (Kantonsreferendum)
   {
-    id: 'parlament',
-    title: 'Position Parlament',
-    icon: 'Users',
-    color: 'purple',
-    description: 'Wie haben National- und Ständerat entschieden?',
+    id: 'kantone',
+    title: 'Kantone (Kantonsreferendum)',
+    shortTitle: 'Kantone',
+    icon: 'MapPin',
+    color: 'orange',
+    colorClass: 'from-orange-500 to-orange-600',
+    bgColor: 'bg-orange-500',
+    intro: 'Die Kantone haben gemeinsam mit dem Nein-Komitee das Referendum ergriffen. Sie befürchten massive Steuerausfälle und einen hohen Umsetzungsaufwand bei der Umstellung des Steuersystems.',
     videoUrl: '[PLATZHALTER]',
-    videoTitle: 'Parlamentsdebatte zur Individualbesteuerung',
-    videoDuration: '3 Min',
+    videoTitle: 'Kantone erklären ihre Position',
+    videoDuration: '2 Min',
     totalPoints: 30,
     slides: [
       {
         type: 'info',
-        title: 'Entscheidung des Parlaments',
-        content: '[PLATZHALTER: Hier kommt der Inhalt zur Parlamentsentscheidung. Wie haben National- und Ständerat abgestimmt? Welche Argumente wurden vorgebracht?]',
-        highlight: '[PLATZHALTER: Kernaussage]'
+        title: 'Was ist ein Kantonsreferendum?',
+        content: 'Wenn mindestens 8 Kantone es verlangen, kommt ein Bundesgesetz vors Volk. Bei der Individualbesteuerung haben die Kantone dieses seltene Instrument genutzt, weil sie direkt von den Steuerausfällen betroffen wären.',
+        highlight: 'Das Kantonsreferendum zeigt, wie stark die Kantone die Reform ablehnen.'
       },
       {
-        type: 'quiz',
-        title: 'Verständnisfrage',
-        question: '[PLATZHALTER: Frage zur Parlamentsentscheidung]',
-        options: [
-          { text: '[Option A]', correct: false },
-          { text: '[Option B - korrekt]', correct: true },
-          { text: '[Option C]', correct: false },
-          { text: '[Option D]', correct: false }
+        type: 'term_reveal',
+        title: 'Bedenken der Kantone',
+        instruction: 'Klicken Sie, um die Argumente der Kantone zu verstehen:',
+        terms: [
+          {
+            term: 'Steuerausfälle',
+            definition: 'Der Bund rechnet mit 630 Mio. Fr. weniger pro Jahr allein bei der direkten Bundessteuer.',
+            example: 'Dazu kommen noch Ausfälle bei den Kantons- und Gemeindesteuern.'
+          },
+          {
+            term: 'Umsetzungsaufwand',
+            definition: 'Die Steuerverwaltungen müssten komplett umgestellt werden.',
+            example: 'Neue Software, neue Formulare, Schulung der Mitarbeitenden.'
+          },
+          {
+            term: 'Föderalismus',
+            definition: 'Jeder Kanton hat eigene Steuergesetze, die angepasst werden müssten.',
+            example: 'Die Umsetzung würde in 26 Kantonen unterschiedlich ablaufen.'
+          }
         ],
-        explanation: '[PLATZHALTER: Erklärung]',
         points: 15
       },
       {
         type: 'truefalse',
         title: 'Richtig oder Falsch?',
         statements: [
-          { text: '[PLATZHALTER: Aussage 1]', correct: true, explanation: '[Erklärung]' },
-          { text: '[PLATZHALTER: Aussage 2]', correct: false, explanation: '[Erklärung]' }
+          { 
+            text: 'Für ein Kantonsreferendum braucht es mindestens 8 Kantone.', 
+            correct: true, 
+            explanation: 'Richtig! 8 Kantone müssen das Referendum verlangen.' 
+          },
+          { 
+            text: 'Die Kantone befürworten die Individualbesteuerung.', 
+            correct: false, 
+            explanation: 'Falsch! Die Kantone haben das Referendum dagegen ergriffen.' 
+          }
         ],
-        points: 15
-      }
-    ]
-  },
-
-  // KANTONE (Platzhalter)
-  {
-    id: 'kantone',
-    title: 'Position Kantone',
-    icon: 'MapPin',
-    color: 'orange',
-    description: 'Warum haben die Kantone das Referendum unterstützt?',
-    videoUrl: '[PLATZHALTER]',
-    videoTitle: 'Kantone gegen die Individualbesteuerung',
-    videoDuration: '2 Min',
-    totalPoints: 30,
-    slides: [
-      {
-        type: 'info',
-        title: 'Die Kantone als Gegner',
-        content: '[PLATZHALTER: Hier kommen die spezifischen Argumente der Kantone. Steuerausfälle, Umsetzungsprobleme, föderale Bedenken etc.]',
-        highlight: '[PLATZHALTER: Kernaussage]'
-      },
-      {
-        type: 'term_reveal',
-        title: 'Begriffe der Kantone',
-        instruction: 'Klicken Sie, um die Begriffe zu verstehen:',
-        terms: [
-          { term: '[Begriff 1]', definition: '[Definition]' },
-          { term: '[Begriff 2]', definition: '[Definition]' }
-        ],
-        points: 15
-      },
-      {
-        type: 'quiz',
-        title: 'Abschlussfrage',
-        question: '[PLATZHALTER: Frage zu den Kantonen]',
-        options: [
-          { text: '[Option A]', correct: false },
-          { text: '[Option B - korrekt]', correct: true },
-          { text: '[Option C]', correct: false },
-          { text: '[Option D]', correct: false }
-        ],
-        explanation: '[PLATZHALTER: Erklärung]',
-        points: 15
-      }
-    ]
-  },
-
-  // EXPERT:INNEN (Platzhalter)
-  {
-    id: 'experten',
-    title: 'Expert:innen-Stimmen',
-    icon: 'GraduationCap',
-    color: 'teal',
-    description: 'Was sagen Fachleute zur Individualbesteuerung?',
-    videoUrl: '[PLATZHALTER]',
-    videoTitle: 'Expert:innen analysieren die Reform',
-    videoDuration: '3 Min',
-    totalPoints: 30,
-    slides: [
-      {
-        type: 'info',
-        title: 'Wissenschaftliche Einschätzungen',
-        content: '[PLATZHALTER: Hier kommen Einschätzungen von Steuerexpert:innen, Ökonom:innen und Rechtswissenschaftler:innen.]',
-        highlight: '[PLATZHALTER: Kernaussage]'
-      },
-      {
-        type: 'quote_reveal',
-        title: 'Expert:innen-Zitate',
-        instruction: 'Klicken Sie, um die Einschätzungen aufzudecken:',
-        quotes: [
-          { author: '[Expert:in]', role: '[Institution]', quote: '[PLATZHALTER: Zitat]', key_point: '[Kernpunkt]' }
-        ],
-        points: 15
-      },
-      {
-        type: 'quiz',
-        title: 'Zusammenfassung',
-        question: '[PLATZHALTER: Abschlussfrage]',
-        options: [
-          { text: '[Option A]', correct: false },
-          { text: '[Option B - korrekt]', correct: true },
-          { text: '[Option C]', correct: false },
-          { text: '[Option D]', correct: false }
-        ],
-        explanation: '[PLATZHALTER: Erklärung]',
         points: 15
       }
     ]
@@ -410,7 +395,7 @@ const SECTIONS: Section[] = [
 // ===========================================
 // ICON MAP
 // ===========================================
-const IconMap: { [key: string]: any } = { Building2, Users, MapPin, GraduationCap }
+const IconMap: { [key: string]: any } = { Building2, Users, MapPin, ThumbsUp, ThumbsDown }
 
 // ===========================================
 // SLIDE KOMPONENTEN
@@ -444,11 +429,7 @@ function QuoteRevealSlideComponent({ slide, onComplete }: { slide: QuoteRevealSl
 
   const toggleReveal = (index: number) => {
     const newRevealed = new Set(revealed)
-    if (newRevealed.has(index)) {
-      newRevealed.delete(index)
-    } else {
-      newRevealed.add(index)
-    }
+    newRevealed.add(index)
     setRevealed(newRevealed)
   }
 
@@ -465,29 +446,28 @@ function QuoteRevealSlideComponent({ slide, onComplete }: { slide: QuoteRevealSl
             className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
               revealed.has(index) 
                 ? 'border-teal-400 bg-teal-50' 
-                : 'border-gray-200 bg-gray-50 hover:border-teal-300'
+                : 'border-gray-200 bg-gray-50 hover:border-teal-300 hover:bg-white'
             }`}
           >
             <div className="flex items-start gap-3">
-              <div className={`p-2 rounded-full ${revealed.has(index) ? 'bg-teal-500' : 'bg-gray-300'}`}>
+              <div className={`p-2 rounded-full flex-shrink-0 ${revealed.has(index) ? 'bg-teal-500' : 'bg-gray-300'}`}>
                 {revealed.has(index) ? <Eye className="h-4 w-4 text-white" /> : <EyeOff className="h-4 w-4 text-white" />}
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 {revealed.has(index) ? (
                   <>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Quote className="h-4 w-4 text-teal-600" />
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <Quote className="h-4 w-4 text-teal-600 flex-shrink-0" />
                       <span className="font-semibold text-gray-900">{q.author}</span>
-                      <span className="text-sm text-gray-500">— {q.role}</span>
                     </div>
-                    <p className="text-gray-700 italic mb-2">"{q.quote}"</p>
-                    <div className="bg-teal-100 text-teal-800 text-sm px-3 py-1 rounded-full inline-block">
+                    <p className="text-gray-700 italic mb-2 text-sm">"{q.quote}"</p>
+                    <div className="bg-teal-100 text-teal-800 text-xs px-3 py-1 rounded-full inline-block">
                       💡 {q.key_point}
                     </div>
                   </>
                 ) : (
                   <div className="text-gray-500">
-                    <span className="font-medium">Zitat von {q.author}</span>
+                    <span className="font-medium">Zitat {index + 1}</span>
                     <p className="text-sm mt-1">Klicken zum Aufdecken...</p>
                   </div>
                 )}
@@ -502,7 +482,7 @@ function QuoteRevealSlideComponent({ slide, onComplete }: { slide: QuoteRevealSl
         disabled={!allRevealed}
         className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {allRevealed ? 'Weiter' : `Noch ${slide.quotes.length - revealed.size} Zitat(e) aufdecken`}
+        {allRevealed ? 'Weiter' : `Noch ${slide.quotes.length - revealed.size} aufdecken`}
       </button>
     </div>
   )
@@ -534,20 +514,20 @@ function TermRevealSlideComponent({ slide, onComplete }: { slide: TermRevealSlid
               }`}
             >
               <div className="flex items-center gap-3">
-                <BookOpen className={`h-5 w-5 ${revealed.has(index) ? 'text-teal-600' : 'text-gray-400'}`} />
+                <BookOpen className={`h-5 w-5 flex-shrink-0 ${revealed.has(index) ? 'text-teal-600' : 'text-gray-400'}`} />
                 <span className="font-bold text-gray-900">{t.term}</span>
               </div>
               {revealed.has(index) ? (
-                <CheckCircle2 className="h-5 w-5 text-teal-600" />
+                <CheckCircle2 className="h-5 w-5 text-teal-600 flex-shrink-0" />
               ) : (
-                <span className="text-sm text-gray-500">Klicken →</span>
+                <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
               )}
             </button>
             {revealed.has(index) && (
               <div className="p-4 bg-white border-t border-gray-100">
-                <p className="text-gray-700 mb-2">{t.definition}</p>
+                <p className="text-gray-700 mb-2 text-sm">{t.definition}</p>
                 {t.example && (
-                  <div className="bg-gray-100 p-3 rounded-lg text-sm text-gray-600">
+                  <div className="bg-gray-100 p-3 rounded-lg text-xs text-gray-600">
                     <strong>Beispiel:</strong> {t.example}
                   </div>
                 )}
@@ -562,7 +542,7 @@ function TermRevealSlideComponent({ slide, onComplete }: { slide: TermRevealSlid
         disabled={!allRevealed}
         className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {allRevealed ? 'Weiter' : `Noch ${slide.terms.length - revealed.size} Begriff(e) aufdecken`}
+        {allRevealed ? 'Weiter' : `Noch ${slide.terms.length - revealed.size} aufdecken`}
       </button>
     </div>
   )
@@ -601,20 +581,20 @@ function DefinitionMatchSlideComponent({ slide, onComplete }: { slide: Definitio
           return (
             <div 
               key={index}
-              className={`p-4 rounded-xl border-2 ${
+              className={`p-3 rounded-xl border-2 ${
                 isCorrect ? 'border-green-400 bg-green-50' :
                 isWrong ? 'border-red-400 bg-red-50' :
                 'border-gray-200 bg-white'
               }`}
             >
-              <p className="font-medium text-gray-900 mb-3">{pair.term}</p>
-              <div className="flex flex-wrap gap-2">
+              <p className="font-medium text-gray-900 mb-2 text-sm">{pair.term}</p>
+              <div className="flex gap-2">
                 {options.map((opt) => (
                   <button
                     key={opt}
                     onClick={() => handleAnswer(index, opt)}
                     disabled={showResults}
-                    className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
                       answer === opt
                         ? showResults
                           ? opt === pair.definition ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
@@ -660,7 +640,7 @@ function QuizSlideComponent({ slide, onComplete }: { slide: QuizSlide; onComplet
   return (
     <div className="p-6">
       <h3 className="text-xl font-bold text-gray-900 mb-2">{slide.title}</h3>
-      <p className="text-lg text-gray-700 mb-4">{slide.question}</p>
+      <p className="text-gray-700 mb-4">{slide.question}</p>
       
       <div className="space-y-2 mb-6">
         {slide.options.map((opt, index) => {
@@ -674,21 +654,21 @@ function QuizSlideComponent({ slide, onComplete }: { slide: QuizSlide; onComplet
               key={index}
               onClick={() => !showResult && setSelected(index)}
               disabled={showResult}
-              className={`w-full text-left p-4 rounded-lg border-2 transition-all flex items-center gap-3 ${
+              className={`w-full text-left p-3 rounded-lg border-2 transition-all flex items-center gap-3 ${
                 showCorrect ? 'border-green-500 bg-green-50' :
                 showWrong ? 'border-red-500 bg-red-50' :
                 isSelected ? 'border-teal-500 bg-teal-50' :
                 'border-gray-200 hover:border-teal-300'
               }`}
             >
-              <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+              <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
                 showCorrect ? 'bg-green-500 text-white' :
                 showWrong ? 'bg-red-500 text-white' :
                 isSelected ? 'bg-teal-500 text-white' : 'bg-gray-200'
               }`}>{String.fromCharCode(65 + index)}</span>
-              <span className="flex-1">{opt.text}</span>
-              {showCorrect && <CheckCircle2 className="h-5 w-5 text-green-500" />}
-              {showWrong && <XCircle className="h-5 w-5 text-red-500" />}
+              <span className="flex-1 text-sm">{opt.text}</span>
+              {showCorrect && <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />}
+              {showWrong && <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />}
             </button>
           )
         })}
@@ -736,12 +716,12 @@ function TrueFalseSlideComponent({ slide, onComplete }: { slide: TrueFalseSlide;
           
           return (
             <div key={index} className={`p-4 rounded-xl border-2 ${isCorrect ? 'border-green-400 bg-green-50' : isWrong ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}>
-              <p className="text-gray-800 mb-3">{s.text}</p>
+              <p className="text-gray-800 mb-3 text-sm">{s.text}</p>
               <div className="flex gap-2">
-                <button onClick={() => handleAnswer(index, true)} disabled={showResults} className={`flex-1 py-2 rounded-lg font-semibold transition-all ${answer === true ? showResults ? s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>✓ Richtig</button>
-                <button onClick={() => handleAnswer(index, false)} disabled={showResults} className={`flex-1 py-2 rounded-lg font-semibold transition-all ${answer === false ? showResults ? !s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>✗ Falsch</button>
+                <button onClick={() => handleAnswer(index, true)} disabled={showResults} className={`flex-1 py-2 rounded-lg font-semibold text-sm transition-all ${answer === true ? showResults ? s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>✓ Richtig</button>
+                <button onClick={() => handleAnswer(index, false)} disabled={showResults} className={`flex-1 py-2 rounded-lg font-semibold text-sm transition-all ${answer === false ? showResults ? !s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>✗ Falsch</button>
               </div>
-              {showResults && <p className={`mt-2 text-sm ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>{s.explanation}</p>}
+              {showResults && <p className={`mt-2 text-xs ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>{s.explanation}</p>}
             </div>
           )
         })}
@@ -752,12 +732,12 @@ function TrueFalseSlideComponent({ slide, onComplete }: { slide: TrueFalseSlide;
   )
 }
 
-// Video Section mit klarer Anforderung
+// Video Section
 function VideoSection({ section, onComplete }: { section: Section; onComplete: () => void }) {
   const [watched, setWatched] = useState(false)
   const [progress, setProgress] = useState(0)
   const isPlaceholder = section.videoUrl.includes('PLATZHALTER')
-  const requiredTime = 30 // Sekunden
+  const requiredTime = 15
 
   useEffect(() => {
     if (!watched && !isPlaceholder) {
@@ -776,22 +756,7 @@ function VideoSection({ section, onComplete }: { section: Section; onComplete: (
   }, [watched, isPlaceholder])
 
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden">
-      {/* Video Anforderung Banner */}
-      <div className={`px-4 py-3 flex items-center gap-3 ${watched ? 'bg-green-100' : 'bg-amber-100'}`}>
-        {watched ? (
-          <>
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
-            <span className="text-green-800 font-medium">Video vollständig angeschaut</span>
-          </>
-        ) : (
-          <>
-            <AlertCircle className="h-5 w-5 text-amber-600" />
-            <span className="text-amber-800 font-medium">Bitte schauen Sie das Video vollständig an, bevor Sie fortfahren</span>
-          </>
-        )}
-      </div>
-
+    <div>
       {/* Video */}
       <div className="bg-gray-900">
         {isPlaceholder ? (
@@ -799,9 +764,9 @@ function VideoSection({ section, onComplete }: { section: Section; onComplete: (
             <div className="text-center">
               <Play className="h-16 w-16 mx-auto mb-4 opacity-50" />
               <p className="text-lg">{section.videoTitle}</p>
-              <p className="text-sm text-gray-500 mt-2">Video-Platzhalter ({section.videoDuration})</p>
+              <p className="text-sm text-gray-500 mt-2">Video-Platzhalter</p>
               <button onClick={() => setWatched(true)} className="mt-4 px-6 py-2 bg-teal-600 hover:bg-teal-700 rounded-lg text-sm font-semibold text-white">
-                Als geschaut markieren (Test)
+                Überspringen
               </button>
             </div>
           </div>
@@ -810,24 +775,31 @@ function VideoSection({ section, onComplete }: { section: Section; onComplete: (
         )}
       </div>
 
-      {/* Progress */}
-      {!isPlaceholder && !watched && (
-        <div className="px-4 py-3 bg-gray-50 border-t">
-          <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-            <span>Fortschritt</span>
-            <span>{Math.round((progress / requiredTime) * 100)}%</span>
+      {/* Progress / Status */}
+      <div className={`px-4 py-3 ${watched ? 'bg-green-100' : 'bg-amber-50'}`}>
+        {watched ? (
+          <div className="flex items-center gap-2 text-green-700">
+            <CheckCircle2 className="h-5 w-5" />
+            <span className="font-medium">Video angeschaut</span>
           </div>
-          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div className="h-full bg-teal-500 transition-all" style={{ width: `${(progress / requiredTime) * 100}%` }} />
+        ) : !isPlaceholder ? (
+          <div>
+            <div className="flex items-center justify-between text-sm text-amber-700 mb-1">
+              <span className="flex items-center gap-2"><AlertCircle className="h-4 w-4" /> Bitte Video anschauen</span>
+              <span>{Math.round((progress / requiredTime) * 100)}%</span>
+            </div>
+            <div className="h-2 bg-amber-200 rounded-full overflow-hidden">
+              <div className="h-full bg-amber-500 transition-all" style={{ width: `${(progress / requiredTime) * 100}%` }} />
+            </div>
           </div>
-        </div>
-      )}
+        ) : null}
+      </div>
 
       {/* Weiter Button */}
       {watched && (
-        <div className="p-4 border-t">
+        <div className="p-4">
           <button onClick={onComplete} className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg flex items-center justify-center gap-2">
-            Zu den interaktiven Aufgaben <ArrowRight className="h-5 w-5" />
+            Zu den Aufgaben <ArrowRight className="h-5 w-5" />
           </button>
         </div>
       )}
@@ -842,14 +814,12 @@ function VideoSection({ section, onComplete }: { section: Section; onComplete: (
 export default function ProContraPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [showIntro, setShowIntro] = useState(true)
-  const [currentSection, setCurrentSection] = useState(0)
-  const [currentSlide, setCurrentSlide] = useState(-1) // -1 = Video
+  const [activeSection, setActiveSection] = useState<string | null>(null)
+  const [currentSlide, setCurrentSlide] = useState(-1)
   const [completedSections, setCompletedSections] = useState<Set<string>>(new Set())
   const [sectionScores, setSectionScores] = useState<{ [key: string]: number }>({})
   const [totalScore, setTotalScore] = useState(0)
 
-  const section = SECTIONS[currentSection]
   const maxPoints = SECTIONS.reduce((sum, s) => sum + s.totalPoints, 0)
 
   useEffect(() => {
@@ -865,7 +835,6 @@ export default function ProContraPage() {
             setTotalScore(data.score || 0)
             setCompletedSections(new Set(data.completedSections || []))
             setSectionScores(data.sectionScores || {})
-            if (data.completedSections?.length > 0) setShowIntro(false)
           }
         }
       } catch (e) { console.error(e) }
@@ -875,6 +844,7 @@ export default function ProContraPage() {
   }, [router])
 
   const handleSlideComplete = async (correct: boolean) => {
+    const section = SECTIONS.find(s => s.id === activeSection)!
     const isLast = currentSlide === section.slides.length - 1
     
     if (isLast) {
@@ -890,10 +860,8 @@ export default function ProContraPage() {
       
       await saveProgress(newTotal, newCompleted, newScores)
       
-      if (currentSection < SECTIONS.length - 1) {
-        setCurrentSection(currentSection + 1)
-        setCurrentSlide(-1)
-      }
+      setActiveSection(null)
+      setCurrentSlide(-1)
     } else {
       setCurrentSlide(currentSlide + 1)
     }
@@ -937,6 +905,7 @@ export default function ProContraPage() {
   }
 
   const renderSlide = () => {
+    const section = SECTIONS.find(s => s.id === activeSection)!
     if (currentSlide === -1) return <VideoSection section={section} onComplete={() => setCurrentSlide(0)} />
     
     const slide = section.slides[currentSlide]
@@ -955,113 +924,135 @@ export default function ProContraPage() {
 
   const isComplete = completedSections.size === SECTIONS.length
 
-  // Intro
-  if (showIntro) {
+  // Einzelne Sektion anzeigen
+  if (activeSection) {
+    const section = SECTIONS.find(s => s.id === activeSection)!
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
-        <header className="bg-white shadow-md"><div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 text-gray-600 hover:text-gray-900"><ArrowLeft className="h-5 w-5" /><span>Zurück</span></button>
-          <div className="text-teal-600 font-semibold">0 / {maxPoints} Punkte</div>
-        </div></header>
-
-        <main className="max-w-4xl mx-auto px-4 py-8">
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Pro und Contra</h1>
-            <h2 className="text-xl text-teal-600 font-semibold mb-6">Individualbesteuerung</h2>
-            
-            <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-6">
-              <h3 className="font-bold text-amber-900 mb-2">📣 Bei Abstimmungen gehen die Meinungen auseinander</h3>
-              <p className="text-amber-800">In der direkten Demokratie vertreten verschiedene Akteure unterschiedliche Standpunkte. Der Bundesrat, das Parlament, die Kantone, Parteien und Expert:innen haben jeweils ihre eigenen Argumente. Lernen Sie alle Seiten kennen!</p>
+        {/* Header */}
+        <header className={`bg-gradient-to-r ${section.colorClass} text-white sticky top-0 z-10`}>
+          <div className="max-w-4xl mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <button onClick={() => { setActiveSection(null); setCurrentSlide(-1) }} className="flex items-center gap-2 text-white/80 hover:text-white">
+                <X className="h-5 w-5" /><span>Schliessen</span>
+              </button>
+              <div className="flex items-center gap-2">
+                <Award className="h-5 w-5" /><span className="font-semibold">{section.totalPoints} Punkte</span>
+              </div>
             </div>
-
-            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg mb-6">
-              <h3 className="font-bold text-blue-900 mb-2">🎬 So funktioniert dieses Modul</h3>
-              <ul className="text-blue-800 space-y-1">
-                <li>• Schauen Sie jedes Video <strong>vollständig</strong> an</li>
-                <li>• Bearbeiten Sie die interaktiven Aufgaben</li>
-                <li>• Decken Sie Zitate und Begriffe auf</li>
-                <li>• Testen Sie Ihr Verständnis mit Quizfragen</li>
-              </ul>
-            </div>
-
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Sie werden folgende Perspektiven kennenlernen:</h3>
-            <div className="space-y-3">
-              {SECTIONS.map((s) => {
-                const Icon = IconMap[s.icon] || Users
-                const colorMap: { [k: string]: string } = { blue: 'bg-blue-100 text-blue-600', red: 'bg-red-100 text-red-600', purple: 'bg-purple-100 text-purple-600', orange: 'bg-orange-100 text-orange-600', teal: 'bg-teal-100 text-teal-600' }
-                return (
-                  <div key={s.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <div className={`p-2 rounded-lg ${colorMap[s.color]}`}><Icon className="h-5 w-5" /></div>
-                    <div className="flex-1">
-                      <span className="font-semibold text-gray-900">{s.title}</span>
-                      <span className="text-gray-500 text-sm ml-2">({s.totalPoints} Punkte)</span>
-                    </div>
-                    {s.videoUrl.includes('PLATZHALTER') && <span className="text-xs text-gray-400">Platzhalter</span>}
-                  </div>
-                )
-              })}
-            </div>
+            <h1 className="text-xl font-bold mt-2">{section.title}</h1>
           </div>
+        </header>
 
-          <button onClick={() => setShowIntro(false)} className="w-full py-4 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white text-xl font-semibold rounded-xl shadow-lg flex items-center justify-center gap-3">
-            Modul starten <ChevronRight className="h-6 w-6" />
-          </button>
+        <main className="max-w-4xl mx-auto px-4 py-6">
+          {/* Einleitung (vor Video) */}
+          {currentSlide === -1 && (
+            <div className="bg-white rounded-xl shadow-md p-4 mb-4">
+              <p className="text-gray-700">{section.intro}</p>
+            </div>
+          )}
+
+          {/* Aufgaben-Fortschritt */}
+          {currentSlide >= 0 && (
+            <div className="bg-white rounded-t-xl shadow-md px-4 py-3 border-b">
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600">Aufgabe {currentSlide + 1} / {section.slides.length}</span>
+                <div className="flex-1 h-2 bg-gray-200 rounded-full">
+                  <div className={`h-full ${section.bgColor} rounded-full transition-all`} style={{ width: `${((currentSlide + 1) / section.slides.length) * 100}%` }} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Content */}
+          <div className={`bg-white ${currentSlide >= 0 ? 'rounded-b-xl' : 'rounded-xl'} shadow-md overflow-hidden`}>
+            {renderSlide()}
+          </div>
         </main>
       </div>
     )
   }
 
-  // Main Content
+  // Übersicht
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
       <header className="bg-white shadow-md sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-3">
-            <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 text-gray-600 hover:text-gray-900"><ArrowLeft className="h-5 w-5" /><span>Zurück</span></button>
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-gray-600 flex items-center gap-1"><Clock className="h-4 w-4" /><span>~20 Min</span></div>
-              <div className={`flex items-center gap-2 font-semibold ${isComplete ? 'text-green-600' : 'text-teal-600'}`}><Award className="h-5 w-5" /><span>{totalScore} / {maxPoints}</span></div>
-            </div>
-          </div>
-          <div className="flex gap-1">
-            {SECTIONS.map((s, i) => (
-              <div key={s.id} className={`flex-1 h-2 rounded-full ${completedSections.has(s.id) ? 'bg-green-500' : i === currentSection ? 'bg-teal-500' : 'bg-gray-200'}`} />
-            ))}
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+          <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
+            <ArrowLeft className="h-5 w-5" /><span>Dashboard</span>
+          </button>
+          <div className={`flex items-center gap-2 font-semibold ${isComplete ? 'text-green-600' : 'text-teal-600'}`}>
+            <Award className="h-5 w-5" /><span>{totalScore} / {maxPoints}</span>
           </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6">
-        {/* Section Header */}
-        <div className="bg-white rounded-xl shadow-md p-4 mb-4">
-          <div className="flex items-center gap-3">
-            {(() => { const Icon = IconMap[section.icon] || Users; return <Icon className="h-6 w-6 text-gray-600" /> })()}
-            <div className="flex-1">
-              <h2 className="text-xl font-bold text-gray-900">{section.title}</h2>
-              <p className="text-sm text-gray-600">{section.description}</p>
-            </div>
-            <span className="text-sm font-semibold text-teal-600 bg-teal-50 px-3 py-1 rounded-full">{section.totalPoints} P</span>
+        {/* Titel */}
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Pro und Contra</h1>
+          <p className="text-gray-600">Verschiedene Positionen zur Individualbesteuerung</p>
+        </div>
+
+        {/* Intro */}
+        <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-6">
+          <p className="text-amber-800">
+            <strong>📣 Bei Abstimmungen gehen die Meinungen auseinander.</strong><br />
+            Lernen Sie die verschiedenen Akteure und ihre Argumente kennen. Klicken Sie auf eine Karte, um zu starten.
+          </p>
+        </div>
+
+        {/* Klickbare Akteur-Karten */}
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          {SECTIONS.map((section) => {
+            const Icon = IconMap[section.icon] || Users
+            const isDone = completedSections.has(section.id)
+            
+            return (
+              <button
+                key={section.id}
+                onClick={() => setActiveSection(section.id)}
+                className={`p-4 rounded-xl border-2 transition-all text-left hover:shadow-lg ${
+                  isDone 
+                    ? 'bg-green-50 border-green-300' 
+                    : 'bg-white border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className={`p-2 rounded-lg ${isDone ? 'bg-green-500' : section.bgColor}`}>
+                    <Icon className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 text-sm">{section.shortTitle}</h3>
+                    <p className="text-xs text-gray-500">{section.totalPoints} Punkte</p>
+                  </div>
+                  {isDone && <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />}
+                </div>
+                {!isDone && (
+                  <p className="text-xs text-gray-500 line-clamp-2">{section.intro.substring(0, 80)}...</p>
+                )}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Fortschritt */}
+        <div className="bg-white rounded-xl shadow-md p-4 mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">Fortschritt</span>
+            <span className="text-sm font-bold text-teal-600">{completedSections.size} / {SECTIONS.length}</span>
           </div>
-          {currentSlide >= 0 && (
-            <div className="mt-3 flex items-center gap-2">
-              <span className="text-xs text-gray-500">Aufgabe {currentSlide + 1} / {section.slides.length}</span>
-              <div className="flex-1 h-1 bg-gray-200 rounded-full"><div className="h-full bg-teal-400 rounded-full transition-all" style={{ width: `${((currentSlide + 1) / section.slides.length) * 100}%` }} /></div>
-            </div>
-          )}
+          <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-teal-500 to-cyan-500 transition-all" style={{ width: `${(completedSections.size / SECTIONS.length) * 100}%` }} />
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="bg-white rounded-xl shadow-md overflow-hidden">
-          {renderSlide()}
-        </div>
-
-        {/* Completion */}
+        {/* Abschluss */}
         {isComplete && (
-          <div className="bg-gradient-to-r from-green-500 to-teal-500 rounded-xl p-6 mt-6 text-white text-center">
+          <div className="bg-gradient-to-r from-green-500 to-teal-500 rounded-xl p-6 text-white text-center">
             <Award className="h-12 w-12 mx-auto mb-3" />
             <h3 className="text-2xl font-bold mb-2">🎉 Modul abgeschlossen!</h3>
-            <p className="text-lg">Sie haben {totalScore} von {maxPoints} Punkten erreicht.</p>
-            <button onClick={() => router.push('/dashboard')} className="mt-4 px-6 py-3 bg-white text-teal-600 font-semibold rounded-lg hover:bg-gray-100">Zurück zum Dashboard</button>
+            <p>Sie haben alle Perspektiven kennengelernt.</p>
           </div>
         )}
       </main>

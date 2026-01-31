@@ -573,7 +573,7 @@ function DefinitionMatchSlideComponent({ slide, onComplete }: { slide: Definitio
   const [answers, setAnswers] = useState<{ [key: number]: string }>({})
   const [showResults, setShowResults] = useState(false)
   
-  const options = [...new Set(slide.pairs.map(p => p.definition))]
+  const options = Array.from(new Set(slide.pairs.map(p => p.definition)))
   const allAnswered = Object.keys(answers).length === slide.pairs.length
 
   const handleAnswer = (index: number, value: string) => {

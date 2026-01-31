@@ -253,6 +253,35 @@ export default function AbstimmungDashboard() {
         </div>
       </header>
 
+      {/* Abstimmungs-Banner */}
+      <div className="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-white/20 p-3 rounded-lg">
+                <span className="text-3xl">🗳️</span>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-red-100 uppercase tracking-wide">Eidgenössische Volksabstimmung</div>
+                <h2 className="text-2xl font-bold">Individualbesteuerung</h2>
+                <p className="text-red-100 text-sm mt-1">Sollen Ehepaare künftig getrennt besteuert werden?</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold">18.</div>
+                <div className="text-sm text-red-100">Mai 2025</div>
+              </div>
+              <div className="hidden md:block h-12 w-px bg-white/30"></div>
+              <div className="text-center hidden md:block">
+                <div className="text-lg font-semibold">🇨🇭</div>
+                <div className="text-xs text-red-100">Schweizweit</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Statistik-Karten */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

@@ -3,621 +3,1067 @@ import { useRouter } from 'next/router'
 import { doc, updateDoc, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
 import { 
-  ArrowLeft, CheckCircle2, Award, Clock, XCircle, ChevronLeft, ChevronRight,
-  Play, Building2, Users, MapPin, GraduationCap, Scale, ArrowRight
+  ArrowLeft, ArrowRight, CheckCircle2, Award, Clock, XCircle, 
+  Play, Building2, Users, MapPin, GraduationCap, ChevronRight,
+  Eye, EyeOff, Quote, BookOpen, Lightbulb, AlertCircle
 } from 'lucide-react'
 
-// ============================================
-// KONFIGURATION - Perspektiven und Inhalte
-// ============================================
+// ===========================================
+// TYPEN
+// ===========================================
 
-interface SlideContent {
-  type: 'info' | 'quiz' | 'truefalse' | 'fillblank'
+type SlideType = 'info' | 'quiz' | 'truefalse' | 'quote_reveal' | 'term_reveal' | 'definition_match'
+
+interface BaseSlide {
+  type: SlideType
   title: string
-  content?: string
-  question?: string
-  options?: { text: string; correct: boolean }[]
-  statement?: string
-  isTrue?: boolean
-  points?: number
 }
 
-interface Perspective {
+interface InfoSlide extends BaseSlide {
+  type: 'info'
+  content: string
+  highlight?: string
+}
+
+interface QuizSlide extends BaseSlide {
+  type: 'quiz'
+  question: string
+  options: { text: string; correct: boolean }[]
+  explanation: string
+  points: number
+}
+
+interface TrueFalseSlide extends BaseSlide {
+  type: 'truefalse'
+  statements: { text: string; correct: boolean; explanation: string }[]
+  points: number
+}
+
+interface QuoteRevealSlide extends BaseSlide {
+  type: 'quote_reveal'
+  instruction: string
+  quotes: { author: string; role: string; quote: string; key_point: string }[]
+  points: number
+}
+
+interface TermRevealSlide extends BaseSlide {
+  type: 'term_reveal'
+  instruction: string
+  terms: { term: string; definition: string; example?: string }[]
+  points: number
+}
+
+interface DefinitionMatchSlide extends BaseSlide {
+  type: 'definition_match'
+  instruction: string
+  pairs: { term: string; definition: string }[]
+  points: number
+}
+
+type Slide = InfoSlide | QuizSlide | TrueFalseSlide | QuoteRevealSlide | TermRevealSlide | DefinitionMatchSlide
+
+interface Section {
   id: string
   title: string
   icon: string
   color: string
+  description: string
   videoUrl: string
   videoTitle: string
-  description: string
-  slides: SlideContent[]
+  videoDuration: string
+  slides: Slide[]
+  totalPoints: number
 }
 
-const perspectives: Perspective[] = [
-  // 1. BUNDESRAT
+// ===========================================
+// SEKTIONEN MIT INHALTEN
+// ===========================================
+
+const SECTIONS: Section[] = [
+  // BUNDESRAT
   {
     id: 'bundesrat',
-    title: 'Bundesrat',
+    title: 'Position Bundesrat',
     icon: 'Building2',
     color: 'blue',
+    description: 'Der Bundesrat und Finanzministerin Karin Keller-Sutter befürworten die Individualbesteuerung',
     videoUrl: 'https://www.srf.ch/play/embed?urn=urn:srf:video:77a83d61-aeb0-4984-8e7b-37291a89b62c&startTime=12',
-    videoTitle: 'Bundesrat zur Individualbesteuerung',
-    description: 'Die Position des Bundesrats und der Finanzministerin',
+    videoTitle: 'Bundesrat präsentiert Position zur Individualbesteuerung',
+    videoDuration: '3 Min',
+    totalPoints: 40,
     slides: [
       {
         type: 'info',
-        title: 'Die Position des Bundesrats',
-        content: 'Der Bundesrat befürwortet die Individualbesteuerung. Finanzministerin Karin Keller-Sutter betont: Die Beseitigung der Heiratsstrafe schafft einen Erwerbsanreiz - Leistung soll sich auch bei den Steuern lohnen. Bisher füllen Ehepaare eine gemeinsame Steuererklärung aus und ihre Einkommen werden zusammengezählt. Dadurch geraten viele in eine höhere Steuerprogression.'
+        title: 'Die Kernaussage des Bundesrats',
+        content: 'Der Bundesrat befürwortet die Individualbesteuerung, weil sie die sogenannte "Heiratsstrafe" abschafft. Heute zahlen viele Ehepaare mehr Steuern als unverheiratete Paare in der gleichen wirtschaftlichen Situation.',
+        highlight: 'Die Ungleichbehandlung aufgrund des Zivilstands soll beseitigt werden.'
+      },
+      {
+        type: 'quote_reveal',
+        title: 'Zentrale Zitate aus dem Video',
+        instruction: 'Klicken Sie auf die Karten, um die Zitate der Finanzministerin aufzudecken:',
+        quotes: [
+          {
+            author: 'Karin Keller-Sutter',
+            role: 'Bundesrätin, Finanzministerin',
+            quote: 'Die Beseitigung der Heiratsstrafe schafft einen Erwerbsanreiz. Das heisst, dass sich Leistung lohnt - auch bei den Steuern.',
+            key_point: 'Erwerbsanreiz durch Steuerreform'
+          },
+          {
+            author: 'Karin Keller-Sutter',
+            role: 'Bundesrätin, Finanzministerin', 
+            quote: 'Paare in vergleichbaren wirtschaftlichen Verhältnissen müssen heute oft unterschiedlich hohe Steuern zahlen. Nur weil sie verheiratet sind oder eben nicht.',
+            key_point: 'Ungleichbehandlung je nach Zivilstand'
+          }
+        ],
+        points: 10
+      },
+      {
+        type: 'term_reveal',
+        title: 'Schlüsselbegriffe verstehen',
+        instruction: 'Klicken Sie auf die Begriffe, um ihre Bedeutung zu erfahren:',
+        terms: [
+          {
+            term: 'Heiratsstrafe',
+            definition: 'Die steuerliche Mehrbelastung von Ehepaaren gegenüber unverheirateten Paaren mit gleichem Einkommen.',
+            example: 'Ein Ehepaar mit zwei Einkommen zahlt mehr als ein Konkubinatspaar.'
+          },
+          {
+            term: 'Individualbesteuerung',
+            definition: 'Jede Person wird einzeln besteuert, unabhängig vom Zivilstand. Ehepaare füllen getrennte Steuererklärungen aus.',
+            example: 'Wie es heute schon bei unverheirateten Paaren der Fall ist.'
+          },
+          {
+            term: 'Steuerprogression',
+            definition: 'Je höher das Einkommen, desto höher der Steuersatz. Bei gemeinsamer Veranlagung von Ehepaaren steigt das Gesamteinkommen.',
+            example: '80\'000 + 60\'000 = 140\'000 wird höher besteuert als zwei Mal 70\'000 einzeln.'
+          }
+        ],
+        points: 10
       },
       {
         type: 'quiz',
         title: 'Verständnisfrage',
-        question: 'Was ist laut Bundesrat das Hauptproblem des aktuellen Systems?',
+        question: 'Welchen positiven Nebeneffekt erwartet der Bund durch die Individualbesteuerung?',
         options: [
-          { text: 'Zu wenig Steuereinnahmen', correct: false },
-          { text: 'Ungleichbehandlung je nach Zivilstand', correct: true },
-          { text: 'Zu komplizierte Formulare', correct: false },
-          { text: 'Fehlende Digitalisierung', correct: false }
+          { text: 'Höhere Steuereinnahmen', correct: false },
+          { text: 'Bis zu 44\'000 neue Vollzeitstellen (v.a. bei Ehefrauen)', correct: true },
+          { text: 'Weniger Bürokratie bei den Steuerbehörden', correct: false },
+          { text: 'Tiefere Mieten', correct: false }
         ],
+        explanation: 'Der Bund rechnet damit, dass v.a. Ehefrauen mehr arbeiten würden, weil ihnen mit der individuellen Besteuerung mehr vom Lohn bleiben würde.',
         points: 10
       },
       {
         type: 'truefalse',
         title: 'Richtig oder Falsch?',
-        statement: 'Mit der Individualbesteuerung würden beide Ehepartner separat besteuert - genau wie Nicht-Verheiratete.',
-        isTrue: true,
+        statements: [
+          { 
+            text: 'Der Bundesrat ist gegen die Individualbesteuerung.', 
+            correct: false, 
+            explanation: 'Falsch! Der Bundesrat befürwortet die Reform ausdrücklich.' 
+          },
+          { 
+            text: 'Die Abstimmung findet am 18. Mai 2025 statt.', 
+            correct: true, 
+            explanation: 'Richtig! Nach dem erfolgreichen Referendum kommt es zur Volksabstimmung.' 
+          },
+          { 
+            text: 'Mit der Reform würden Ehepaare weiterhin gemeinsam besteuert.', 
+            correct: false, 
+            explanation: 'Falsch! Jeder Ehepartner würde eine eigene Steuererklärung ausfüllen.' 
+          }
+        ],
+        points: 10
+      }
+    ]
+  },
+
+  // GEGNER:INNEN - MIT ECHTEM VIDEO
+  {
+    id: 'gegner',
+    title: 'Position Gegner:innen',
+    icon: 'Users',
+    color: 'red',
+    description: 'SVP, EVP, EDU, Mitte und die Kantone haben das Referendum ergriffen',
+    videoUrl: 'https://www.srf.ch/play/embed?urn=urn:srf:video:76af4420-abff-4a34-8aab-9941193b223e',
+    videoTitle: 'Kontra-Komitee präsentiert Argumente gegen die Individualbesteuerung',
+    videoDuration: '2 Min',
+    totalPoints: 40,
+    slides: [
+      {
+        type: 'info',
+        title: 'Wer sind die Gegner:innen?',
+        content: 'Gegen die Individualbesteuerung haben die Kantone sowie ein Komitee bestehend aus SVP, EVP, EDU und der Mitte-Partei das Referendum ergriffen. Sie sehen in der Reform mehr Nachteile als Vorteile.',
+        highlight: 'Die Gegner:innen warnen vor Steuerausfällen und neuen Ungerechtigkeiten.'
+      },
+      {
+        type: 'quote_reveal',
+        title: 'Argumente der Gegner:innen',
+        instruction: 'Klicken Sie auf die Karten, um die Hauptargumente aufzudecken:',
+        quotes: [
+          {
+            author: 'Kontra-Komitee',
+            role: 'Referendumskomitee',
+            quote: 'Die Individualbesteuerung schafft neue Ungerechtigkeit, indem sie vor allem Doppelverdiener mit hohen Einkommen belohnt.',
+            key_point: 'Profiteure sind Gutverdienende'
+          },
+          {
+            author: 'Kontra-Komitee',
+            role: 'Referendumskomitee',
+            quote: 'Die Reform ist bürokratisch. Zukünftig muss jedes Ehepaar zwei Steuererklärungen ausfüllen.',
+            key_point: 'Mehr Aufwand für alle'
+          },
+          {
+            author: 'Kantone',
+            role: 'Finanzdirektorenkonferenz',
+            quote: 'Die Reform führt zu massiven Steuerausfällen bei Bund und Kantonen.',
+            key_point: 'Weniger Geld für öffentliche Aufgaben'
+          }
+        ],
         points: 10
       },
       {
-        type: 'fillblank',
-        title: 'Lückentext',
-        question: 'Der Bund schätzt, dass durch die Individualbesteuerung bis zu _____ Vollzeitstellen entstehen könnten.',
-        options: [
-          { text: '14\'000', correct: false },
-          { text: '44\'000', correct: true },
-          { text: '84\'000', correct: false },
-          { text: '4\'000', correct: false }
+        type: 'term_reveal',
+        title: 'Kritische Begriffe verstehen',
+        instruction: 'Klicken Sie auf die Begriffe, um die Kritikpunkte zu verstehen:',
+        terms: [
+          {
+            term: 'Steuerausfälle',
+            definition: 'Der Bund rechnet mit 630 Mio. Franken weniger pro Jahr allein bei der direkten Bundessteuer.',
+            example: 'Dieses Geld fehlt dann für Bildung, Gesundheit, Infrastruktur etc.'
+          },
+          {
+            term: 'Doppelverdiener-Bonus',
+            definition: 'Die Kritik, dass vor allem gut verdienende Paare mit zwei Einkommen profitieren würden.',
+            example: 'Ein Paar mit 2x 150\'000 profitiert mehr als eines mit 1x 100\'000.'
+          },
+          {
+            term: 'Familienmodell',
+            definition: 'Gegner:innen argumentieren, dass traditionelle Familienmodelle mit einem Hauptverdiener benachteiligt würden.',
+            example: 'Einverdiener-Ehepaare hätten keinen Vorteil von der Reform.'
+          }
+        ],
+        points: 10
+      },
+      {
+        type: 'definition_match',
+        title: 'Argumente zuordnen',
+        instruction: 'Ordnen Sie die Argumente der richtigen Seite zu:',
+        pairs: [
+          { term: 'Beseitigung der Heiratsstrafe', definition: 'PRO' },
+          { term: 'Steuerausfälle von 630 Mio.', definition: 'CONTRA' },
+          { term: 'Erwerbsanreiz für Ehefrauen', definition: 'PRO' },
+          { term: 'Mehr Bürokratie (2 Steuererklärungen)', definition: 'CONTRA' },
+          { term: 'Gleichbehandlung aller Paare', definition: 'PRO' },
+          { term: 'Bevorzugt Gutverdienende', definition: 'CONTRA' }
         ],
         points: 10
       },
       {
         type: 'quiz',
         title: 'Abschlussfrage',
-        question: 'Warum unterstützt der Bundesrat die Reform trotz Steuerausfällen?',
+        question: 'Welche Partei gehört NICHT zum Kontra-Komitee?',
         options: [
-          { text: 'Weil die Kantone es fordern', correct: false },
-          { text: 'Weil sie Erwerbsanreize schafft und Leistung belohnt', correct: true },
-          { text: 'Weil sie die Bürokratie reduziert', correct: false },
-          { text: 'Weil sie mehr Steuereinnahmen bringt', correct: false }
+          { text: 'SVP', correct: false },
+          { text: 'SP', correct: true },
+          { text: 'EVP', correct: false },
+          { text: 'Mitte', correct: false }
         ],
+        explanation: 'Die SP unterstützt die Individualbesteuerung. Das Kontra-Komitee besteht aus SVP, EVP, EDU und Mitte, zusammen mit den Kantonen.',
         points: 10
       }
     ]
   },
-  
-  // 2. PARLAMENT
+
+  // PARLAMENT (Platzhalter)
   {
     id: 'parlament',
-    title: 'Parlament',
+    title: 'Position Parlament',
     icon: 'Users',
     color: 'purple',
-    videoUrl: '[PLATZHALTER_VIDEO_URL_PARLAMENT]',
-    videoTitle: 'Debatte im Parlament',
-    description: 'Die Diskussion und Entscheidung im National- und Ständerat',
+    description: 'Wie haben National- und Ständerat entschieden?',
+    videoUrl: '[PLATZHALTER]',
+    videoTitle: 'Parlamentsdebatte zur Individualbesteuerung',
+    videoDuration: '3 Min',
+    totalPoints: 30,
     slides: [
       {
         type: 'info',
-        title: 'Die Parlamentsdebatte',
-        content: '[PLATZHALTER: Hier kommt eine Zusammenfassung der Parlamentsdebatte zur Individualbesteuerung. Wie haben National- und Ständerat abgestimmt? Welche Argumente wurden vorgebracht?]'
+        title: 'Entscheidung des Parlaments',
+        content: '[PLATZHALTER: Hier kommt der Inhalt zur Parlamentsentscheidung. Wie haben National- und Ständerat abgestimmt? Welche Argumente wurden vorgebracht?]',
+        highlight: '[PLATZHALTER: Kernaussage]'
       },
       {
         type: 'quiz',
         title: 'Verständnisfrage',
-        question: '[PLATZHALTER: Frage zur Parlamentsdebatte]',
+        question: '[PLATZHALTER: Frage zur Parlamentsentscheidung]',
         options: [
           { text: '[Option A]', correct: false },
           { text: '[Option B - korrekt]', correct: true },
           { text: '[Option C]', correct: false },
           { text: '[Option D]', correct: false }
         ],
-        points: 10
+        explanation: '[PLATZHALTER: Erklärung]',
+        points: 15
       },
       {
         type: 'truefalse',
         title: 'Richtig oder Falsch?',
-        statement: '[PLATZHALTER: Aussage zur Parlamentsentscheidung]',
-        isTrue: true,
-        points: 10
-      },
-      {
-        type: 'fillblank',
-        title: 'Abstimmungsergebnis',
-        question: '[PLATZHALTER: Frage zum Abstimmungsergebnis im Parlament]',
-        options: [
-          { text: '[Falsche Antwort]', correct: false },
-          { text: '[Richtige Antwort]', correct: true },
-          { text: '[Falsche Antwort]', correct: false },
-          { text: '[Falsche Antwort]', correct: false }
+        statements: [
+          { text: '[PLATZHALTER: Aussage 1]', correct: true, explanation: '[Erklärung]' },
+          { text: '[PLATZHALTER: Aussage 2]', correct: false, explanation: '[Erklärung]' }
         ],
-        points: 10
+        points: 15
       }
     ]
   },
-  
-  // 3. KANTONE (Gegner)
+
+  // KANTONE (Platzhalter)
   {
     id: 'kantone',
-    title: 'Kantone',
+    title: 'Position Kantone',
     icon: 'MapPin',
-    color: 'red',
-    videoUrl: '[PLATZHALTER_VIDEO_URL_KANTONE]',
-    videoTitle: 'Position der Kantone',
-    description: 'Warum die Kantone das Referendum ergriffen haben',
+    color: 'orange',
+    description: 'Warum haben die Kantone das Referendum unterstützt?',
+    videoUrl: '[PLATZHALTER]',
+    videoTitle: 'Kantone gegen die Individualbesteuerung',
+    videoDuration: '2 Min',
+    totalPoints: 30,
     slides: [
       {
         type: 'info',
         title: 'Die Kantone als Gegner',
-        content: '[PLATZHALTER: Die Kantone haben zusammen mit Parteien das Referendum ergriffen. Hier werden ihre Hauptargumente dargestellt: Steuerausfälle, Umsetzungsprobleme, Föderalismus-Bedenken etc.]'
+        content: '[PLATZHALTER: Hier kommen die spezifischen Argumente der Kantone. Steuerausfälle, Umsetzungsprobleme, föderale Bedenken etc.]',
+        highlight: '[PLATZHALTER: Kernaussage]'
       },
       {
-        type: 'quiz',
-        title: 'Steuerausfälle',
-        question: 'Mit welchem jährlichen Steuerausfall rechnet der Bund bei der direkten Bundessteuer?',
-        options: [
-          { text: '130 Mio. Franken', correct: false },
-          { text: '330 Mio. Franken', correct: false },
-          { text: '630 Mio. Franken', correct: true },
-          { text: '1.3 Mia. Franken', correct: false }
+        type: 'term_reveal',
+        title: 'Begriffe der Kantone',
+        instruction: 'Klicken Sie, um die Begriffe zu verstehen:',
+        terms: [
+          { term: '[Begriff 1]', definition: '[Definition]' },
+          { term: '[Begriff 2]', definition: '[Definition]' }
         ],
-        points: 10
-      },
-      {
-        type: 'truefalse',
-        title: 'Richtig oder Falsch?',
-        statement: 'Die Individualbesteuerung würde bedeuten, dass jedes Ehepaar zwei Steuererklärungen ausfüllen muss.',
-        isTrue: true,
-        points: 10
+        points: 15
       },
       {
         type: 'quiz',
-        title: 'Gegenargumente',
-        question: '[PLATZHALTER: Frage zu den Argumenten der Kantone]',
+        title: 'Abschlussfrage',
+        question: '[PLATZHALTER: Frage zu den Kantonen]',
         options: [
           { text: '[Option A]', correct: false },
           { text: '[Option B - korrekt]', correct: true },
           { text: '[Option C]', correct: false },
           { text: '[Option D]', correct: false }
         ],
-        points: 10
+        explanation: '[PLATZHALTER: Erklärung]',
+        points: 15
       }
     ]
   },
-  
-  // 4. GEGNER:INNEN ALLGEMEIN
-  {
-    id: 'gegner',
-    title: 'Gegner:innen',
-    icon: 'Users',
-    color: 'orange',
-    videoUrl: '[PLATZHALTER_VIDEO_URL_GEGNER]',
-    videoTitle: 'Stimmen der Gegner:innen',
-    description: 'SVP, EVP, EDU, Mitte und weitere Kritiker:innen',
-    slides: [
-      {
-        type: 'info',
-        title: 'Die Argumente der Gegner:innen',
-        content: '[PLATZHALTER: Ein Komitee von SVP, EVP, EDU und Mitte argumentiert: Die Individualbesteuerung schafft neue Ungerechtigkeiten, belohnt vor allem Doppelverdiener mit hohen Einkommen und ist bürokratisch.]'
-      },
-      {
-        type: 'quiz',
-        title: 'Kritikpunkte',
-        question: '[PLATZHALTER: Frage zu den Gegenargumenten]',
-        options: [
-          { text: '[Option A]', correct: false },
-          { text: '[Option B - korrekt]', correct: true },
-          { text: '[Option C]', correct: false },
-          { text: '[Option D]', correct: false }
-        ],
-        points: 10
-      },
-      {
-        type: 'truefalse',
-        title: 'Richtig oder Falsch?',
-        statement: '[PLATZHALTER: Kritische Aussage der Gegner]',
-        isTrue: false,
-        points: 10
-      },
-      {
-        type: 'fillblank',
-        title: 'Wer sind die Gegner?',
-        question: 'Das Referendum wurde unter anderem von folgenden Parteien unterstützt: SVP, EVP, EDU und _____.',
-        options: [
-          { text: 'FDP', correct: false },
-          { text: 'Mitte', correct: true },
-          { text: 'SP', correct: false },
-          { text: 'Grüne', correct: false }
-        ],
-        points: 10
-      }
-    ]
-  },
-  
-  // 5. EXPERT:INNEN
+
+  // EXPERT:INNEN (Platzhalter)
   {
     id: 'experten',
-    title: 'Expert:innen',
+    title: 'Expert:innen-Stimmen',
     icon: 'GraduationCap',
     color: 'teal',
-    videoUrl: '[PLATZHALTER_VIDEO_URL_EXPERTEN]',
-    videoTitle: 'Einschätzungen von Expert:innen',
-    description: 'Wissenschaftliche Perspektiven und Analysen',
+    description: 'Was sagen Fachleute zur Individualbesteuerung?',
+    videoUrl: '[PLATZHALTER]',
+    videoTitle: 'Expert:innen analysieren die Reform',
+    videoDuration: '3 Min',
+    totalPoints: 30,
     slides: [
       {
         type: 'info',
-        title: 'Was sagen Expert:innen?',
-        content: '[PLATZHALTER: Hier kommen Einschätzungen von Steuerexpert:innen, Ökonom:innen und Rechtswissenschaftler:innen zur Individualbesteuerung.]'
+        title: 'Wissenschaftliche Einschätzungen',
+        content: '[PLATZHALTER: Hier kommen Einschätzungen von Steuerexpert:innen, Ökonom:innen und Rechtswissenschaftler:innen.]',
+        highlight: '[PLATZHALTER: Kernaussage]'
+      },
+      {
+        type: 'quote_reveal',
+        title: 'Expert:innen-Zitate',
+        instruction: 'Klicken Sie, um die Einschätzungen aufzudecken:',
+        quotes: [
+          { author: '[Expert:in]', role: '[Institution]', quote: '[PLATZHALTER: Zitat]', key_point: '[Kernpunkt]' }
+        ],
+        points: 15
       },
       {
         type: 'quiz',
-        title: 'Expertenmeinung',
-        question: '[PLATZHALTER: Frage zu Expertenanalysen]',
+        title: 'Zusammenfassung',
+        question: '[PLATZHALTER: Abschlussfrage]',
         options: [
           { text: '[Option A]', correct: false },
-          { text: '[Option B]', correct: false },
-          { text: '[Option C - korrekt]', correct: true },
+          { text: '[Option B - korrekt]', correct: true },
+          { text: '[Option C]', correct: false },
           { text: '[Option D]', correct: false }
         ],
-        points: 10
-      },
-      {
-        type: 'truefalse',
-        title: 'Richtig oder Falsch?',
-        statement: '[PLATZHALTER: Expertenaussage zur Überprüfung]',
-        isTrue: true,
-        points: 10
-      },
-      {
-        type: 'fillblank',
-        title: 'Faktencheck',
-        question: '[PLATZHALTER: Lückentext mit Expertenzitat oder Statistik]',
-        options: [
-          { text: '[Falsche Zahl]', correct: false },
-          { text: '[Richtige Zahl]', correct: true },
-          { text: '[Falsche Zahl]', correct: false },
-          { text: '[Falsche Zahl]', correct: false }
-        ],
-        points: 10
+        explanation: '[PLATZHALTER: Erklärung]',
+        points: 15
       }
     ]
   }
 ]
 
-// Icon Komponente
-const IconComponent = ({ name, className }: { name: string; className?: string }) => {
-  const icons: { [key: string]: any } = { Building2, Users, MapPin, GraduationCap, Scale }
-  const Icon = icons[name] || Scale
-  return <Icon className={className} />
-}
+// ===========================================
+// ICON MAP
+// ===========================================
+const IconMap: { [key: string]: any } = { Building2, Users, MapPin, GraduationCap }
+
+// ===========================================
+// SLIDE KOMPONENTEN
+// ===========================================
 
 // Info Slide
-const InfoSlide = ({ slide }: { slide: SlideContent }) => (
-  <div className="p-6">
-    <h3 className="text-xl font-bold text-gray-900 mb-4">{slide.title}</h3>
-    <div className="bg-gray-50 rounded-lg p-4">
-      <p className="text-gray-700 leading-relaxed whitespace-pre-line">{slide.content}</p>
-    </div>
-  </div>
-)
-
-// Quiz Slide
-const QuizSlide = ({ slide, onAnswer, answered }: { slide: SlideContent; onAnswer: (c: boolean, p: number) => void; answered: boolean }) => {
-  const [selected, setSelected] = useState<number | null>(null)
-  
-  const handleSubmit = () => {
-    if (selected === null) return
-    const correct = slide.options![selected].correct
-    onAnswer(correct, correct ? (slide.points || 10) : 0)
-  }
-  
+function InfoSlideComponent({ slide, onNext }: { slide: InfoSlide; onNext: () => void }) {
   return (
     <div className="p-6">
       <h3 className="text-xl font-bold text-gray-900 mb-4">{slide.title}</h3>
-      <p className="text-lg text-gray-800 mb-6">{slide.question}</p>
-      <div className="space-y-3 mb-6">
-        {slide.options?.map((option, index) => (
+      <p className="text-gray-700 mb-4 leading-relaxed">{slide.content}</p>
+      {slide.highlight && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <Lightbulb className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <p className="text-yellow-800 font-medium">{slide.highlight}</p>
+          </div>
+        </div>
+      )}
+      <button onClick={onNext} className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg flex items-center justify-center gap-2">
+        Weiter <ArrowRight className="h-5 w-5" />
+      </button>
+    </div>
+  )
+}
+
+// Quote Reveal Slide
+function QuoteRevealSlideComponent({ slide, onComplete }: { slide: QuoteRevealSlide; onComplete: (correct: boolean) => void }) {
+  const [revealed, setRevealed] = useState<Set<number>>(new Set())
+  const allRevealed = revealed.size === slide.quotes.length
+
+  const toggleReveal = (index: number) => {
+    const newRevealed = new Set(revealed)
+    if (newRevealed.has(index)) {
+      newRevealed.delete(index)
+    } else {
+      newRevealed.add(index)
+    }
+    setRevealed(newRevealed)
+  }
+
+  return (
+    <div className="p-6">
+      <h3 className="text-xl font-bold text-gray-900 mb-2">{slide.title}</h3>
+      <p className="text-gray-600 mb-4">{slide.instruction}</p>
+      
+      <div className="space-y-4 mb-6">
+        {slide.quotes.map((q, index) => (
           <button
             key={index}
-            onClick={() => !answered && setSelected(index)}
-            disabled={answered}
-            className={`w-full text-left p-4 rounded-lg border-2 transition-all flex items-center gap-3 ${
-              answered && option.correct ? 'border-green-500 bg-green-50' :
-              answered && selected === index && !option.correct ? 'border-red-500 bg-red-50' :
-              selected === index ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-teal-300'
+            onClick={() => toggleReveal(index)}
+            className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+              revealed.has(index) 
+                ? 'border-teal-400 bg-teal-50' 
+                : 'border-gray-200 bg-gray-50 hover:border-teal-300'
             }`}
           >
-            <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-              answered && option.correct ? 'bg-green-500 text-white' :
-              answered && selected === index && !option.correct ? 'bg-red-500 text-white' :
-              selected === index ? 'bg-teal-500 text-white' : 'bg-gray-200'
-            }`}>{String.fromCharCode(65 + index)}</span>
-            <span className="flex-1">{option.text}</span>
-            {answered && option.correct && <CheckCircle2 className="h-5 w-5 text-green-500" />}
-            {answered && selected === index && !option.correct && <XCircle className="h-5 w-5 text-red-500" />}
+            <div className="flex items-start gap-3">
+              <div className={`p-2 rounded-full ${revealed.has(index) ? 'bg-teal-500' : 'bg-gray-300'}`}>
+                {revealed.has(index) ? <Eye className="h-4 w-4 text-white" /> : <EyeOff className="h-4 w-4 text-white" />}
+              </div>
+              <div className="flex-1">
+                {revealed.has(index) ? (
+                  <>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Quote className="h-4 w-4 text-teal-600" />
+                      <span className="font-semibold text-gray-900">{q.author}</span>
+                      <span className="text-sm text-gray-500">— {q.role}</span>
+                    </div>
+                    <p className="text-gray-700 italic mb-2">"{q.quote}"</p>
+                    <div className="bg-teal-100 text-teal-800 text-sm px-3 py-1 rounded-full inline-block">
+                      💡 {q.key_point}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-gray-500">
+                    <span className="font-medium">Zitat von {q.author}</span>
+                    <p className="text-sm mt-1">Klicken zum Aufdecken...</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </button>
         ))}
       </div>
-      {!answered && <button onClick={handleSubmit} disabled={selected === null} className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg disabled:opacity-50">Antwort prüfen</button>}
-      {answered && <div className={`p-3 rounded-lg ${selected !== null && slide.options![selected].correct ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>{selected !== null && slide.options![selected].correct ? '✓ Richtig!' : '✗ Leider falsch.'}</div>}
+
+      <button
+        onClick={() => onComplete(true)}
+        disabled={!allRevealed}
+        className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {allRevealed ? 'Weiter' : `Noch ${slide.quotes.length - revealed.size} Zitat(e) aufdecken`}
+      </button>
+    </div>
+  )
+}
+
+// Term Reveal Slide
+function TermRevealSlideComponent({ slide, onComplete }: { slide: TermRevealSlide; onComplete: (correct: boolean) => void }) {
+  const [revealed, setRevealed] = useState<Set<number>>(new Set())
+  const allRevealed = revealed.size === slide.terms.length
+
+  const toggleReveal = (index: number) => {
+    const newRevealed = new Set(revealed)
+    newRevealed.add(index)
+    setRevealed(newRevealed)
+  }
+
+  return (
+    <div className="p-6">
+      <h3 className="text-xl font-bold text-gray-900 mb-2">{slide.title}</h3>
+      <p className="text-gray-600 mb-4">{slide.instruction}</p>
+      
+      <div className="space-y-3 mb-6">
+        {slide.terms.map((t, index) => (
+          <div key={index} className="border-2 border-gray-200 rounded-xl overflow-hidden">
+            <button
+              onClick={() => toggleReveal(index)}
+              className={`w-full text-left p-4 flex items-center justify-between ${
+                revealed.has(index) ? 'bg-teal-50' : 'bg-gray-50 hover:bg-gray-100'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <BookOpen className={`h-5 w-5 ${revealed.has(index) ? 'text-teal-600' : 'text-gray-400'}`} />
+                <span className="font-bold text-gray-900">{t.term}</span>
+              </div>
+              {revealed.has(index) ? (
+                <CheckCircle2 className="h-5 w-5 text-teal-600" />
+              ) : (
+                <span className="text-sm text-gray-500">Klicken →</span>
+              )}
+            </button>
+            {revealed.has(index) && (
+              <div className="p-4 bg-white border-t border-gray-100">
+                <p className="text-gray-700 mb-2">{t.definition}</p>
+                {t.example && (
+                  <div className="bg-gray-100 p-3 rounded-lg text-sm text-gray-600">
+                    <strong>Beispiel:</strong> {t.example}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={() => onComplete(true)}
+        disabled={!allRevealed}
+        className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {allRevealed ? 'Weiter' : `Noch ${slide.terms.length - revealed.size} Begriff(e) aufdecken`}
+      </button>
+    </div>
+  )
+}
+
+// Definition Match Slide
+function DefinitionMatchSlideComponent({ slide, onComplete }: { slide: DefinitionMatchSlide; onComplete: (correct: boolean) => void }) {
+  const [answers, setAnswers] = useState<{ [key: number]: string }>({})
+  const [showResults, setShowResults] = useState(false)
+  
+  const options = [...new Set(slide.pairs.map(p => p.definition))]
+  const allAnswered = Object.keys(answers).length === slide.pairs.length
+
+  const handleAnswer = (index: number, value: string) => {
+    if (showResults) return
+    setAnswers({ ...answers, [index]: value })
+  }
+
+  const handleSubmit = () => {
+    setShowResults(true)
+    const allCorrect = slide.pairs.every((p, i) => answers[i] === p.definition)
+    setTimeout(() => onComplete(allCorrect), 2000)
+  }
+
+  return (
+    <div className="p-6">
+      <h3 className="text-xl font-bold text-gray-900 mb-2">{slide.title}</h3>
+      <p className="text-gray-600 mb-4">{slide.instruction}</p>
+      
+      <div className="space-y-3 mb-6">
+        {slide.pairs.map((pair, index) => {
+          const answer = answers[index]
+          const isCorrect = showResults && answer === pair.definition
+          const isWrong = showResults && answer && answer !== pair.definition
+          
+          return (
+            <div 
+              key={index}
+              className={`p-4 rounded-xl border-2 ${
+                isCorrect ? 'border-green-400 bg-green-50' :
+                isWrong ? 'border-red-400 bg-red-50' :
+                'border-gray-200 bg-white'
+              }`}
+            >
+              <p className="font-medium text-gray-900 mb-3">{pair.term}</p>
+              <div className="flex flex-wrap gap-2">
+                {options.map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => handleAnswer(index, opt)}
+                    disabled={showResults}
+                    className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                      answer === opt
+                        ? showResults
+                          ? opt === pair.definition ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                          : 'bg-teal-500 text-white'
+                        : showResults && opt === pair.definition
+                          ? 'bg-green-200 text-green-800'
+                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {!showResults && (
+        <button
+          onClick={handleSubmit}
+          disabled={!allAnswered}
+          className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg disabled:opacity-50"
+        >
+          Antworten prüfen
+        </button>
+      )}
+    </div>
+  )
+}
+
+// Quiz Slide
+function QuizSlideComponent({ slide, onComplete }: { slide: QuizSlide; onComplete: (correct: boolean) => void }) {
+  const [selected, setSelected] = useState<number | null>(null)
+  const [showResult, setShowResult] = useState(false)
+
+  const handleSubmit = () => {
+    if (selected === null) return
+    setShowResult(true)
+    setTimeout(() => onComplete(slide.options[selected].correct), 2000)
+  }
+
+  return (
+    <div className="p-6">
+      <h3 className="text-xl font-bold text-gray-900 mb-2">{slide.title}</h3>
+      <p className="text-lg text-gray-700 mb-4">{slide.question}</p>
+      
+      <div className="space-y-2 mb-6">
+        {slide.options.map((opt, index) => {
+          const isSelected = selected === index
+          const isCorrect = opt.correct
+          const showCorrect = showResult && isCorrect
+          const showWrong = showResult && isSelected && !isCorrect
+          
+          return (
+            <button
+              key={index}
+              onClick={() => !showResult && setSelected(index)}
+              disabled={showResult}
+              className={`w-full text-left p-4 rounded-lg border-2 transition-all flex items-center gap-3 ${
+                showCorrect ? 'border-green-500 bg-green-50' :
+                showWrong ? 'border-red-500 bg-red-50' :
+                isSelected ? 'border-teal-500 bg-teal-50' :
+                'border-gray-200 hover:border-teal-300'
+              }`}
+            >
+              <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                showCorrect ? 'bg-green-500 text-white' :
+                showWrong ? 'bg-red-500 text-white' :
+                isSelected ? 'bg-teal-500 text-white' : 'bg-gray-200'
+              }`}>{String.fromCharCode(65 + index)}</span>
+              <span className="flex-1">{opt.text}</span>
+              {showCorrect && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+              {showWrong && <XCircle className="h-5 w-5 text-red-500" />}
+            </button>
+          )
+        })}
+      </div>
+
+      {showResult ? (
+        <div className={`p-4 rounded-lg ${slide.options[selected!].correct ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
+          <p className="text-sm">{slide.explanation}</p>
+        </div>
+      ) : (
+        <button onClick={handleSubmit} disabled={selected === null} className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg disabled:opacity-50">
+          Antwort prüfen
+        </button>
+      )}
     </div>
   )
 }
 
 // True/False Slide
-const TrueFalseSlide = ({ slide, onAnswer, answered }: { slide: SlideContent; onAnswer: (c: boolean, p: number) => void; answered: boolean }) => {
-  const [selected, setSelected] = useState<boolean | null>(null)
-  
-  const handleSelect = (value: boolean) => {
-    if (answered) return
-    setSelected(value)
-    onAnswer(value === slide.isTrue, value === slide.isTrue ? (slide.points || 10) : 0)
-  }
-  
-  return (
-    <div className="p-6">
-      <h3 className="text-xl font-bold text-gray-900 mb-4">{slide.title}</h3>
-      <div className="bg-gray-100 p-4 rounded-lg mb-6"><p className="text-lg text-gray-800 italic">"{slide.statement}"</p></div>
-      <div className="grid grid-cols-2 gap-4">
-        <button onClick={() => handleSelect(true)} disabled={answered} className={`p-6 rounded-lg border-2 transition-all ${answered ? slide.isTrue ? 'border-green-500 bg-green-50' : selected === true ? 'border-red-500 bg-red-50' : 'border-gray-200' : selected === true ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-teal-300'}`}>
-          <CheckCircle2 className={`h-8 w-8 mx-auto mb-2 ${answered && slide.isTrue ? 'text-green-500' : selected === true ? 'text-teal-500' : 'text-gray-400'}`} />
-          <span className="font-semibold block text-center">Richtig</span>
-        </button>
-        <button onClick={() => handleSelect(false)} disabled={answered} className={`p-6 rounded-lg border-2 transition-all ${answered ? !slide.isTrue ? 'border-green-500 bg-green-50' : selected === false ? 'border-red-500 bg-red-50' : 'border-gray-200' : selected === false ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-teal-300'}`}>
-          <XCircle className={`h-8 w-8 mx-auto mb-2 ${answered && !slide.isTrue ? 'text-green-500' : selected === false ? 'text-teal-500' : 'text-gray-400'}`} />
-          <span className="font-semibold block text-center">Falsch</span>
-        </button>
-      </div>
-      {answered && <div className={`mt-4 p-3 rounded-lg ${selected === slide.isTrue ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>{selected === slide.isTrue ? '✓ Richtig!' : '✗ Leider falsch.'}</div>}
-    </div>
-  )
-}
+function TrueFalseSlideComponent({ slide, onComplete }: { slide: TrueFalseSlide; onComplete: (correct: boolean) => void }) {
+  const [answers, setAnswers] = useState<{ [key: number]: boolean | null }>({})
+  const [showResults, setShowResults] = useState(false)
+  const allAnswered = Object.keys(answers).filter(k => answers[parseInt(k)] !== null).length === slide.statements.length
 
-// Fillblank Slide
-const FillblankSlide = ({ slide, onAnswer, answered }: { slide: SlideContent; onAnswer: (c: boolean, p: number) => void; answered: boolean }) => {
-  const [selected, setSelected] = useState<number | null>(null)
-  
+  const handleAnswer = (index: number, value: boolean) => {
+    if (showResults) return
+    setAnswers({ ...answers, [index]: value })
+  }
+
   const handleSubmit = () => {
-    if (selected === null) return
-    const correct = slide.options![selected].correct
-    onAnswer(correct, correct ? (slide.points || 10) : 0)
+    setShowResults(true)
+    const allCorrect = slide.statements.every((s, i) => answers[i] === s.correct)
+    setTimeout(() => onComplete(allCorrect), 2500)
   }
-  
+
   return (
     <div className="p-6">
       <h3 className="text-xl font-bold text-gray-900 mb-4">{slide.title}</h3>
-      <p className="text-lg text-gray-800 mb-6">{slide.question}</p>
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        {slide.options?.map((option, index) => (
-          <button key={index} onClick={() => !answered && setSelected(index)} disabled={answered} className={`p-4 rounded-lg border-2 font-semibold transition-all ${answered && option.correct ? 'border-green-500 bg-green-50 text-green-800' : answered && selected === index && !option.correct ? 'border-red-500 bg-red-50 text-red-800' : selected === index ? 'border-teal-500 bg-teal-50 text-teal-800' : 'border-gray-200 hover:border-teal-300'}`}>{option.text}</button>
-        ))}
+      
+      <div className="space-y-4 mb-6">
+        {slide.statements.map((s, index) => {
+          const answer = answers[index]
+          const isCorrect = showResults && answer === s.correct
+          const isWrong = showResults && answer !== null && answer !== s.correct
+          
+          return (
+            <div key={index} className={`p-4 rounded-xl border-2 ${isCorrect ? 'border-green-400 bg-green-50' : isWrong ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}>
+              <p className="text-gray-800 mb-3">{s.text}</p>
+              <div className="flex gap-2">
+                <button onClick={() => handleAnswer(index, true)} disabled={showResults} className={`flex-1 py-2 rounded-lg font-semibold transition-all ${answer === true ? showResults ? s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>✓ Richtig</button>
+                <button onClick={() => handleAnswer(index, false)} disabled={showResults} className={`flex-1 py-2 rounded-lg font-semibold transition-all ${answer === false ? showResults ? !s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>✗ Falsch</button>
+              </div>
+              {showResults && <p className={`mt-2 text-sm ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>{s.explanation}</p>}
+            </div>
+          )
+        })}
       </div>
-      {!answered && <button onClick={handleSubmit} disabled={selected === null} className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg disabled:opacity-50">Antwort prüfen</button>}
-      {answered && <div className={`p-3 rounded-lg ${selected !== null && slide.options![selected].correct ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>{selected !== null && slide.options![selected].correct ? '✓ Richtig!' : '✗ Leider falsch.'}</div>}
+
+      {!showResults && <button onClick={handleSubmit} disabled={!allAnswered} className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg disabled:opacity-50">Antworten prüfen</button>}
     </div>
   )
 }
 
-// Perspektive View
-const PerspectiveView = ({ perspective, onComplete }: { perspective: Perspective; onComplete: (p: number) => void }) => {
-  const [currentSlide, setCurrentSlide] = useState(0)
-  const [videoWatched, setVideoWatched] = useState(false)
-  const [slideAnswers, setSlideAnswers] = useState<{ [key: number]: { correct: boolean; points: number } }>({})
-  const [totalPoints, setTotalPoints] = useState(0)
-  
-  const handleSlideAnswer = (i: number, c: boolean, p: number) => {
-    const newAnswers = { ...slideAnswers, [i]: { correct: c, points: p } }
-    setSlideAnswers(newAnswers)
-    setTotalPoints(Object.values(newAnswers).reduce((s, a) => s + a.points, 0))
-  }
-  
-  const colorClasses: { [key: string]: string } = { blue: 'bg-blue-500', purple: 'bg-purple-500', red: 'bg-red-500', orange: 'bg-orange-500', teal: 'bg-teal-500' }
-  const isLastSlide = currentSlide === perspective.slides.length - 1
-  const currentSlideAnswered = !!slideAnswers[currentSlide] || perspective.slides[currentSlide].type === 'info'
-  const allSlidesCompleted = perspective.slides.every((s, i) => s.type === 'info' || slideAnswers[i])
+// Video Section mit klarer Anforderung
+function VideoSection({ section, onComplete }: { section: Section; onComplete: () => void }) {
+  const [watched, setWatched] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const isPlaceholder = section.videoUrl.includes('PLATZHALTER')
+  const requiredTime = 30 // Sekunden
+
+  useEffect(() => {
+    if (!watched && !isPlaceholder) {
+      const interval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= requiredTime) {
+            setWatched(true)
+            clearInterval(interval)
+            return requiredTime
+          }
+          return prev + 1
+        })
+      }, 1000)
+      return () => clearInterval(interval)
+    }
+  }, [watched, isPlaceholder])
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-      <div className={`${colorClasses[perspective.color]} p-4 text-white`}>
-        <div className="flex items-center gap-3">
-          <IconComponent name={perspective.icon} className="h-6 w-6" />
-          <h2 className="text-xl font-bold">{perspective.title}</h2>
-          <span className="ml-auto bg-white/20 px-3 py-1 rounded-full text-sm">{totalPoints} Punkte</span>
-        </div>
+    <div className="bg-white rounded-xl shadow-md overflow-hidden">
+      {/* Video Anforderung Banner */}
+      <div className={`px-4 py-3 flex items-center gap-3 ${watched ? 'bg-green-100' : 'bg-amber-100'}`}>
+        {watched ? (
+          <>
+            <CheckCircle2 className="h-5 w-5 text-green-600" />
+            <span className="text-green-800 font-medium">Video vollständig angeschaut</span>
+          </>
+        ) : (
+          <>
+            <AlertCircle className="h-5 w-5 text-amber-600" />
+            <span className="text-amber-800 font-medium">Bitte schauen Sie das Video vollständig an, bevor Sie fortfahren</span>
+          </>
+        )}
       </div>
-      
-      {!videoWatched ? (
-        <div>
-          <div className="aspect-video bg-gray-900">
-            {perspective.videoUrl.startsWith('[') ? (
-              <div className="w-full h-full flex items-center justify-center text-gray-400">
-                <div className="text-center"><Play className="h-16 w-16 mx-auto mb-4 opacity-50" /><p className="text-lg">{perspective.videoTitle}</p><p className="text-sm mt-2 text-gray-500">Video-Platzhalter</p></div>
-              </div>
-            ) : (
-              <iframe className="w-full h-full" src={perspective.videoUrl} title={perspective.videoTitle} frameBorder="0" allow="autoplay; fullscreen" allowFullScreen />
-            )}
+
+      {/* Video */}
+      <div className="bg-gray-900">
+        {isPlaceholder ? (
+          <div className="aspect-video flex items-center justify-center text-gray-400">
+            <div className="text-center">
+              <Play className="h-16 w-16 mx-auto mb-4 opacity-50" />
+              <p className="text-lg">{section.videoTitle}</p>
+              <p className="text-sm text-gray-500 mt-2">Video-Platzhalter ({section.videoDuration})</p>
+              <button onClick={() => setWatched(true)} className="mt-4 px-6 py-2 bg-teal-600 hover:bg-teal-700 rounded-lg text-sm font-semibold text-white">
+                Als geschaut markieren (Test)
+              </button>
+            </div>
           </div>
-          <div className="p-4 bg-gray-50 border-t">
-            <p className="text-sm text-gray-600 mb-3">{perspective.description}</p>
-            <button onClick={() => setVideoWatched(true)} className={`w-full py-3 ${colorClasses[perspective.color]} hover:opacity-90 text-white font-semibold rounded-lg flex items-center justify-center gap-2`}>
-              <CheckCircle2 className="h-5 w-5" />Video angeschaut - Weiter zu den Aufgaben
-            </button>
+        ) : (
+          <iframe className="w-full aspect-video" src={section.videoUrl} title={section.videoTitle} frameBorder="0" allow="autoplay; fullscreen" allowFullScreen />
+        )}
+      </div>
+
+      {/* Progress */}
+      {!isPlaceholder && !watched && (
+        <div className="px-4 py-3 bg-gray-50 border-t">
+          <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+            <span>Fortschritt</span>
+            <span>{Math.round((progress / requiredTime) * 100)}%</span>
+          </div>
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-full bg-teal-500 transition-all" style={{ width: `${(progress / requiredTime) * 100}%` }} />
           </div>
         </div>
-      ) : (
-        <div>
-          <div className="px-4 py-3 bg-gray-100 border-b flex items-center gap-2">
-            {perspective.slides.map((_, i) => (
-              <button key={i} onClick={() => setCurrentSlide(i)} className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${i === currentSlide ? `${colorClasses[perspective.color]} text-white` : slideAnswers[i] ? slideAnswers[i].correct ? 'bg-green-500 text-white' : 'bg-orange-500 text-white' : 'bg-gray-300 text-gray-600 hover:bg-gray-400'}`}>{i + 1}</button>
-            ))}
-          </div>
-          <div className="min-h-[350px]">
-            {perspective.slides[currentSlide].type === 'info' && <InfoSlide slide={perspective.slides[currentSlide]} />}
-            {perspective.slides[currentSlide].type === 'quiz' && <QuizSlide slide={perspective.slides[currentSlide]} onAnswer={(c, p) => handleSlideAnswer(currentSlide, c, p)} answered={!!slideAnswers[currentSlide]} />}
-            {perspective.slides[currentSlide].type === 'truefalse' && <TrueFalseSlide slide={perspective.slides[currentSlide]} onAnswer={(c, p) => handleSlideAnswer(currentSlide, c, p)} answered={!!slideAnswers[currentSlide]} />}
-            {perspective.slides[currentSlide].type === 'fillblank' && <FillblankSlide slide={perspective.slides[currentSlide]} onAnswer={(c, p) => handleSlideAnswer(currentSlide, c, p)} answered={!!slideAnswers[currentSlide]} />}
-          </div>
-          <div className="p-4 bg-gray-50 border-t flex items-center justify-between">
-            <button onClick={() => setCurrentSlide(Math.max(0, currentSlide - 1))} disabled={currentSlide === 0} className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 disabled:opacity-50"><ChevronLeft className="h-5 w-5" />Zurück</button>
-            {isLastSlide && allSlidesCompleted ? (
-              <button onClick={() => onComplete(totalPoints)} className={`flex items-center gap-2 px-6 py-2 ${colorClasses[perspective.color]} text-white rounded-lg font-semibold`}>Abschliessen<CheckCircle2 className="h-5 w-5" /></button>
-            ) : (
-              <button onClick={() => setCurrentSlide(Math.min(perspective.slides.length - 1, currentSlide + 1))} disabled={!currentSlideAnswered} className="flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg disabled:opacity-50">Weiter<ChevronRight className="h-5 w-5" /></button>
-            )}
-          </div>
+      )}
+
+      {/* Weiter Button */}
+      {watched && (
+        <div className="p-4 border-t">
+          <button onClick={onComplete} className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg flex items-center justify-center gap-2">
+            Zu den interaktiven Aufgaben <ArrowRight className="h-5 w-5" />
+          </button>
         </div>
       )}
     </div>
   )
 }
 
-// Hauptkomponente
+// ===========================================
+// HAUPTKOMPONENTE
+// ===========================================
+
 export default function ProContraPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [activePerspective, setActivePerspective] = useState<string | null>(null)
-  const [completedPerspectives, setCompletedPerspectives] = useState<{ [key: string]: { points: number } }>({})
+  const [showIntro, setShowIntro] = useState(true)
+  const [currentSection, setCurrentSection] = useState(0)
+  const [currentSlide, setCurrentSlide] = useState(-1) // -1 = Video
+  const [completedSections, setCompletedSections] = useState<Set<string>>(new Set())
+  const [sectionScores, setSectionScores] = useState<{ [key: string]: number }>({})
   const [totalScore, setTotalScore] = useState(0)
 
+  const section = SECTIONS[currentSection]
+  const maxPoints = SECTIONS.reduce((sum, s) => sum + s.totalPoints, 0)
+
   useEffect(() => {
-    const loadProgress = async () => {
+    const load = async () => {
       const user = auth.currentUser
       if (!user) { router.push('/'); return }
+      
       try {
         const userDoc = await getDoc(doc(db, 'users', user.uid))
         if (userDoc.exists()) {
-          const moduleData = userDoc.data().modules?.procontra
-          if (moduleData) { setTotalScore(moduleData.score || 0); setCompletedPerspectives(moduleData.perspectives || {}) }
+          const data = userDoc.data().modules?.procontra
+          if (data) {
+            setTotalScore(data.score || 0)
+            setCompletedSections(new Set(data.completedSections || []))
+            setSectionScores(data.sectionScores || {})
+            if (data.completedSections?.length > 0) setShowIntro(false)
+          }
         }
-      } catch (e) { console.error('Error:', e) }
+      } catch (e) { console.error(e) }
       setLoading(false)
     }
-    loadProgress()
+    load()
   }, [router])
 
-  const handlePerspectiveComplete = async (id: string, points: number) => {
-    const newCompleted = { ...completedPerspectives, [id]: { points } }
-    setCompletedPerspectives(newCompleted)
-    setActivePerspective(null)
-    const newTotal = Object.values(newCompleted).reduce((s, p) => s + p.points, 0)
-    setTotalScore(newTotal)
+  const handleSlideComplete = async (correct: boolean) => {
+    const isLast = currentSlide === section.slides.length - 1
     
+    if (isLast) {
+      const newCompleted = new Set(completedSections)
+      newCompleted.add(section.id)
+      setCompletedSections(newCompleted)
+      
+      const newScores = { ...sectionScores, [section.id]: section.totalPoints }
+      setSectionScores(newScores)
+      
+      const newTotal = Object.values(newScores).reduce((s, v) => s + v, 0)
+      setTotalScore(newTotal)
+      
+      await saveProgress(newTotal, newCompleted, newScores)
+      
+      if (currentSection < SECTIONS.length - 1) {
+        setCurrentSection(currentSection + 1)
+        setCurrentSlide(-1)
+      }
+    } else {
+      setCurrentSlide(currentSlide + 1)
+    }
+  }
+
+  const saveProgress = async (score: number, completed: Set<string>, scores: typeof sectionScores) => {
     const user = auth.currentUser
     if (!user) return
+    
     try {
       const userRef = doc(db, 'users', user.uid)
       const userDoc = await getDoc(userRef)
+      
       if (userDoc.exists()) {
         const userData = userDoc.data()
         const modules = userData.modules || {}
-        const allComplete = Object.keys(newCompleted).length === 5
-        modules.procontra = { completed: allComplete, score: newTotal, progress: Math.round((Object.keys(newCompleted).length / 5) * 100), perspectives: newCompleted, lastUpdated: new Date().toISOString() }
+        const isComplete = completed.size === SECTIONS.length
+        
+        modules.procontra = {
+          completed: isComplete,
+          score,
+          progress: Math.round((completed.size / SECTIONS.length) * 100),
+          completedSections: Array.from(completed),
+          sectionScores: scores,
+          lastUpdated: new Date().toISOString()
+        }
+        
         let totalPoints = 0
         Object.keys(modules).forEach(k => { if (modules[k].score) totalPoints += modules[k].score })
+        
         const allModules = ['grundlagen', 'vertiefung', 'procontra', 'lernkontrolle', 'umfrage']
         const overallProgress = Math.round((allModules.filter(id => modules[id]?.completed).length / allModules.length) * 100)
+        
         await updateDoc(userRef, { modules, totalPoints, overallProgress })
-        if (allComplete && !userData.badges?.procontra) {
+        
+        if (isComplete && !userData.badges?.procontra) {
           await updateDoc(userRef, { [`badges.procontra`]: { moduleId: 'procontra', moduleName: '3. Pro- und Contra', lerncode: userData.code, issuedAt: new Date().toISOString() } })
         }
       }
-    } catch (e) { console.error('Error:', e) }
+    } catch (e) { console.error(e) }
+  }
+
+  const renderSlide = () => {
+    if (currentSlide === -1) return <VideoSection section={section} onComplete={() => setCurrentSlide(0)} />
+    
+    const slide = section.slides[currentSlide]
+    switch (slide.type) {
+      case 'info': return <InfoSlideComponent slide={slide} onNext={() => handleSlideComplete(true)} />
+      case 'quiz': return <QuizSlideComponent slide={slide} onComplete={handleSlideComplete} />
+      case 'truefalse': return <TrueFalseSlideComponent slide={slide} onComplete={handleSlideComplete} />
+      case 'quote_reveal': return <QuoteRevealSlideComponent slide={slide} onComplete={handleSlideComplete} />
+      case 'term_reveal': return <TermRevealSlideComponent slide={slide} onComplete={handleSlideComplete} />
+      case 'definition_match': return <DefinitionMatchSlideComponent slide={slide} onComplete={handleSlideComplete} />
+      default: return null
+    }
   }
 
   if (loading) return <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div></div>
 
-  if (activePerspective) {
-    const perspective = perspectives.find(p => p.id === activePerspective)!
+  const isComplete = completedSections.size === SECTIONS.length
+
+  // Intro
+  if (showIntro) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
-        <header className="bg-white shadow-md sticky top-0 z-10">
-          <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-            <button onClick={() => setActivePerspective(null)} className="flex items-center gap-2 text-gray-600 hover:text-gray-900"><ArrowLeft className="h-5 w-5" /><span>Zurück</span></button>
-            <div className="flex items-center gap-2 text-teal-600 font-semibold"><Award className="h-5 w-5" /><span>{totalScore} Punkte</span></div>
+        <header className="bg-white shadow-md"><div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+          <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 text-gray-600 hover:text-gray-900"><ArrowLeft className="h-5 w-5" /><span>Zurück</span></button>
+          <div className="text-teal-600 font-semibold">0 / {maxPoints} Punkte</div>
+        </div></header>
+
+        <main className="max-w-4xl mx-auto px-4 py-8">
+          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Pro und Contra</h1>
+            <h2 className="text-xl text-teal-600 font-semibold mb-6">Individualbesteuerung</h2>
+            
+            <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-6">
+              <h3 className="font-bold text-amber-900 mb-2">📣 Bei Abstimmungen gehen die Meinungen auseinander</h3>
+              <p className="text-amber-800">In der direkten Demokratie vertreten verschiedene Akteure unterschiedliche Standpunkte. Der Bundesrat, das Parlament, die Kantone, Parteien und Expert:innen haben jeweils ihre eigenen Argumente. Lernen Sie alle Seiten kennen!</p>
+            </div>
+
+            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg mb-6">
+              <h3 className="font-bold text-blue-900 mb-2">🎬 So funktioniert dieses Modul</h3>
+              <ul className="text-blue-800 space-y-1">
+                <li>• Schauen Sie jedes Video <strong>vollständig</strong> an</li>
+                <li>• Bearbeiten Sie die interaktiven Aufgaben</li>
+                <li>• Decken Sie Zitate und Begriffe auf</li>
+                <li>• Testen Sie Ihr Verständnis mit Quizfragen</li>
+              </ul>
+            </div>
+
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Sie werden folgende Perspektiven kennenlernen:</h3>
+            <div className="space-y-3">
+              {SECTIONS.map((s) => {
+                const Icon = IconMap[s.icon] || Users
+                const colorMap: { [k: string]: string } = { blue: 'bg-blue-100 text-blue-600', red: 'bg-red-100 text-red-600', purple: 'bg-purple-100 text-purple-600', orange: 'bg-orange-100 text-orange-600', teal: 'bg-teal-100 text-teal-600' }
+                return (
+                  <div key={s.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className={`p-2 rounded-lg ${colorMap[s.color]}`}><Icon className="h-5 w-5" /></div>
+                    <div className="flex-1">
+                      <span className="font-semibold text-gray-900">{s.title}</span>
+                      <span className="text-gray-500 text-sm ml-2">({s.totalPoints} Punkte)</span>
+                    </div>
+                    {s.videoUrl.includes('PLATZHALTER') && <span className="text-xs text-gray-400">Platzhalter</span>}
+                  </div>
+                )
+              })}
+            </div>
           </div>
-        </header>
-        <main className="max-w-4xl mx-auto px-4 py-8"><PerspectiveView perspective={perspective} onComplete={(p) => handlePerspectiveComplete(perspective.id, p)} /></main>
+
+          <button onClick={() => setShowIntro(false)} className="w-full py-4 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white text-xl font-semibold rounded-xl shadow-lg flex items-center justify-center gap-3">
+            Modul starten <ChevronRight className="h-6 w-6" />
+          </button>
+        </main>
       </div>
     )
   }
 
-  const isAllComplete = Object.keys(completedPerspectives).length === perspectives.length
-  const colorClasses: { [k: string]: { bg: string; border: string; text: string } } = {
-    blue: { bg: 'bg-blue-50', border: 'border-blue-300', text: 'text-blue-600' },
-    purple: { bg: 'bg-purple-50', border: 'border-purple-300', text: 'text-purple-600' },
-    red: { bg: 'bg-red-50', border: 'border-red-300', text: 'text-red-600' },
-    orange: { bg: 'bg-orange-50', border: 'border-orange-300', text: 'text-orange-600' },
-    teal: { bg: 'bg-teal-50', border: 'border-teal-300', text: 'text-teal-600' }
-  }
-
+  // Main Content
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
       <header className="bg-white shadow-md sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 text-gray-600 hover:text-gray-900"><ArrowLeft className="h-5 w-5" /><span>Dashboard</span></button>
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-gray-600 flex items-center gap-2"><Clock className="h-4 w-4" /><span>~25 Min</span></div>
-            <div className="flex items-center gap-2 text-teal-600 font-semibold"><Award className="h-5 w-5" /><span>{totalScore} Punkte</span></div>
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between mb-3">
+            <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 text-gray-600 hover:text-gray-900"><ArrowLeft className="h-5 w-5" /><span>Zurück</span></button>
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-gray-600 flex items-center gap-1"><Clock className="h-4 w-4" /><span>~20 Min</span></div>
+              <div className={`flex items-center gap-2 font-semibold ${isComplete ? 'text-green-600' : 'text-teal-600'}`}><Award className="h-5 w-5" /><span>{totalScore} / {maxPoints}</span></div>
+            </div>
+          </div>
+          <div className="flex gap-1">
+            {SECTIONS.map((s, i) => (
+              <div key={s.id} className={`flex-1 h-2 rounded-full ${completedSections.has(s.id) ? 'bg-green-500' : i === currentSection ? 'bg-teal-500' : 'bg-gray-200'}`} />
+            ))}
           </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="bg-teal-100 p-3 rounded-xl"><Scale className="h-8 w-8 text-teal-600" /></div>
-            <div><h1 className="text-3xl font-bold text-gray-900">3. Pro und Contra</h1><p className="text-gray-600">Individualbesteuerung</p></div>
-          </div>
-          
-          <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-6">
-            <h2 className="font-bold text-amber-900 mb-2">📣 Bei Abstimmungen gehen die Meinungen auseinander</h2>
-            <p className="text-amber-800">In einer Demokratie ist es normal, dass verschiedene Akteure unterschiedliche Positionen vertreten. Der Bundesrat, das Parlament, die Kantone, Parteien und Expert:innen haben jeweils ihre eigenen Argumente. In diesem Modul lernen Sie die wichtigsten Positionen zur Individualbesteuerung kennen.</p>
-          </div>
-          
-          <div className="bg-gray-100 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">Fortschritt</span>
-              <span className="text-sm font-bold text-teal-600">{Object.keys(completedPerspectives).length} / {perspectives.length} Perspektiven</span>
+      <main className="max-w-4xl mx-auto px-4 py-6">
+        {/* Section Header */}
+        <div className="bg-white rounded-xl shadow-md p-4 mb-4">
+          <div className="flex items-center gap-3">
+            {(() => { const Icon = IconMap[section.icon] || Users; return <Icon className="h-6 w-6 text-gray-600" /> })()}
+            <div className="flex-1">
+              <h2 className="text-xl font-bold text-gray-900">{section.title}</h2>
+              <p className="text-sm text-gray-600">{section.description}</p>
             </div>
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-teal-500 to-cyan-500 transition-all" style={{ width: `${(Object.keys(completedPerspectives).length / perspectives.length) * 100}%` }} />
-            </div>
+            <span className="text-sm font-semibold text-teal-600 bg-teal-50 px-3 py-1 rounded-full">{section.totalPoints} P</span>
           </div>
+          {currentSlide >= 0 && (
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-xs text-gray-500">Aufgabe {currentSlide + 1} / {section.slides.length}</span>
+              <div className="flex-1 h-1 bg-gray-200 rounded-full"><div className="h-full bg-teal-400 rounded-full transition-all" style={{ width: `${((currentSlide + 1) / section.slides.length) * 100}%` }} /></div>
+            </div>
+          )}
         </div>
 
-        <div className="grid gap-4 mb-8">
-          {perspectives.map((p) => {
-            const done = !!completedPerspectives[p.id]
-            const c = colorClasses[p.color]
-            return (
-              <button key={p.id} onClick={() => setActivePerspective(p.id)} className={`w-full p-4 rounded-xl border-2 transition-all text-left flex items-center gap-4 ${done ? 'bg-green-50 border-green-300' : `${c.bg} ${c.border} hover:shadow-md`}`}>
-                <div className={`p-3 rounded-lg ${done ? 'bg-green-500' : c.bg}`}><IconComponent name={p.icon} className={`h-6 w-6 ${done ? 'text-white' : c.text}`} /></div>
-                <div className="flex-1"><h3 className="font-bold text-gray-900">{p.title}</h3><p className="text-sm text-gray-600">{p.description}</p></div>
-                {done ? <div className="flex items-center gap-2 text-green-600"><CheckCircle2 className="h-5 w-5" /><span className="font-semibold">{completedPerspectives[p.id].points}P</span></div> : <ArrowRight className={`h-5 w-5 ${c.text}`} />}
-              </button>
-            )
-          })}
+        {/* Content */}
+        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          {renderSlide()}
         </div>
 
-        {isAllComplete && (
-          <div className="bg-gradient-to-r from-green-500 to-teal-500 rounded-xl p-6 text-white text-center mb-8">
+        {/* Completion */}
+        {isComplete && (
+          <div className="bg-gradient-to-r from-green-500 to-teal-500 rounded-xl p-6 mt-6 text-white text-center">
             <Award className="h-12 w-12 mx-auto mb-3" />
             <h3 className="text-2xl font-bold mb-2">🎉 Modul abgeschlossen!</h3>
-            <p className="text-lg">Sie haben alle Perspektiven bearbeitet und {totalScore} Punkte erreicht.</p>
+            <p className="text-lg">Sie haben {totalScore} von {maxPoints} Punkten erreicht.</p>
+            <button onClick={() => router.push('/dashboard')} className="mt-4 px-6 py-3 bg-white text-teal-600 font-semibold rounded-lg hover:bg-gray-100">Zurück zum Dashboard</button>
           </div>
         )}
-
-        <div className="text-center">
-          <button onClick={() => router.push('/dashboard')} className="px-8 py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg shadow-lg">Zurück zum Dashboard</button>
-        </div>
       </main>
     </div>
   )

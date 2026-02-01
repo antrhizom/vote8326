@@ -735,13 +735,21 @@ function TrueFalseSlideComponent({ slide, onComplete }: { slide: TrueFalseSlide;
 // SECTION VIEW (Video + Aufgaben auf einer Seite)
 // ===========================================
 
-function SectionView({ 
-  section, 
-  onClose, 
+// Video-Dauer pro Sektion in Sekunden (anpassen an echte Videolängen!)
+const VIDEO_DURATIONS: { [key: string]: number } = {
+  bundesrat: 120,      // 2 Minuten
+  befuerworter: 90,    // 1.5 Minuten (Platzhalter)
+  gegner: 150,         // 2.5 Minuten
+  kantone: 90          // 1.5 Minuten (Platzhalter)
+}
+
+function SectionView({
+  section,
+  onClose,
   onComplete,
   initialVideoWatched,
   initialCompletedSlides
-}: { 
+}: {
   section: Section
   onClose: () => void
   onComplete: (videoWatched: boolean, completedSlides: Set<number>) => void
@@ -752,9 +760,49 @@ function SectionView({
   const [completedSlides, setCompletedSlides] = useState<Set<number>>(initialCompletedSlides)
   const isPlaceholder = section.videoUrl.includes('PLATZHALTER')
 
+  // Timer State
+  const [timeWatched, setTimeWatched] = useState(0)
+  const [timerActive, setTimerActive] = useState(false)
+  const videoDuration = VIDEO_DURATIONS[section.id] || 120 // Default 2 Min
+  const timerComplete = timeWatched >= videoDuration
+
+  // Timer starten wenn Video-Bereich sichtbar ist
+  useEffect(() => {
+    // Timer nur starten wenn Video noch nicht als geschaut markiert ist
+    if (videoWatched) {
+      setTimeWatched(videoDuration) // Bereits geschaut = Timer voll
+      return
+    }
+
+    setTimerActive(true)
+    const interval = setInterval(() => {
+      setTimeWatched(prev => {
+        if (prev >= videoDuration) {
+          clearInterval(interval)
+          return videoDuration
+        }
+        return prev + 1
+      })
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [videoWatched, videoDuration])
+
   const handleVideoConfirm = () => {
-    setVideoWatched(true)
+    if (timerComplete) {
+      setVideoWatched(true)
+    }
   }
+
+  // Format time remaining
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+
+  const timeRemaining = Math.max(0, videoDuration - timeWatched)
+  const progressPercent = Math.min(100, (timeWatched / videoDuration) * 100)
 
   const handleSlideComplete = (index: number) => {
     const newCompleted = new Set(completedSlides)
@@ -825,7 +873,7 @@ function SectionView({
             )}
           </div>
           
-          {/* Video Bestätigung */}
+          {/* Video Bestätigung mit Timer */}
           <div className={`p-3 border-t ${videoWatched ? 'bg-green-50' : 'bg-gray-50'}`}>
             {videoWatched ? (
               <div className="flex items-center gap-2 text-green-700">
@@ -834,21 +882,75 @@ function SectionView({
                 <span className="ml-auto text-xs font-semibold">+{section.videoPoints} Punkte</span>
               </div>
             ) : (
-              <button 
-                onClick={handleVideoConfirm}
-                className="w-full flex items-center justify-center gap-2 py-2 bg-teal-500 hover:bg-teal-600 text-white font-semibold rounded-lg text-sm"
-              >
-                <Video className="h-4 w-4" />
-                Video angeschaut (+{section.videoPoints} Punkte)
-              </button>
+              <div className="space-y-3">
+                {/* Timer-Fortschrittsanzeige */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs text-gray-600">
+                    <span>Mindest-Verweildauer: {formatTime(videoDuration)}</span>
+                    <span className={timerComplete ? 'text-green-600 font-semibold' : ''}>
+                      {timerComplete ? '✓ Fertig!' : `Noch ${formatTime(timeRemaining)}`}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-1000 ${timerComplete ? 'bg-green-500' : 'bg-teal-500'}`}
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Bestätigungs-Button */}
+                <button
+                  onClick={handleVideoConfirm}
+                  disabled={!timerComplete}
+                  className={`w-full flex items-center justify-center gap-2 py-2 font-semibold rounded-lg text-sm transition-all ${
+                    timerComplete
+                      ? 'bg-green-500 hover:bg-green-600 text-white cursor-pointer'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  <Video className="h-4 w-4" />
+                  {timerComplete
+                    ? `Video angeschaut bestätigen (+${section.videoPoints} Punkte)`
+                    : `Bitte Video schauen (${formatTime(timeRemaining)})`
+                  }
+                </button>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Aufgaben direkt unter dem Video */}
+        {/* Aufgaben - gesperrt bis Video geschaut */}
         <div className="space-y-4">
-          <h3 className="text-lg font-bold text-gray-900">Interaktive Aufgaben</h3>
-          {section.slides.map((slide, index) => renderSlide(slide, index))}
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-gray-900">Interaktive Aufgaben</h3>
+            {!videoWatched && (
+              <span className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded-full">
+                🔒 Erst nach Video verfügbar
+              </span>
+            )}
+          </div>
+
+          {videoWatched ? (
+            // Aufgaben freigeschaltet
+            section.slides.map((slide, index) => renderSlide(slide, index))
+          ) : (
+            // Aufgaben gesperrt - Vorschau anzeigen
+            <div className="space-y-3 opacity-50 pointer-events-none">
+              {section.slides.map((slide, index) => (
+                <div key={index} className="p-4 bg-gray-100 rounded-xl border border-gray-200 relative">
+                  <div className="absolute inset-0 bg-gray-50/80 rounded-xl flex items-center justify-center z-10">
+                    <div className="text-center text-gray-500">
+                      <div className="text-2xl mb-1">🔒</div>
+                      <p className="text-sm font-medium">Gesperrt</p>
+                    </div>
+                  </div>
+                  <h4 className="font-bold text-gray-400 mb-2">{slide.title}</h4>
+                  <p className="text-gray-400 text-sm">Diese Aufgabe wird nach dem Video freigeschaltet...</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Abschluss */}

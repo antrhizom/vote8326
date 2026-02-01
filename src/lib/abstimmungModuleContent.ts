@@ -16,8 +16,8 @@ export const moduleData: { [key: string]: ModuleData } = {
     id: 'ausgangslage',
     title: '1. Ausgangslage kollaborativ interaktiv',
     description: 'Erarbeiten Sie Ihre persönliche Ausgangslage und lernen Sie das Referendum als politisches Instrument kennen.',
-    estimatedTime: '15 Min',
-    maxPoints: 100,
+    estimatedTime: '20 Min',
+    maxPoints: 150,
     type: 'interactive',
     h5pUrl: null // Uses custom page
   },

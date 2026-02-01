@@ -15,22 +15,22 @@ export const moduleData: { [key: string]: ModuleData } = {
   ausgangslage: {
     id: 'ausgangslage',
     title: '1. Ausgangslage kollaborativ interaktiv',
-    description: 'Erarbeiten Sie gemeinsam die Ausgangslage zur Individualbesteuerung.',
+    description: 'Erarbeiten Sie Ihre persönliche Ausgangslage und lernen Sie das Referendum als politisches Instrument kennen.',
     estimatedTime: '15 Min',
     maxPoints: 100,
-    type: 'h5p',
-    h5pUrl: '/h5p/ausgangslage.html'
+    type: 'interactive',
+    h5pUrl: null // Uses custom page
   },
   
   // 2. Grundlagen Info Bund Medien
   grundlagen: {
     id: 'grundlagen',
     title: '2. Grundlagen Info Bund Medien',
-    description: 'Lernen Sie die Grundlagen über Bundesinformationen und Medienberichterstattung kennen.',
-    estimatedTime: '15 Min',
-    maxPoints: 100,
-    type: 'h5p',
-    h5pUrl: '/h5p/grundlagen.html'
+    description: 'Lernen Sie die offiziellen Informationen des Bundes und die Medienberichterstattung kennen.',
+    estimatedTime: '20 Min',
+    maxPoints: 120,
+    type: 'interactive',
+    h5pUrl: null // Uses custom page
   },
   
   // 3. Pro Contra
@@ -38,7 +38,7 @@ export const moduleData: { [key: string]: ModuleData } = {
     id: 'procontra',
     title: '3. Pro Contra',
     description: 'Lernen Sie die verschiedenen Perspektiven zur Individualbesteuerung kennen.',
-    estimatedTime: '20 Min',
+    estimatedTime: '25 Min',
     maxPoints: 210,
     type: 'interactive',
     h5pUrl: null // Uses custom page
@@ -51,8 +51,8 @@ export const moduleData: { [key: string]: ModuleData } = {
     description: 'Vertiefen Sie Ihr Wissen mit interaktiven Übungen und praktischen Beispielen.',
     estimatedTime: '20 Min',
     maxPoints: 100,
-    type: 'h5p',
-    h5pUrl: '/h5p/vertiefung.html'
+    type: 'interactive',
+    h5pUrl: null // Uses custom page
   },
   
   // 5. Spielerisch
@@ -62,8 +62,8 @@ export const moduleData: { [key: string]: ModuleData } = {
     description: 'Festigen Sie Ihr Wissen spielerisch mit Quiz und Challenges.',
     estimatedTime: '15 Min',
     maxPoints: 100,
-    type: 'h5p',
-    h5pUrl: '/h5p/spielerisch.html'
+    type: 'interactive',
+    h5pUrl: null // Uses custom page
   }
 }
 

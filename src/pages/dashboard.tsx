@@ -446,11 +446,8 @@ export default function AbstimmungDashboard() {
             modules={userData.modules}
             userData={userData}
             onModuleClick={(moduleId) => {
-              if (moduleId === 'procontra') {
-                router.push('/custom-modules/procontra')
-              } else {
-                router.push(`/modules/${moduleId}`)
-              }
+              // All modules use custom pages now
+              router.push(`/custom-modules/${moduleId}`)
             }}
             onCertificateClick={() => router.push('/certificate/abstimmung2026')}
             router={router}

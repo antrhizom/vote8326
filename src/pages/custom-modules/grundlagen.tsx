@@ -1,19 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { doc, updateDoc, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
 import {
-  ArrowLeft, CheckCircle2, Award, ChevronDown, ChevronUp,
-  Film, Radio, BookOpen, ThumbsUp, ThumbsDown, Star,
-  Volume2, Play, Pause, Lock
+  ArrowLeft, CheckCircle2, Award,
+  Film, Radio, ThumbsUp, ThumbsDown, Star,
+  Volume2
 } from 'lucide-react'
 
 // ===========================================
 // GRUNDLAGEN INFO BUND MEDIEN - KAPITEL-STRUKTUR
-// Audio: 1 Pflicht + 1 Bonus
+// Kapitel 1: Video (50P)
+// Kapitel 2: Audio wählen (50P) + Bonus zweites Audio (+30)
+// "Wer profitiert" gehört zum Rendez-vous Audio
+// "Arbeitsmarkt" gehört zum Echo der Zeit Audio
 // ===========================================
 
-type Chapter = 'video' | 'quiz' | 'audio' | null
+type Chapter = 'video' | 'audio' | null
 
 export default function GrundlagenPage() {
   const router = useRouter()
@@ -27,22 +30,28 @@ export default function GrundlagenPage() {
   const [quizAnswers, setQuizAnswers] = useState<{[key: string]: string}>({})
   const [quizSubmitted, setQuizSubmitted] = useState(false)
 
-  // Matching
+  // Audio - erste Auswahl ist Pflicht, zweite ist Bonus
+  const [selectedAudio, setSelectedAudio] = useState<string | null>(null)
+  const [audioListened, setAudioListened] = useState(false)
+  const [audioProgress, setAudioProgress] = useState(0)
+  const audioRef = useRef<HTMLAudioElement>(null)
+
+  // Rendez-vous: Wer profitiert Zuordnung
   const [matchingAnswers, setMatchingAnswers] = useState<{[key: string]: string}>({})
   const [matchingSubmitted, setMatchingSubmitted] = useState(false)
 
-  // Audio - erste Auswahl ist Pflicht, zweite ist Bonus
-  const [selectedAudio, setSelectedAudio] = useState<string | null>(null)
-  const [audioConfirmed, setAudioConfirmed] = useState(false) // Audio angehört
-  const [audioQuizAnswers, setAudioQuizAnswers] = useState<{[key: string]: string}>({})
-  const [audioQuizSubmitted, setAudioQuizSubmitted] = useState(false)
+  // Echo der Zeit: Arbeitsmarkt Quiz
+  const [echoQuizAnswers, setEchoQuizAnswers] = useState<{[key: string]: string}>({})
+  const [echoQuizSubmitted, setEchoQuizSubmitted] = useState(false)
 
-  // Zweites Audio (Bonus)
-  const [secondAudioConfirmed, setSecondAudioConfirmed] = useState(false)
-  const [secondAudioQuizAnswers, setSecondAudioQuizAnswers] = useState<{[key: string]: string}>({})
-  const [secondAudioQuizSubmitted, setSecondAudioQuizSubmitted] = useState(false)
+  // Bonus Audio
+  const [bonusAudioListened, setBonusAudioListened] = useState(false)
+  const [bonusAudioProgress, setBonusAudioProgress] = useState(0)
+  const bonusAudioRef = useRef<HTMLAudioElement>(null)
+  const [bonusQuizAnswers, setBonusQuizAnswers] = useState<{[key: string]: string}>({})
+  const [bonusQuizSubmitted, setBonusQuizSubmitted] = useState(false)
 
-  const maxPoints = 150 // Grundpunkte (50 + 50 + 50)
+  const maxPoints = 100 // Grundpunkte (50 Video + 50 Audio)
   const maxBonus = 30 // Audio-Bonus für zweites Audio
 
   useEffect(() => {
@@ -66,6 +75,31 @@ export default function GrundlagenPage() {
     }
     load()
   }, [router])
+
+  // Audio Progress Tracking
+  const handleAudioTimeUpdate = (isBonus: boolean = false) => {
+    const audio = isBonus ? bonusAudioRef.current : audioRef.current
+    if (audio && audio.duration) {
+      const progress = (audio.currentTime / audio.duration) * 100
+      if (isBonus) {
+        setBonusAudioProgress(progress)
+        if (progress >= 90) setBonusAudioListened(true)
+      } else {
+        setAudioProgress(progress)
+        if (progress >= 90) setAudioListened(true)
+      }
+    }
+  }
+
+  const handleAudioEnded = (isBonus: boolean = false) => {
+    if (isBonus) {
+      setBonusAudioListened(true)
+      setBonusAudioProgress(100)
+    } else {
+      setAudioListened(true)
+      setAudioProgress(100)
+    }
+  }
 
   const completeSection = async (sectionId: string, points: number, isBonus: boolean = false) => {
     if (completedSections.has(sectionId)) return
@@ -100,9 +134,8 @@ export default function GrundlagenPage() {
         const userData = userDoc.data()
         const modules = userData.modules || {}
 
-        // Pflicht: videoquiz, matching, UND ein audio
         const hasFirstAudio = completed.includes('audio_first')
-        const requiredSections = ['videoquiz', 'matching']
+        const requiredSections = ['videoquiz']
         const allComplete = requiredSections.every(s => completed.includes(s)) && hasFirstAudio
 
         modules.grundlagen = {
@@ -130,27 +163,6 @@ export default function GrundlagenPage() {
     } catch (e) { console.error(e) }
   }
 
-  const getChapterProgress = (chapter: Chapter) => {
-    switch (chapter) {
-      case 'video':
-        return { done: completedSections.has('videoquiz') ? 1 : 0, total: 1, points: completedSections.has('videoquiz') ? 50 : 0 }
-      case 'quiz':
-        return { done: completedSections.has('matching') ? 1 : 0, total: 1, points: completedSections.has('matching') ? 50 : 0 }
-      case 'audio':
-        const firstDone = completedSections.has('audio_first') ? 1 : 0
-        const secondDone = completedSections.has('audio_bonus') ? 1 : 0
-        return {
-          done: firstDone + secondDone,
-          total: 2,
-          points: firstDone * 50,
-          bonusPoints: secondDone * 30
-        }
-      default:
-        return { done: 0, total: 0, points: 0 }
-    }
-  }
-
-  // Welches ist das "andere" Audio (für Bonus)
   const getOtherAudio = () => {
     if (selectedAudio === 'echo') return 'rendezvous'
     if (selectedAudio === 'rendezvous') return 'echo'
@@ -165,16 +177,15 @@ export default function GrundlagenPage() {
     )
   }
 
+  const firstAudioDone = completedSections.has('audio_first')
+  const bonusAudioDone = completedSections.has('audio_bonus')
+  const videoDone = completedSections.has('videoquiz')
+  const isComplete = videoDone && firstAudioDone
+
   // ========== CHAPTER OVERVIEW ==========
   if (!activeChapter) {
-    const videoProgress = getChapterProgress('video')
-    const quizProgress = getChapterProgress('quiz')
-    const audioProgress = getChapterProgress('audio')
-    const isComplete = videoProgress.done === 1 && quizProgress.done === 1 && completedSections.has('audio_first')
-
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-        {/* Header */}
         <header className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
           <div className="max-w-4xl mx-auto px-4 py-4">
             <div className="flex items-center justify-between mb-2">
@@ -200,7 +211,6 @@ export default function GrundlagenPage() {
         </header>
 
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
-          {/* Intro Text */}
           <div className="bg-white rounded-xl p-6 shadow-sm">
             <p className="text-gray-700">
               Lernen Sie die <strong>offiziellen Informationen des Bundes</strong> und die
@@ -209,7 +219,6 @@ export default function GrundlagenPage() {
             </p>
           </div>
 
-          {/* Chapter Cards */}
           <div className="space-y-3">
             {/* Kapitel 1: Video */}
             <button
@@ -218,7 +227,7 @@ export default function GrundlagenPage() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${videoProgress.done === 1 ? 'bg-green-500' : 'bg-blue-500'}`}>
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${videoDone ? 'bg-green-500' : 'bg-blue-500'}`}>
                     <Film className="h-6 w-6 text-white" />
                   </div>
                   <div>
@@ -227,11 +236,11 @@ export default function GrundlagenPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-semibold text-blue-600">{videoProgress.done}/{videoProgress.total}</div>
+                  <div className="text-sm font-semibold text-blue-600">{videoDone ? '1' : '0'}/1</div>
                   <div className="text-xs text-gray-400">50 Punkte</div>
                 </div>
               </div>
-              {videoProgress.done === 1 && (
+              {videoDone && (
                 <div className="mt-3 flex items-center gap-2 text-green-600 text-sm">
                   <CheckCircle2 className="h-4 w-4" />
                   <span>Abgeschlossen</span>
@@ -239,101 +248,62 @@ export default function GrundlagenPage() {
               )}
             </button>
 
-            {/* Kapitel 2: Wer profitiert */}
-            <button
-              onClick={() => setActiveChapter('quiz')}
-              className="w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-blue-200"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${quizProgress.done === 1 ? 'bg-green-500' : 'bg-indigo-500'}`}>
-                    <span className="text-2xl">🎯</span>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900">Kapitel 2: Wer profitiert?</h3>
-                    <p className="text-sm text-gray-500">Auswirkungen verstehen & zuordnen</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-semibold text-indigo-600">{quizProgress.done}/{quizProgress.total}</div>
-                  <div className="text-xs text-gray-400">50 Punkte</div>
-                </div>
-              </div>
-              {quizProgress.done === 1 && (
-                <div className="mt-3 flex items-center gap-2 text-green-600 text-sm">
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>Abgeschlossen</span>
-                </div>
-              )}
-            </button>
-
-            {/* Kapitel 3: Audio (Pflicht + Bonus) */}
+            {/* Kapitel 2: Audio */}
             <button
               onClick={() => setActiveChapter('audio')}
               className="w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-blue-200"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${completedSections.has('audio_first') ? 'bg-green-500' : 'bg-red-500'}`}>
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${firstAudioDone ? 'bg-green-500' : 'bg-red-500'}`}>
                     <Radio className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900">Kapitel 3: SRF Radio-Beiträge</h3>
-                    <p className="text-sm text-gray-500">Einen Beitrag wählen (Pflicht) + optionaler Bonus</p>
+                    <h3 className="font-bold text-gray-900">Kapitel 2: SRF Radio-Beiträge</h3>
+                    <p className="text-sm text-gray-500">Einen Beitrag wählen & Aufgaben lösen</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-semibold text-red-600">
-                    {completedSections.has('audio_first') ? '1' : '0'}/1 Pflicht
-                  </div>
+                  <div className="text-sm font-semibold text-red-600">{firstAudioDone ? '1' : '0'}/1 Pflicht</div>
                   <div className="text-xs text-gray-400">50 Punkte</div>
-                  {completedSections.has('audio_bonus') && (
+                  {bonusAudioDone && (
                     <div className="text-xs text-yellow-600 flex items-center gap-1 justify-end mt-1">
                       <Star className="h-3 w-3" /> +30 Bonus
                     </div>
                   )}
                 </div>
               </div>
-              {completedSections.has('audio_first') && (
+              {firstAudioDone && (
                 <div className="mt-3 flex items-center gap-2 text-green-600 text-sm">
                   <CheckCircle2 className="h-4 w-4" />
                   <span>Pflicht abgeschlossen</span>
-                  {!completedSections.has('audio_bonus') && (
-                    <span className="text-yellow-600 ml-2">• Bonus verfügbar!</span>
-                  )}
+                  {!bonusAudioDone && <span className="text-yellow-600 ml-2">• Bonus verfügbar!</span>}
                 </div>
               )}
             </button>
           </div>
 
-          {/* Info about Audio */}
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
             <div className="flex items-start gap-3">
               <Radio className="h-5 w-5 text-blue-500 mt-0.5" />
               <div>
                 <h4 className="font-semibold text-blue-800">Über die Audio-Beiträge</h4>
                 <p className="text-sm text-blue-700 mt-1">
-                  Sie müssen <strong>einen</strong> der zwei SRF-Beiträge anhören und die Fragen beantworten (50 Punkte).
-                  Wenn Sie <strong>auch den zweiten</strong> Beitrag anhören, erhalten Sie <strong>+30 Bonus-Punkte</strong>,
-                  die im Badge und Zertifikat separat ausgewiesen werden.
+                  Wählen Sie <strong>einen</strong> der zwei SRF-Beiträge. Sie müssen ihn <strong>vollständig anhören</strong> (mind. 90%),
+                  bevor Sie die Aufgaben lösen können. Das zweite Audio bringt <strong>+30 Bonus-Punkte</strong>.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Completion Banner */}
           {isComplete && (
             <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl p-6 text-white text-center">
               <div className="text-4xl mb-3">🎉</div>
               <h3 className="text-xl font-bold mb-2">Modul abgeschlossen!</h3>
               <p className="text-blue-100 mb-4">
-                Sie haben {totalScore} Punkte erreicht
-                {bonusScore > 0 && <span> (+{bonusScore} Bonus)</span>}
+                Sie haben {totalScore} Punkte erreicht{bonusScore > 0 && <span> (+{bonusScore} Bonus)</span>}
               </p>
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="px-6 py-2 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50"
-              >
+              <button onClick={() => router.push('/dashboard')} className="px-6 py-2 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50">
                 Weiter zum nächsten Modul
               </button>
             </div>
@@ -363,18 +333,16 @@ export default function GrundlagenPage() {
         </header>
 
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-          {/* Video */}
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
             <div className="bg-blue-50 p-4 border-b">
               <div className="flex items-center gap-3">
                 <Film className="h-6 w-6 text-blue-600" />
                 <div>
                   <h3 className="font-bold text-gray-900">Offizieller Erklärfilm</h3>
-                  <p className="text-sm text-gray-500">Bundesrat erklärt die Individualbesteuerung</p>
+                  <p className="text-sm text-gray-500">Bundesrat erklärt die Individualbesteuerung (3:50 Min.)</p>
                 </div>
               </div>
             </div>
-
             <div className="p-6">
               <div className="bg-gray-900 rounded-lg overflow-hidden">
                 <iframe
@@ -386,57 +354,34 @@ export default function GrundlagenPage() {
                   allowFullScreen
                 />
               </div>
-              <p className="text-sm text-gray-500 mt-3 text-center">
-                Schauen Sie das Video und beantworten Sie die Fragen in der Reihenfolge des Videos
-              </p>
             </div>
           </div>
 
-          {/* Quiz - Fragen in Video-Reihenfolge */}
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
             <div className="bg-blue-50 p-4 border-b flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">❓</span>
                 <div>
-                  <h3 className="font-bold text-gray-900">Verständnisfragen zum Video</h3>
-                  <p className="text-sm text-gray-500">In chronologischer Reihenfolge</p>
+                  <h3 className="font-bold text-gray-900">Verständnisfragen</h3>
+                  <p className="text-sm text-gray-500">4 Fragen zum Video</p>
                 </div>
               </div>
-              {completedSections.has('videoquiz') && (
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">+50P ✓</span>
-              )}
+              {videoDone && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">+50P ✓</span>}
             </div>
-
             <div className="p-6 space-y-4">
-              {/* Frage 1 - Anfang: Warum Reform? */}
+              {/* Frage 1 */}
               <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-xs text-blue-600 mb-1">📍 Video-Anfang</p>
-                <p className="font-medium text-gray-800 mb-3">
-                  1. Was ist das Ziel von Bundesrat und Parlament?
-                </p>
+                <p className="text-xs text-blue-600 mb-1">📍 0:13</p>
+                <p className="font-medium text-gray-800 mb-3">1. Was ist das Ziel von Bundesrat und Parlament?</p>
                 <div className="space-y-2">
-                  {[
-                    'Paare sollen vom Zivilstand steuerlich profitieren',
-                    'Paare sollen nicht vom Zivilstand steuerlich profitieren oder benachteiligt werden',
-                    'Alle sollen mehr Steuern zahlen',
-                    'Nur Verheiratete sollen Steuererklärungen ausfüllen'
-                  ].map(opt => {
+                  {['Paare sollen vom Zivilstand steuerlich profitieren', 'Paare sollen nicht vom Zivilstand steuerlich profitieren oder benachteiligt werden', 'Alle sollen mehr Steuern zahlen', 'Nur Verheiratete sollen Steuererklärungen ausfüllen'].map(opt => {
                     const isSelected = quizAnswers.q1 === opt
                     const correct = 'Paare sollen nicht vom Zivilstand steuerlich profitieren oder benachteiligt werden'
                     const isCorrect = quizSubmitted && opt === correct
                     const isWrong = quizSubmitted && isSelected && opt !== correct
                     return (
-                      <button
-                        key={opt}
-                        onClick={() => !quizSubmitted && setQuizAnswers({...quizAnswers, q1: opt})}
-                        disabled={quizSubmitted}
-                        className={`w-full p-2 rounded-lg text-sm font-medium text-left transition-all ${
-                          isCorrect ? 'bg-green-500 text-white' :
-                          isWrong ? 'bg-red-500 text-white' :
-                          isSelected ? 'bg-blue-500 text-white' :
-                          'bg-white border border-gray-300 hover:border-blue-400'
-                        }`}
-                      >
+                      <button key={opt} onClick={() => !quizSubmitted && setQuizAnswers({...quizAnswers, q1: opt})} disabled={quizSubmitted}
+                        className={`w-full p-2 rounded-lg text-sm font-medium text-left transition-all ${isCorrect ? 'bg-green-500 text-white' : isWrong ? 'bg-red-500 text-white' : isSelected ? 'bg-blue-500 text-white' : 'bg-white border border-gray-300 hover:border-blue-400'}`}>
                         {opt}
                       </button>
                     )
@@ -444,12 +389,10 @@ export default function GrundlagenPage() {
                 </div>
               </div>
 
-              {/* Frage 2 - Mitte: Kinderabzug */}
+              {/* Frage 2 */}
               <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-xs text-blue-600 mb-1">📍 Video-Mitte</p>
-                <p className="font-medium text-gray-800 mb-3">
-                  2. Wie hoch würde der Kinderabzug bei der direkten Bundessteuer erhöht?
-                </p>
+                <p className="text-xs text-blue-600 mb-1">📍 2:00</p>
+                <p className="font-medium text-gray-800 mb-3">2. Wie hoch würde der Kinderabzug bei der direkten Bundessteuer erhöht?</p>
                 <div className="grid grid-cols-2 gap-2">
                   {['Auf 8\'000 Fr.', 'Auf 10\'000 Fr.', 'Auf 12\'000 Fr.', 'Auf 15\'000 Fr.'].map(opt => {
                     const isSelected = quizAnswers.q2 === opt
@@ -457,17 +400,8 @@ export default function GrundlagenPage() {
                     const isCorrect = quizSubmitted && opt === correct
                     const isWrong = quizSubmitted && isSelected && opt !== correct
                     return (
-                      <button
-                        key={opt}
-                        onClick={() => !quizSubmitted && setQuizAnswers({...quizAnswers, q2: opt})}
-                        disabled={quizSubmitted}
-                        className={`p-2 rounded-lg text-sm font-medium transition-all ${
-                          isCorrect ? 'bg-green-500 text-white' :
-                          isWrong ? 'bg-red-500 text-white' :
-                          isSelected ? 'bg-blue-500 text-white' :
-                          'bg-white border border-gray-300 hover:border-blue-400'
-                        }`}
-                      >
+                      <button key={opt} onClick={() => !quizSubmitted && setQuizAnswers({...quizAnswers, q2: opt})} disabled={quizSubmitted}
+                        className={`p-2 rounded-lg text-sm font-medium transition-all ${isCorrect ? 'bg-green-500 text-white' : isWrong ? 'bg-red-500 text-white' : isSelected ? 'bg-blue-500 text-white' : 'bg-white border border-gray-300 hover:border-blue-400'}`}>
                         {opt}
                       </button>
                     )
@@ -475,61 +409,39 @@ export default function GrundlagenPage() {
                 </div>
               </div>
 
-              {/* Frage 3 - Mitte: Steuererklärungen */}
+              {/* Frage 3 */}
               <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-xs text-blue-600 mb-1">📍 Video-Mitte</p>
-                <p className="font-medium text-gray-800 mb-3">
-                  3. Wie viele zusätzliche Steuererklärungen würde es geben?
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {['500\'000', '1,7 Millionen', '3 Millionen', '140\'000'].map(opt => {
-                    const isSelected = quizAnswers.q3 === opt
-                    const correct = '1,7 Millionen'
-                    const isCorrect = quizSubmitted && opt === correct
-                    const isWrong = quizSubmitted && isSelected && opt !== correct
-                    return (
-                      <button
-                        key={opt}
-                        onClick={() => !quizSubmitted && setQuizAnswers({...quizAnswers, q3: opt})}
-                        disabled={quizSubmitted}
-                        className={`p-2 rounded-lg text-sm font-medium transition-all ${
-                          isCorrect ? 'bg-green-500 text-white' :
-                          isWrong ? 'bg-red-500 text-white' :
-                          isSelected ? 'bg-blue-500 text-white' :
-                          'bg-white border border-gray-300 hover:border-blue-400'
-                        }`}
-                      >
-                        {opt}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Frage 4 - Ende: Steuerausfälle */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-xs text-blue-600 mb-1">📍 Video-Ende</p>
-                <p className="font-medium text-gray-800 mb-3">
-                  4. Wie hoch wären die geschätzten jährlichen Steuerausfälle beim Bund?
-                </p>
+                <p className="text-xs text-blue-600 mb-1">📍 2:17</p>
+                <p className="font-medium text-gray-800 mb-3">3. Wie hoch wären die geschätzten jährlichen Steuerausfälle beim Bund?</p>
                 <div className="grid grid-cols-2 gap-2">
                   {['200 Mio. Fr.', '450 Mio. Fr.', '630 Mio. Fr.', '1 Mrd. Fr.'].map(opt => {
-                    const isSelected = quizAnswers.q4 === opt
+                    const isSelected = quizAnswers.q3 === opt
                     const correct = '630 Mio. Fr.'
                     const isCorrect = quizSubmitted && opt === correct
                     const isWrong = quizSubmitted && isSelected && opt !== correct
                     return (
-                      <button
-                        key={opt}
-                        onClick={() => !quizSubmitted && setQuizAnswers({...quizAnswers, q4: opt})}
-                        disabled={quizSubmitted}
-                        className={`p-2 rounded-lg text-sm font-medium transition-all ${
-                          isCorrect ? 'bg-green-500 text-white' :
-                          isWrong ? 'bg-red-500 text-white' :
-                          isSelected ? 'bg-blue-500 text-white' :
-                          'bg-white border border-gray-300 hover:border-blue-400'
-                        }`}
-                      >
+                      <button key={opt} onClick={() => !quizSubmitted && setQuizAnswers({...quizAnswers, q3: opt})} disabled={quizSubmitted}
+                        className={`p-2 rounded-lg text-sm font-medium transition-all ${isCorrect ? 'bg-green-500 text-white' : isWrong ? 'bg-red-500 text-white' : isSelected ? 'bg-blue-500 text-white' : 'bg-white border border-gray-300 hover:border-blue-400'}`}>
+                        {opt}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Frage 4 */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-xs text-blue-600 mb-1">📍 2:59</p>
+                <p className="font-medium text-gray-800 mb-3">4. Wie viele zusätzliche Steuererklärungen würde es geben?</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {['500\'000', '1,7 Millionen', '3 Millionen', '140\'000'].map(opt => {
+                    const isSelected = quizAnswers.q4 === opt
+                    const correct = '1,7 Millionen'
+                    const isCorrect = quizSubmitted && opt === correct
+                    const isWrong = quizSubmitted && isSelected && opt !== correct
+                    return (
+                      <button key={opt} onClick={() => !quizSubmitted && setQuizAnswers({...quizAnswers, q4: opt})} disabled={quizSubmitted}
+                        className={`p-2 rounded-lg text-sm font-medium transition-all ${isCorrect ? 'bg-green-500 text-white' : isWrong ? 'bg-red-500 text-white' : isSelected ? 'bg-blue-500 text-white' : 'bg-white border border-gray-300 hover:border-blue-400'}`}>
                         {opt}
                       </button>
                     )
@@ -538,44 +450,23 @@ export default function GrundlagenPage() {
               </div>
 
               {!quizSubmitted && quizAnswers.q1 && quizAnswers.q2 && quizAnswers.q3 && quizAnswers.q4 && (
-                <button
-                  onClick={() => {
-                    setQuizSubmitted(true)
-                    if (!completedSections.has('videoquiz')) {
-                      completeSection('videoquiz', 50)
-                    }
-                  }}
-                  className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold"
-                >
+                <button onClick={() => { setQuizSubmitted(true); completeSection('videoquiz', 50) }}
+                  className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold">
                   Antworten prüfen
                 </button>
               )}
-
               {quizSubmitted && (
                 <div className="p-4 bg-green-100 rounded-lg text-green-800">
-                  <strong>✓ Verständnisfragen abgeschlossen!</strong>
-                  <p className="text-sm mt-1">
-                    Der Kinderabzug steigt auf 12'000 Fr., es gäbe 1,7 Mio. zusätzliche Steuererklärungen,
-                    und die Steuerausfälle betragen ca. 630 Mio. Fr. pro Jahr.
-                  </p>
+                  <strong>✓ Verständnisfragen abgeschlossen! +50 Punkte</strong>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Navigation */}
           <div className="flex justify-between">
-            <button
-              onClick={() => setActiveChapter(null)}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
-            >
-              ← Zurück zur Übersicht
-            </button>
-            <button
-              onClick={() => setActiveChapter('quiz')}
-              className="px-6 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg font-semibold"
-            >
-              Weiter zu Kapitel 2 →
+            <button onClick={() => setActiveChapter(null)} className="px-4 py-2 text-gray-600 hover:text-gray-800">← Übersicht</button>
+            <button onClick={() => setActiveChapter('audio')} className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold flex items-center gap-2">
+              <Radio className="h-4 w-4" /> Kapitel 2: Audio →
             </button>
           </div>
         </main>
@@ -583,160 +474,8 @@ export default function GrundlagenPage() {
     )
   }
 
-  // ========== CHAPTER: QUIZ (Wer profitiert) ==========
-  if (activeChapter === 'quiz') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
-        <header className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white sticky top-0 z-10">
-          <div className="max-w-4xl mx-auto px-4 py-3">
-            <div className="flex items-center justify-between">
-              <button onClick={() => setActiveChapter(null)} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
-                <ArrowLeft className="h-5 w-5" /><span>Übersicht</span>
-              </button>
-              <div className="flex items-center gap-2 text-sm bg-white/20 px-3 py-1 rounded-full">
-                <Award className="h-4 w-4" />
-                <span className="font-semibold">{totalScore} / {maxPoints}</span>
-              </div>
-            </div>
-            <h1 className="text-xl font-bold mt-2">Kapitel 2: Wer profitiert?</h1>
-          </div>
-        </header>
-
-        <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-          {/* Info */}
-          <div className="bg-white rounded-xl p-6 shadow-sm">
-            <p className="text-gray-700">
-              Die Individualbesteuerung würde verschiedene Gruppen unterschiedlich treffen.
-              Ordnen Sie zu, wer tendenziell <strong>mehr</strong> und wer <strong>weniger</strong> Steuern zahlen würde.
-            </p>
-          </div>
-
-          {/* Matching Exercise */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="bg-indigo-50 p-4 border-b flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">🎯</span>
-                <div>
-                  <h3 className="font-bold text-gray-900">Zuordnung: Steuerliche Auswirkungen</h3>
-                  <p className="text-sm text-gray-500">Wer würde mehr, wer weniger zahlen?</p>
-                </div>
-              </div>
-              {completedSections.has('matching') && (
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">+50P ✓</span>
-              )}
-            </div>
-
-            <div className="p-6">
-              <div className="space-y-3">
-                {[
-                  { group: 'Doppelverdiener-Ehepaar mit ähnlichem Einkommen', correct: 'weniger', hint: 'Die Heiratsstrafe fällt weg' },
-                  { group: 'Einverdiener-Ehepaar mit Kindern', correct: 'mehr', hint: 'Trotz höherem Kinderabzug' },
-                  { group: 'Unverheiratete mit tiefem/mittlerem Einkommen', correct: 'weniger', hint: 'Durch neue Tarife' },
-                  { group: 'Gutverdienende Doppelverdiener (verheiratet)', correct: 'weniger', hint: 'Profitieren am meisten' },
-                  { group: 'Ehepaar mit sehr ungleich verteiltem Einkommen', correct: 'mehr', hint: 'Verlieren den Splitting-Vorteil' },
-                ].map((item, idx) => {
-                  const answer = matchingAnswers[`m${idx}`]
-                  const isCorrect = matchingSubmitted && answer === item.correct
-                  const isWrong = matchingSubmitted && answer && answer !== item.correct
-
-                  return (
-                    <div key={idx} className={`p-4 rounded-lg border ${
-                      isCorrect ? 'border-green-400 bg-green-50' :
-                      isWrong ? 'border-red-400 bg-red-50' :
-                      'border-gray-200 bg-white'
-                    }`}>
-                      <p className="font-medium text-gray-800 mb-2">{item.group}</p>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => !matchingSubmitted && setMatchingAnswers({...matchingAnswers, [`m${idx}`]: 'weniger'})}
-                          disabled={matchingSubmitted}
-                          className={`flex-1 py-2 px-3 rounded text-sm font-medium flex items-center justify-center gap-1 ${
-                            answer === 'weniger'
-                              ? matchingSubmitted
-                                ? item.correct === 'weniger' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-                                : 'bg-indigo-500 text-white'
-                              : matchingSubmitted && item.correct === 'weniger'
-                                ? 'bg-green-200 text-green-800'
-                                : 'bg-gray-100 hover:bg-gray-200'
-                          }`}
-                        >
-                          <ThumbsUp className="h-4 w-4" /> Weniger Steuern
-                        </button>
-                        <button
-                          onClick={() => !matchingSubmitted && setMatchingAnswers({...matchingAnswers, [`m${idx}`]: 'mehr'})}
-                          disabled={matchingSubmitted}
-                          className={`flex-1 py-2 px-3 rounded text-sm font-medium flex items-center justify-center gap-1 ${
-                            answer === 'mehr'
-                              ? matchingSubmitted
-                                ? item.correct === 'mehr' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-                                : 'bg-indigo-500 text-white'
-                              : matchingSubmitted && item.correct === 'mehr'
-                                ? 'bg-green-200 text-green-800'
-                                : 'bg-gray-100 hover:bg-gray-200'
-                          }`}
-                        >
-                          <ThumbsDown className="h-4 w-4" /> Mehr Steuern
-                        </button>
-                      </div>
-                      {matchingSubmitted && (
-                        <p className="text-xs text-gray-500 mt-2 italic">{item.hint}</p>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-
-              {!matchingSubmitted && Object.keys(matchingAnswers).length >= 5 && (
-                <button
-                  onClick={() => {
-                    setMatchingSubmitted(true)
-                    if (!completedSections.has('matching')) {
-                      completeSection('matching', 50)
-                    }
-                  }}
-                  className="mt-4 w-full py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg font-semibold"
-                >
-                  Antworten prüfen
-                </button>
-              )}
-
-              {matchingSubmitted && (
-                <div className="mt-4 p-4 bg-green-100 rounded-lg text-green-800">
-                  <strong>✓ Zuordnung abgeschlossen!</strong>
-                  <p className="text-sm mt-1">
-                    Doppelverdiener mit ähnlichem Einkommen profitieren am meisten.
-                    Einverdiener-Familien und Paare mit ungleichem Einkommen würden tendenziell mehr zahlen.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <div className="flex justify-between">
-            <button
-              onClick={() => setActiveChapter('video')}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
-            >
-              ← Kapitel 1
-            </button>
-            <button
-              onClick={() => setActiveChapter('audio')}
-              className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold flex items-center gap-2"
-            >
-              <Radio className="h-4 w-4" />
-              Kapitel 3: Audio →
-            </button>
-          </div>
-        </main>
-      </div>
-    )
-  }
-
-  // ========== CHAPTER: AUDIO (Pflicht + Bonus) ==========
+  // ========== CHAPTER: AUDIO ==========
   if (activeChapter === 'audio') {
-    const firstAudioDone = completedSections.has('audio_first')
-    const bonusAudioDone = completedSections.has('audio_bonus')
     const otherAudio = getOtherAudio()
 
     return (
@@ -754,441 +493,136 @@ export default function GrundlagenPage() {
                 </div>
                 {bonusScore > 0 && (
                   <div className="flex items-center gap-1 text-sm bg-yellow-400/30 px-2 py-1 rounded-full">
-                    <Star className="h-3 w-3" />
-                    <span className="text-xs">+{bonusScore}</span>
+                    <Star className="h-3 w-3" /><span className="text-xs">+{bonusScore}</span>
                   </div>
                 )}
               </div>
             </div>
-            <h1 className="text-xl font-bold mt-2">Kapitel 3: SRF Radio-Beiträge</h1>
+            <h1 className="text-xl font-bold mt-2">Kapitel 2: SRF Radio-Beiträge</h1>
           </div>
         </header>
 
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-          {/* Info */}
           <div className="bg-white rounded-xl p-6 shadow-sm border-2 border-red-200">
             <div className="flex items-start gap-3">
               <Radio className="h-6 w-6 text-red-500 mt-0.5" />
               <div>
                 <h3 className="font-bold text-gray-900 mb-2">So funktioniert's</h3>
                 <div className="space-y-2 text-sm text-gray-700">
-                  <p><strong>1. Pflicht (50 Punkte):</strong> Wählen Sie einen der zwei Beiträge, hören Sie ihn an und beantworten Sie die Fragen.</p>
-                  <p><strong>2. Bonus (+30 Punkte):</strong> Nach dem ersten Beitrag können Sie optional den zweiten anhören für Extra-Punkte.</p>
+                  <p><strong>1. Pflicht (50 Punkte):</strong> Wählen Sie einen Beitrag und hören Sie ihn <strong>vollständig</strong> an (mind. 90%).</p>
+                  <p><strong>2. Bonus (+30 Punkte):</strong> Hören Sie optional den zweiten Beitrag für Extra-Punkte.</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* PFLICHT: Audio-Auswahl (wenn noch nicht gewählt) */}
+          {/* AUDIO AUSWAHL */}
           {!selectedAudio && !firstAudioDone && (
             <div className="space-y-4">
               <h3 className="font-bold text-gray-900 text-center text-lg">Wählen Sie einen Beitrag (Pflicht):</h3>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Echo der Zeit */}
-                <button
-                  onClick={() => setSelectedAudio('echo')}
-                  className="p-6 rounded-xl border-2 border-red-200 bg-white hover:border-red-400 hover:shadow-md text-left transition-all"
-                >
+                <button onClick={() => setSelectedAudio('rendezvous')}
+                  className="p-6 rounded-xl border-2 border-red-200 bg-white hover:border-red-400 hover:shadow-md text-left transition-all">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="bg-red-600 p-3 rounded-lg">
-                      <Volume2 className="h-6 w-6 text-white" />
+                    <div className="bg-red-600 p-3 rounded-lg"><Volume2 className="h-6 w-6 text-white" /></div>
+                    <div>
+                      <p className="font-bold text-gray-900">SRF Rendez-vous</p>
+                      <p className="text-sm text-gray-500">ca. 4 Minuten</p>
                     </div>
+                  </div>
+                  <p className="text-gray-700 text-sm"><strong>Thema:</strong> Was ändert sich? Wer profitiert, wer verliert?</p>
+                  <p className="text-xs text-indigo-600 mt-2 font-medium">+ Aufgabe: Zuordnung "Wer profitiert?"</p>
+                </button>
+
+                <button onClick={() => setSelectedAudio('echo')}
+                  className="p-6 rounded-xl border-2 border-red-200 bg-white hover:border-red-400 hover:shadow-md text-left transition-all">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="bg-red-600 p-3 rounded-lg"><Volume2 className="h-6 w-6 text-white" /></div>
                     <div>
                       <p className="font-bold text-gray-900">SRF Echo der Zeit</p>
                       <p className="text-sm text-gray-500">ca. 5 Minuten</p>
                     </div>
                   </div>
-                  <p className="text-gray-700 text-sm">
-                    <strong>Thema:</strong> Konservative Allianz lehnt Individualbesteuerung ab – Argumente der Gegner
-                  </p>
-                </button>
-
-                {/* Trend */}
-                <button
-                  onClick={() => setSelectedAudio('rendezvous')}
-                  className="p-6 rounded-xl border-2 border-red-200 bg-white hover:border-red-400 hover:shadow-md text-left transition-all"
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="bg-red-600 p-3 rounded-lg">
-                      <Volume2 className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-gray-900">SRF Trend</p>
-                      <p className="text-sm text-gray-500">ca. 25 Minuten</p>
-                    </div>
-                  </div>
-                  <p className="text-gray-700 text-sm">
-                    <strong>Thema:</strong> Warum (nicht) heiraten? Steuerliche Nachteile für junge Paare
-                  </p>
+                  <p className="text-gray-700 text-sm"><strong>Thema:</strong> Auswirkungen auf den Arbeitsmarkt</p>
+                  <p className="text-xs text-indigo-600 mt-2 font-medium">+ Aufgabe: Fragen zum Arbeitsmarkt</p>
                 </button>
               </div>
             </div>
           )}
 
-          {/* ERSTES AUDIO: Echo der Zeit */}
-          {selectedAudio === 'echo' && !firstAudioDone && (
-            <div className="space-y-6">
-              <button
-                onClick={() => setSelectedAudio(null)}
-                className="text-sm text-gray-500 hover:text-gray-700"
-              >
-                ← Andere Auswahl treffen
-              </button>
-
-              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                <div className="bg-red-50 p-4 border-b">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-red-600 p-2 rounded-lg">
-                      <Volume2 className="h-5 w-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900">SRF Echo der Zeit</h3>
-                      <p className="text-sm text-gray-500">Konservative Allianz gegen Individualbesteuerung</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-6">
-                  {/* Audio Player - SRF Embed */}
-                  <div className="bg-gray-100 rounded-lg p-4 mb-4">
-                    <p className="text-sm text-gray-600 mb-3">
-                      🎧 Hören Sie den Beitrag auf SRF.ch:
-                    </p>
-                    <a
-                      href="https://www.srf.ch/audio/echo-der-zeit/konservative-allianz-lehnt-individualbesteuerung-ab?id=AUDI20250703_RS_0064"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                    >
-                      <Play className="h-4 w-4" />
-                      Beitrag auf SRF.ch öffnen
-                    </a>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Dauer: ca. 5 Minuten
-                    </p>
-                  </div>
-
-                  {/* Bestätigung dass angehört */}
-                  {!audioConfirmed && (
-                    <button
-                      onClick={() => setAudioConfirmed(true)}
-                      className="w-full py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors"
-                    >
-                      ✓ Ich habe den Beitrag angehört
-                    </button>
-                  )}
-
-                  {/* Fragen nach Bestätigung */}
-                  {audioConfirmed && (
-                    <div className="space-y-4 mt-6">
-                      <h4 className="font-bold text-gray-900">Fragen zum Beitrag:</h4>
-
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <p className="text-xs text-red-600 mb-1">📍 Beitrag-Anfang</p>
-                        <p className="font-medium text-gray-800 mb-3">
-                          1. Welche Parteien haben das Referendum lanciert?
-                        </p>
-                        <div className="space-y-2">
-                          {[
-                            'FDP, SP, Grüne, GLP',
-                            'Mitte, EVP, SVP, EDU',
-                            'Nur die SVP',
-                            'Alle Parteien gemeinsam'
-                          ].map(opt => {
-                            const isSelected = audioQuizAnswers.q1 === opt
-                            const correct = 'Mitte, EVP, SVP, EDU'
-                            const isCorrect = audioQuizSubmitted && opt === correct
-                            const isWrong = audioQuizSubmitted && isSelected && opt !== correct
-                            return (
-                              <button
-                                key={opt}
-                                onClick={() => !audioQuizSubmitted && setAudioQuizAnswers({...audioQuizAnswers, q1: opt})}
-                                disabled={audioQuizSubmitted}
-                                className={`w-full p-2 rounded-lg text-sm font-medium text-left transition-all ${
-                                  isCorrect ? 'bg-green-500 text-white' :
-                                  isWrong ? 'bg-red-500 text-white' :
-                                  isSelected ? 'bg-red-500 text-white' :
-                                  'bg-white border border-gray-300 hover:border-red-400'
-                                }`}
-                              >
-                                {opt}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <p className="text-xs text-red-600 mb-1">📍 Beitrag-Mitte</p>
-                        <p className="font-medium text-gray-800 mb-3">
-                          2. Was kritisieren die Gegner an der Reform?
-                        </p>
-                        <div className="space-y-2">
-                          {[
-                            'Sie ist zu günstig für den Staat',
-                            'Sie schafft neue Ungleichheiten und ist ein Bürokratiemonster',
-                            'Sie benachteiligt nur Ledige',
-                            'Sie wurde zu schnell beschlossen'
-                          ].map(opt => {
-                            const isSelected = audioQuizAnswers.q2 === opt
-                            const correct = 'Sie schafft neue Ungleichheiten und ist ein Bürokratiemonster'
-                            const isCorrect = audioQuizSubmitted && opt === correct
-                            const isWrong = audioQuizSubmitted && isSelected && opt !== correct
-                            return (
-                              <button
-                                key={opt}
-                                onClick={() => !audioQuizSubmitted && setAudioQuizAnswers({...audioQuizAnswers, q2: opt})}
-                                disabled={audioQuizSubmitted}
-                                className={`w-full p-2 rounded-lg text-sm font-medium text-left transition-all ${
-                                  isCorrect ? 'bg-green-500 text-white' :
-                                  isWrong ? 'bg-red-500 text-white' :
-                                  isSelected ? 'bg-red-500 text-white' :
-                                  'bg-white border border-gray-300 hover:border-red-400'
-                                }`}
-                              >
-                                {opt}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <p className="text-xs text-red-600 mb-1">📍 Beitrag-Ende</p>
-                        <p className="font-medium text-gray-800 mb-3">
-                          3. Wie viele Kantone haben das Referendum unterstützt?
-                        </p>
-                        <div className="grid grid-cols-2 gap-2">
-                          {['5 Kantone', '10 Kantone', '15 Kantone', '20 Kantone'].map(opt => {
-                            const isSelected = audioQuizAnswers.q3 === opt
-                            const correct = '10 Kantone'
-                            const isCorrect = audioQuizSubmitted && opt === correct
-                            const isWrong = audioQuizSubmitted && isSelected && opt !== correct
-                            return (
-                              <button
-                                key={opt}
-                                onClick={() => !audioQuizSubmitted && setAudioQuizAnswers({...audioQuizAnswers, q3: opt})}
-                                disabled={audioQuizSubmitted}
-                                className={`p-2 rounded-lg text-sm font-medium transition-all ${
-                                  isCorrect ? 'bg-green-500 text-white' :
-                                  isWrong ? 'bg-red-500 text-white' :
-                                  isSelected ? 'bg-red-500 text-white' :
-                                  'bg-white border border-gray-300 hover:border-red-400'
-                                }`}
-                              >
-                                {opt}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-
-                      {!audioQuizSubmitted && audioQuizAnswers.q1 && audioQuizAnswers.q2 && audioQuizAnswers.q3 && (
-                        <button
-                          onClick={() => {
-                            setAudioQuizSubmitted(true)
-                            completeSection('audio_first', 50)
-                          }}
-                          className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold"
-                        >
-                          Antworten prüfen (+50 Punkte)
-                        </button>
-                      )}
-
-                      {audioQuizSubmitted && (
-                        <div className="p-4 bg-green-100 rounded-lg text-green-800">
-                          <strong>✓ Pflicht-Audio abgeschlossen! +50 Punkte</strong>
-                          <p className="text-sm mt-1">
-                            Das Referendum wurde von Mitte, EVP, SVP und EDU sowie 10 Kantonen unterstützt.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ERSTES AUDIO: Trend/Rendezvous */}
+          {/* RENDEZ-VOUS */}
           {selectedAudio === 'rendezvous' && !firstAudioDone && (
             <div className="space-y-6">
-              <button
-                onClick={() => setSelectedAudio(null)}
-                className="text-sm text-gray-500 hover:text-gray-700"
-              >
-                ← Andere Auswahl treffen
-              </button>
-
+              <button onClick={() => setSelectedAudio(null)} className="text-sm text-gray-500 hover:text-gray-700">← Andere Auswahl</button>
               <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                 <div className="bg-red-50 p-4 border-b">
                   <div className="flex items-center gap-3">
-                    <div className="bg-red-600 p-2 rounded-lg">
-                      <Volume2 className="h-5 w-5 text-white" />
-                    </div>
+                    <div className="bg-red-600 p-2 rounded-lg"><Volume2 className="h-5 w-5 text-white" /></div>
                     <div>
-                      <h3 className="font-bold text-gray-900">SRF Trend</h3>
-                      <p className="text-sm text-gray-500">Warum (nicht) heiraten?</p>
+                      <h3 className="font-bold text-gray-900">SRF Rendez-vous</h3>
+                      <p className="text-sm text-gray-500">Was ändert sich, wer profitiert, wer verliert?</p>
                     </div>
                   </div>
                 </div>
-
                 <div className="p-6">
-                  {/* Audio Player - SRF Embed */}
                   <div className="bg-gray-100 rounded-lg p-4 mb-4">
-                    <p className="text-sm text-gray-600 mb-3">
-                      🎧 Hören Sie den Beitrag auf SRF.ch:
-                    </p>
-                    <a
-                      href="https://www.srf.ch/audio/trend/individualbesteuerung-warum-nicht-heiraten?id=AUDI20250502_NR_0023"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                    >
-                      <Play className="h-4 w-4" />
-                      Beitrag auf SRF.ch öffnen
-                    </a>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Dauer: ca. 25 Minuten (Sie können auch nur die ersten 10 Min. hören)
-                    </p>
+                    <audio ref={audioRef} controls className="w-full" onTimeUpdate={() => handleAudioTimeUpdate(false)} onEnded={() => handleAudioEnded(false)}>
+                      <source src="https://www.srf.ch/play/radio/redirect/detail/0a5f5262-293a-3556-bdf1-9ede96808d61" type="audio/mpeg" />
+                    </audio>
+                    <div className="mt-3">
+                      <div className="flex justify-between text-xs text-gray-500 mb-1">
+                        <span>Fortschritt</span><span>{Math.round(audioProgress)}%</span>
+                      </div>
+                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div className={`h-full transition-all ${audioProgress >= 90 ? 'bg-green-500' : 'bg-red-500'}`} style={{ width: `${audioProgress}%` }} />
+                      </div>
+                      {audioProgress < 90 && <p className="text-xs text-orange-600 mt-1">⚠️ Hören Sie mindestens 90% an</p>}
+                      {audioListened && <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Audio vollständig!</p>}
+                    </div>
                   </div>
 
-                  {/* Bestätigung dass angehört */}
-                  {!audioConfirmed && (
-                    <button
-                      onClick={() => setAudioConfirmed(true)}
-                      className="w-full py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors"
-                    >
-                      ✓ Ich habe den Beitrag angehört
-                    </button>
-                  )}
-
-                  {/* Fragen nach Bestätigung */}
-                  {audioConfirmed && (
+                  {audioListened && (
                     <div className="space-y-4 mt-6">
-                      <h4 className="font-bold text-gray-900">Fragen zum Beitrag:</h4>
-
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <p className="text-xs text-red-600 mb-1">📍 Beitrag-Anfang</p>
-                        <p className="font-medium text-gray-800 mb-3">
-                          1. Wie viel mehr Steuern würde das Beispielpaar Camille und Tristan pro Jahr zahlen, wenn sie heiraten?
-                        </p>
-                        <div className="grid grid-cols-2 gap-2">
-                          {['ca. 2\'000 Fr.', 'ca. 5\'000 Fr.', 'ca. 10\'000 Fr.', 'ca. 20\'000 Fr.'].map(opt => {
-                            const isSelected = audioQuizAnswers.q1 === opt
-                            const correct = 'ca. 10\'000 Fr.'
-                            const isCorrect = audioQuizSubmitted && opt === correct
-                            const isWrong = audioQuizSubmitted && isSelected && opt !== correct
-                            return (
-                              <button
-                                key={opt}
-                                onClick={() => !audioQuizSubmitted && setAudioQuizAnswers({...audioQuizAnswers, q1: opt})}
-                                disabled={audioQuizSubmitted}
-                                className={`p-2 rounded-lg text-sm font-medium transition-all ${
-                                  isCorrect ? 'bg-green-500 text-white' :
-                                  isWrong ? 'bg-red-500 text-white' :
-                                  isSelected ? 'bg-red-500 text-white' :
-                                  'bg-white border border-gray-300 hover:border-red-400'
-                                }`}
-                              >
-                                {opt}
-                              </button>
-                            )
-                          })}
-                        </div>
+                      <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                        <h4 className="font-bold text-gray-900">🎯 Aufgabe: Wer profitiert?</h4>
+                        <p className="text-sm text-gray-600 mt-1">Ordnen Sie zu, wer mehr und wer weniger Steuern zahlen würde.</p>
                       </div>
-
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <p className="text-xs text-red-600 mb-1">📍 Beitrag-Mitte</p>
-                        <p className="font-medium text-gray-800 mb-3">
-                          2. Welche Paare werden durch das aktuelle System benachteiligt?
-                        </p>
-                        <div className="space-y-2">
-                          {[
-                            'Paare mit nur einem Einkommen',
-                            'Doppelverdiener-Ehepaare mit ähnlich hohem Einkommen',
-                            'Unverheiratete Paare',
-                            'Rentner-Ehepaare'
-                          ].map(opt => {
-                            const isSelected = audioQuizAnswers.q2 === opt
-                            const correct = 'Doppelverdiener-Ehepaare mit ähnlich hohem Einkommen'
-                            const isCorrect = audioQuizSubmitted && opt === correct
-                            const isWrong = audioQuizSubmitted && isSelected && opt !== correct
-                            return (
-                              <button
-                                key={opt}
-                                onClick={() => !audioQuizSubmitted && setAudioQuizAnswers({...audioQuizAnswers, q2: opt})}
-                                disabled={audioQuizSubmitted}
-                                className={`w-full p-2 rounded-lg text-sm font-medium text-left transition-all ${
-                                  isCorrect ? 'bg-green-500 text-white' :
-                                  isWrong ? 'bg-red-500 text-white' :
-                                  isSelected ? 'bg-red-500 text-white' :
-                                  'bg-white border border-gray-300 hover:border-red-400'
-                                }`}
-                              >
-                                {opt}
-                              </button>
-                            )
-                          })}
-                        </div>
+                      <div className="space-y-3">
+                        {[
+                          { group: 'Doppelverdiener-Ehepaar mit ähnlichem Einkommen', correct: 'weniger', hint: 'Die Heiratsstrafe fällt weg' },
+                          { group: 'Einverdiener-Ehepaar', correct: 'mehr', hint: 'Verlieren den Splitting-Vorteil' },
+                          { group: 'Unverheiratete mit niedrigem/mittlerem Einkommen', correct: 'weniger', hint: 'Durch neue Tarife' },
+                          { group: 'Gutverdienende Doppelverdiener (verheiratet)', correct: 'weniger', hint: 'Profitieren am meisten' },
+                          { group: 'Ehepaar mit sehr ungleich verteiltem Einkommen', correct: 'mehr', hint: 'Besonders mit Kindern' },
+                        ].map((item, idx) => {
+                          const answer = matchingAnswers[`m${idx}`]
+                          const isCorrect = matchingSubmitted && answer === item.correct
+                          const isWrong = matchingSubmitted && answer && answer !== item.correct
+                          return (
+                            <div key={idx} className={`p-4 rounded-lg border ${isCorrect ? 'border-green-400 bg-green-50' : isWrong ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-white'}`}>
+                              <p className="font-medium text-gray-800 mb-2">{item.group}</p>
+                              <div className="flex gap-2">
+                                <button onClick={() => !matchingSubmitted && setMatchingAnswers({...matchingAnswers, [`m${idx}`]: 'weniger'})} disabled={matchingSubmitted}
+                                  className={`flex-1 py-2 px-3 rounded text-sm font-medium flex items-center justify-center gap-1 ${answer === 'weniger' ? (matchingSubmitted ? (item.correct === 'weniger' ? 'bg-green-500 text-white' : 'bg-red-500 text-white') : 'bg-indigo-500 text-white') : (matchingSubmitted && item.correct === 'weniger' ? 'bg-green-200 text-green-800' : 'bg-gray-100 hover:bg-gray-200')}`}>
+                                  <ThumbsUp className="h-4 w-4" /> Weniger
+                                </button>
+                                <button onClick={() => !matchingSubmitted && setMatchingAnswers({...matchingAnswers, [`m${idx}`]: 'mehr'})} disabled={matchingSubmitted}
+                                  className={`flex-1 py-2 px-3 rounded text-sm font-medium flex items-center justify-center gap-1 ${answer === 'mehr' ? (matchingSubmitted ? (item.correct === 'mehr' ? 'bg-green-500 text-white' : 'bg-red-500 text-white') : 'bg-indigo-500 text-white') : (matchingSubmitted && item.correct === 'mehr' ? 'bg-green-200 text-green-800' : 'bg-gray-100 hover:bg-gray-200')}`}>
+                                  <ThumbsDown className="h-4 w-4" /> Mehr
+                                </button>
+                              </div>
+                              {matchingSubmitted && <p className="text-xs text-gray-500 mt-2 italic">{item.hint}</p>}
+                            </div>
+                          )
+                        })}
                       </div>
-
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <p className="text-xs text-red-600 mb-1">📍 Beitrag-Ende</p>
-                        <p className="font-medium text-gray-800 mb-3">
-                          3. Was sind mögliche gesellschaftliche Folgen der Heiratsstrafe?
-                        </p>
-                        <div className="space-y-2">
-                          {[
-                            'Mehr Hochzeiten',
-                            'Weniger Hochzeiten und möglicherweise weniger Geburten',
-                            'Höhere Scheidungsraten',
-                            'Keine Auswirkungen'
-                          ].map(opt => {
-                            const isSelected = audioQuizAnswers.q3 === opt
-                            const correct = 'Weniger Hochzeiten und möglicherweise weniger Geburten'
-                            const isCorrect = audioQuizSubmitted && opt === correct
-                            const isWrong = audioQuizSubmitted && isSelected && opt !== correct
-                            return (
-                              <button
-                                key={opt}
-                                onClick={() => !audioQuizSubmitted && setAudioQuizAnswers({...audioQuizAnswers, q3: opt})}
-                                disabled={audioQuizSubmitted}
-                                className={`w-full p-2 rounded-lg text-sm font-medium text-left transition-all ${
-                                  isCorrect ? 'bg-green-500 text-white' :
-                                  isWrong ? 'bg-red-500 text-white' :
-                                  isSelected ? 'bg-red-500 text-white' :
-                                  'bg-white border border-gray-300 hover:border-red-400'
-                                }`}
-                              >
-                                {opt}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-
-                      {!audioQuizSubmitted && audioQuizAnswers.q1 && audioQuizAnswers.q2 && audioQuizAnswers.q3 && (
-                        <button
-                          onClick={() => {
-                            setAudioQuizSubmitted(true)
-                            completeSection('audio_first', 50)
-                          }}
-                          className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold"
-                        >
+                      {!matchingSubmitted && Object.keys(matchingAnswers).length >= 5 && (
+                        <button onClick={() => { setMatchingSubmitted(true); completeSection('audio_first', 50) }}
+                          className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold">
                           Antworten prüfen (+50 Punkte)
                         </button>
                       )}
-
-                      {audioQuizSubmitted && (
-                        <div className="p-4 bg-green-100 rounded-lg text-green-800">
-                          <strong>✓ Pflicht-Audio abgeschlossen! +50 Punkte</strong>
-                          <p className="text-sm mt-1">
-                            Die Heiratsstrafe kann dazu führen, dass Paare nicht heiraten und möglicherweise weniger Kinder bekommen.
-                          </p>
-                        </div>
-                      )}
+                      {matchingSubmitted && <div className="p-4 bg-green-100 rounded-lg text-green-800"><strong>✓ Pflicht-Audio abgeschlossen! +50 Punkte</strong></div>}
                     </div>
                   )}
                 </div>
@@ -1196,101 +630,163 @@ export default function GrundlagenPage() {
             </div>
           )}
 
-          {/* NACH ERSTEM AUDIO: Bonus-Angebot */}
+          {/* ECHO DER ZEIT */}
+          {selectedAudio === 'echo' && !firstAudioDone && (
+            <div className="space-y-6">
+              <button onClick={() => setSelectedAudio(null)} className="text-sm text-gray-500 hover:text-gray-700">← Andere Auswahl</button>
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div className="bg-red-50 p-4 border-b">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-red-600 p-2 rounded-lg"><Volume2 className="h-5 w-5 text-white" /></div>
+                    <div>
+                      <h3 className="font-bold text-gray-900">SRF Echo der Zeit</h3>
+                      <p className="text-sm text-gray-500">Auswirkungen auf den Arbeitsmarkt</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <div className="bg-gray-100 rounded-lg p-4 mb-4">
+                    <audio ref={audioRef} controls className="w-full" onTimeUpdate={() => handleAudioTimeUpdate(false)} onEnded={() => handleAudioEnded(false)}>
+                      <source src="https://www.srf.ch/play/radio/redirect/detail/3a4f8b4b-cbe9-3b28-a210-21977898e358" type="audio/mpeg" />
+                    </audio>
+                    <div className="mt-3">
+                      <div className="flex justify-between text-xs text-gray-500 mb-1">
+                        <span>Fortschritt</span><span>{Math.round(audioProgress)}%</span>
+                      </div>
+                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div className={`h-full transition-all ${audioProgress >= 90 ? 'bg-green-500' : 'bg-red-500'}`} style={{ width: `${audioProgress}%` }} />
+                      </div>
+                      {audioProgress < 90 && <p className="text-xs text-orange-600 mt-1">⚠️ Hören Sie mindestens 90% an</p>}
+                      {audioListened && <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Audio vollständig!</p>}
+                    </div>
+                  </div>
+
+                  {audioListened && (
+                    <div className="space-y-4 mt-6">
+                      <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                        <h4 className="font-bold text-gray-900">🎯 Aufgabe: Fragen zum Arbeitsmarkt</h4>
+                      </div>
+
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <p className="font-medium text-gray-800 mb-3">1. Was ist das Problem bei Doppelverdiener-Ehepaaren heute?</p>
+                        <div className="space-y-2">
+                          {['Sie zahlen weniger Steuern als Unverheiratete', 'Sie zahlen mehr Steuern als wenn sie unverheiratet zusammenleben würden', 'Sie müssen keine Steuern zahlen'].map(opt => {
+                            const isSelected = echoQuizAnswers.eq1 === opt
+                            const correct = 'Sie zahlen mehr Steuern als wenn sie unverheiratet zusammenleben würden'
+                            const isCorrect = echoQuizSubmitted && opt === correct
+                            const isWrong = echoQuizSubmitted && isSelected && opt !== correct
+                            return (
+                              <button key={opt} onClick={() => !echoQuizSubmitted && setEchoQuizAnswers({...echoQuizAnswers, eq1: opt})} disabled={echoQuizSubmitted}
+                                className={`w-full p-2 rounded-lg text-sm font-medium text-left transition-all ${isCorrect ? 'bg-green-500 text-white' : isWrong ? 'bg-red-500 text-white' : isSelected ? 'bg-red-500 text-white' : 'bg-white border border-gray-300 hover:border-red-400'}`}>
+                                {opt}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <p className="font-medium text-gray-800 mb-3">2. Wie viele neue Vollzeitstellen werden laut Studien geschätzt?</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {['5\'000 - 8\'000', '10\'000 - 20\'000', '50\'000 - 100\'000', '200\'000+'].map(opt => {
+                            const isSelected = echoQuizAnswers.eq2 === opt
+                            const correct = '10\'000 - 20\'000'
+                            const isCorrect = echoQuizSubmitted && opt === correct
+                            const isWrong = echoQuizSubmitted && isSelected && opt !== correct
+                            return (
+                              <button key={opt} onClick={() => !echoQuizSubmitted && setEchoQuizAnswers({...echoQuizAnswers, eq2: opt})} disabled={echoQuizSubmitted}
+                                className={`p-2 rounded-lg text-sm font-medium transition-all ${isCorrect ? 'bg-green-500 text-white' : isWrong ? 'bg-red-500 text-white' : isSelected ? 'bg-red-500 text-white' : 'bg-white border border-gray-300 hover:border-red-400'}`}>
+                                {opt}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <p className="font-medium text-gray-800 mb-3">3. Wie viele Frauen würden laut Schätzungen neu erwerbstätig werden?</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {['ca. 5\'000', 'ca. 11\'500', 'ca. 50\'000', 'ca. 100\'000'].map(opt => {
+                            const isSelected = echoQuizAnswers.eq3 === opt
+                            const correct = 'ca. 11\'500'
+                            const isCorrect = echoQuizSubmitted && opt === correct
+                            const isWrong = echoQuizSubmitted && isSelected && opt !== correct
+                            return (
+                              <button key={opt} onClick={() => !echoQuizSubmitted && setEchoQuizAnswers({...echoQuizAnswers, eq3: opt})} disabled={echoQuizSubmitted}
+                                className={`p-2 rounded-lg text-sm font-medium transition-all ${isCorrect ? 'bg-green-500 text-white' : isWrong ? 'bg-red-500 text-white' : isSelected ? 'bg-red-500 text-white' : 'bg-white border border-gray-300 hover:border-red-400'}`}>
+                                {opt}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+
+                      {!echoQuizSubmitted && echoQuizAnswers.eq1 && echoQuizAnswers.eq2 && echoQuizAnswers.eq3 && (
+                        <button onClick={() => { setEchoQuizSubmitted(true); completeSection('audio_first', 50) }}
+                          className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold">
+                          Antworten prüfen (+50 Punkte)
+                        </button>
+                      )}
+                      {echoQuizSubmitted && <div className="p-4 bg-green-100 rounded-lg text-green-800"><strong>✓ Pflicht-Audio abgeschlossen! +50 Punkte</strong></div>}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* BONUS */}
           {firstAudioDone && !bonusAudioDone && (
             <div className="space-y-6">
-              {/* Erfolgs-Banner */}
               <div className="bg-green-100 border border-green-300 rounded-xl p-6 text-center">
                 <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-3" />
                 <h3 className="text-xl font-bold text-green-800 mb-2">Pflicht-Audio abgeschlossen!</h3>
-                <p className="text-green-700">Sie haben 50 Punkte für das Audio erhalten.</p>
+                <p className="text-green-700">Sie haben 50 Punkte erhalten.</p>
               </div>
 
-              {/* Bonus-Angebot */}
               <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-300 rounded-xl p-6">
                 <div className="flex items-start gap-4">
-                  <div className="bg-yellow-400 p-3 rounded-xl">
-                    <Star className="h-6 w-6 text-white" />
-                  </div>
+                  <div className="bg-yellow-400 p-3 rounded-xl"><Star className="h-6 w-6 text-white" /></div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-gray-900 text-lg mb-2">Bonus verfügbar!</h3>
-                    <p className="text-gray-700 mb-4">
-                      Möchten Sie <strong>+30 Bonus-Punkte</strong> sammeln? Hören Sie den anderen Beitrag an!
-                    </p>
+                    <h3 className="font-bold text-gray-900 text-lg mb-2">Bonus: +30 Punkte</h3>
+                    <p className="text-gray-700 mb-4">Hören Sie den anderen Beitrag vollständig an.</p>
 
-                    {/* Zweites Audio */}
                     <div className="bg-white rounded-lg p-4 border border-yellow-200">
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="bg-red-600 p-2 rounded-lg">
-                          <Volume2 className="h-5 w-5 text-white" />
-                        </div>
+                        <div className="bg-red-600 p-2 rounded-lg"><Volume2 className="h-5 w-5 text-white" /></div>
                         <div>
-                          <p className="font-bold text-gray-900">
-                            {otherAudio === 'echo' ? 'SRF Echo der Zeit' : 'SRF Trend'}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {otherAudio === 'echo'
-                              ? 'Konservative Allianz gegen Individualbesteuerung'
-                              : 'Warum (nicht) heiraten?'}
-                          </p>
+                          <p className="font-bold text-gray-900">{otherAudio === 'echo' ? 'SRF Echo der Zeit' : 'SRF Rendez-vous'}</p>
+                          <p className="text-sm text-gray-500">{otherAudio === 'echo' ? 'Auswirkungen Arbeitsmarkt' : 'Wer profitiert?'}</p>
                         </div>
                       </div>
 
-                      <div className="space-y-3">
-                        <a
-                          href={otherAudio === 'echo'
-                            ? 'https://www.srf.ch/audio/echo-der-zeit/konservative-allianz-lehnt-individualbesteuerung-ab?id=AUDI20250703_RS_0064'
-                            : 'https://www.srf.ch/audio/trend/individualbesteuerung-warum-nicht-heiraten?id=AUDI20250502_NR_0023'
-                          }
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                        >
-                          <Play className="h-4 w-4" />
-                          Beitrag auf SRF.ch öffnen
-                        </a>
-
-                        {!secondAudioConfirmed && (
-                          <button
-                            onClick={() => setSecondAudioConfirmed(true)}
-                            className="w-full py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors text-sm"
-                          >
-                            ✓ Ich habe den Beitrag angehört
-                          </button>
-                        )}
+                      <div className="bg-gray-100 rounded-lg p-3 mb-3">
+                        <audio ref={bonusAudioRef} controls className="w-full" onTimeUpdate={() => handleAudioTimeUpdate(true)} onEnded={() => handleAudioEnded(true)}>
+                          <source src={otherAudio === 'echo' ? 'https://www.srf.ch/play/radio/redirect/detail/3a4f8b4b-cbe9-3b28-a210-21977898e358' : 'https://www.srf.ch/play/radio/redirect/detail/0a5f5262-293a-3556-bdf1-9ede96808d61'} type="audio/mpeg" />
+                        </audio>
+                        <div className="mt-2">
+                          <div className="flex justify-between text-xs text-gray-500 mb-1"><span>Fortschritt</span><span>{Math.round(bonusAudioProgress)}%</span></div>
+                          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div className={`h-full transition-all ${bonusAudioProgress >= 90 ? 'bg-green-500' : 'bg-yellow-500'}`} style={{ width: `${bonusAudioProgress}%` }} />
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Bonus-Fragen */}
-                      {secondAudioConfirmed && (
-                        <div className="mt-4 space-y-3">
+                      {bonusAudioListened && (
+                        <div className="space-y-3">
                           <h4 className="font-semibold text-gray-900">Bonus-Frage:</h4>
-
                           {otherAudio === 'echo' ? (
                             <div className="bg-gray-50 rounded-lg p-3">
-                              <p className="font-medium text-gray-800 mb-2 text-sm">
-                                Welche Parteien haben das Referendum lanciert?
-                              </p>
-                              <div className="space-y-2">
-                                {[
-                                  'FDP, SP, Grüne',
-                                  'Mitte, EVP, SVP, EDU'
-                                ].map(opt => {
-                                  const isSelected = secondAudioQuizAnswers.bq1 === opt
-                                  const correct = 'Mitte, EVP, SVP, EDU'
-                                  const isCorrect = secondAudioQuizSubmitted && opt === correct
-                                  const isWrong = secondAudioQuizSubmitted && isSelected && opt !== correct
+                              <p className="font-medium text-gray-800 mb-2 text-sm">Wie viele Vollzeitstellen könnten entstehen?</p>
+                              <div className="grid grid-cols-2 gap-2">
+                                {['5\'000 - 8\'000', '10\'000 - 20\'000'].map(opt => {
+                                  const isSelected = bonusQuizAnswers.bq1 === opt
+                                  const correct = '10\'000 - 20\'000'
+                                  const isCorrect = bonusQuizSubmitted && opt === correct
+                                  const isWrong = bonusQuizSubmitted && isSelected && opt !== correct
                                   return (
-                                    <button
-                                      key={opt}
-                                      onClick={() => !secondAudioQuizSubmitted && setSecondAudioQuizAnswers({...secondAudioQuizAnswers, bq1: opt})}
-                                      disabled={secondAudioQuizSubmitted}
-                                      className={`w-full p-2 rounded-lg text-sm font-medium text-left transition-all ${
-                                        isCorrect ? 'bg-green-500 text-white' :
-                                        isWrong ? 'bg-red-500 text-white' :
-                                        isSelected ? 'bg-yellow-500 text-white' :
-                                        'bg-white border border-gray-300 hover:border-yellow-400'
-                                      }`}
-                                    >
+                                    <button key={opt} onClick={() => !bonusQuizSubmitted && setBonusQuizAnswers({...bonusQuizAnswers, bq1: opt})} disabled={bonusQuizSubmitted}
+                                      className={`p-2 rounded-lg text-sm font-medium transition-all ${isCorrect ? 'bg-green-500 text-white' : isWrong ? 'bg-red-500 text-white' : isSelected ? 'bg-yellow-500 text-white' : 'bg-white border border-gray-300'}`}>
                                       {opt}
                                     </button>
                                   )
@@ -1299,27 +795,16 @@ export default function GrundlagenPage() {
                             </div>
                           ) : (
                             <div className="bg-gray-50 rounded-lg p-3">
-                              <p className="font-medium text-gray-800 mb-2 text-sm">
-                                Wie viel mehr Steuern zahlt das Beispielpaar wenn verheiratet?
-                              </p>
-                              <div className="grid grid-cols-2 gap-2">
-                                {['ca. 5\'000 Fr.', 'ca. 10\'000 Fr.'].map(opt => {
-                                  const isSelected = secondAudioQuizAnswers.bq1 === opt
-                                  const correct = 'ca. 10\'000 Fr.'
-                                  const isCorrect = secondAudioQuizSubmitted && opt === correct
-                                  const isWrong = secondAudioQuizSubmitted && isSelected && opt !== correct
+                              <p className="font-medium text-gray-800 mb-2 text-sm">Wer profitiert am meisten?</p>
+                              <div className="space-y-2">
+                                {['Einverdiener-Ehepaare', 'Doppelverdiener-Ehepaare mit ähnlichem Einkommen'].map(opt => {
+                                  const isSelected = bonusQuizAnswers.bq1 === opt
+                                  const correct = 'Doppelverdiener-Ehepaare mit ähnlichem Einkommen'
+                                  const isCorrect = bonusQuizSubmitted && opt === correct
+                                  const isWrong = bonusQuizSubmitted && isSelected && opt !== correct
                                   return (
-                                    <button
-                                      key={opt}
-                                      onClick={() => !secondAudioQuizSubmitted && setSecondAudioQuizAnswers({...secondAudioQuizAnswers, bq1: opt})}
-                                      disabled={secondAudioQuizSubmitted}
-                                      className={`p-2 rounded-lg text-sm font-medium transition-all ${
-                                        isCorrect ? 'bg-green-500 text-white' :
-                                        isWrong ? 'bg-red-500 text-white' :
-                                        isSelected ? 'bg-yellow-500 text-white' :
-                                        'bg-white border border-gray-300 hover:border-yellow-400'
-                                      }`}
-                                    >
+                                    <button key={opt} onClick={() => !bonusQuizSubmitted && setBonusQuizAnswers({...bonusQuizAnswers, bq1: opt})} disabled={bonusQuizSubmitted}
+                                      className={`w-full p-2 rounded-lg text-sm font-medium text-left transition-all ${isCorrect ? 'bg-green-500 text-white' : isWrong ? 'bg-red-500 text-white' : isSelected ? 'bg-yellow-500 text-white' : 'bg-white border border-gray-300'}`}>
                                       {opt}
                                     </button>
                                   )
@@ -1327,66 +812,34 @@ export default function GrundlagenPage() {
                               </div>
                             </div>
                           )}
-
-                          {!secondAudioQuizSubmitted && secondAudioQuizAnswers.bq1 && (
-                            <button
-                              onClick={() => {
-                                setSecondAudioQuizSubmitted(true)
-                                completeSection('audio_bonus', 30, true)
-                              }}
-                              className="w-full py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-semibold"
-                            >
-                              Bonus-Punkte erhalten (+30)
+                          {!bonusQuizSubmitted && bonusQuizAnswers.bq1 && (
+                            <button onClick={() => { setBonusQuizSubmitted(true); completeSection('audio_bonus', 30, true) }}
+                              className="w-full py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-semibold">
+                              Bonus erhalten (+30)
                             </button>
                           )}
-
-                          {secondAudioQuizSubmitted && (
-                            <div className="p-3 bg-yellow-100 rounded-lg text-yellow-800 flex items-center gap-2">
-                              <Star className="h-5 w-5" />
-                              <strong>+30 Bonus-Punkte erhalten!</strong>
-                            </div>
-                          )}
+                          {bonusQuizSubmitted && <div className="p-3 bg-yellow-100 rounded-lg text-yellow-800 flex items-center gap-2"><Star className="h-5 w-5" /><strong>+30 Bonus!</strong></div>}
                         </div>
                       )}
                     </div>
-
-                    <p className="text-xs text-amber-700 mt-3">
-                      💡 Bonus-Punkte werden im Badge und Zertifikat separat ausgewiesen.
-                    </p>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Alles fertig */}
           {firstAudioDone && bonusAudioDone && (
             <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-6 text-white text-center">
               <div className="text-4xl mb-3">🎉</div>
               <h3 className="text-xl font-bold mb-2">Alle Audios abgeschlossen!</h3>
-              <p className="text-green-100 mb-2">
-                Pflicht: 50 Punkte ✓
-              </p>
-              <p className="text-yellow-200 flex items-center justify-center gap-1">
-                <Star className="h-4 w-4" /> Bonus: +30 Punkte ✓
-              </p>
+              <p className="text-green-100 mb-2">Pflicht: 50 Punkte ✓</p>
+              <p className="text-yellow-200 flex items-center justify-center gap-1"><Star className="h-4 w-4" /> Bonus: +30 ✓</p>
             </div>
           )}
 
-          {/* Navigation */}
           <div className="flex justify-between">
-            <button
-              onClick={() => setActiveChapter('quiz')}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
-            >
-              ← Kapitel 2
-            </button>
-            <button
-              onClick={() => setActiveChapter(null)}
-              className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold"
-            >
-              Zur Übersicht →
-            </button>
+            <button onClick={() => setActiveChapter('video')} className="px-4 py-2 text-gray-600 hover:text-gray-800">← Kapitel 1</button>
+            <button onClick={() => setActiveChapter(null)} className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold">Zur Übersicht →</button>
           </div>
         </main>
       </div>

@@ -6,6 +6,7 @@ export interface ModuleData {
   description: string
   estimatedTime: string
   maxPoints: number
+  bonusPoints?: number
   type: 'h5p' | 'quiz' | 'interactive'
   h5pUrl?: string | null
 }
@@ -28,7 +29,8 @@ export const moduleData: { [key: string]: ModuleData } = {
     title: '2. Grundlagen Info Bund Medien',
     description: 'Lernen Sie die offiziellen Informationen des Bundes und die Medienberichterstattung kennen.',
     estimatedTime: '20 Min',
-    maxPoints: 120,
+    maxPoints: 100,
+    bonusPoints: 30,
     type: 'interactive',
     h5pUrl: null // Uses custom page
   },

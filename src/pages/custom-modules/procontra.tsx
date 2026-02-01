@@ -5,14 +5,15 @@ import { auth, db } from '@/lib/firebase'
 import { 
   ArrowLeft, CheckCircle2, Award, XCircle, 
   Building2, Users, MapPin, ThumbsUp, ThumbsDown,
-  Eye, EyeOff, Quote, BookOpen, ChevronDown, ChevronUp, X
+  Eye, EyeOff, Quote, BookOpen, ChevronDown, ChevronUp, X,
+  RotateCcw, Sparkles, ArrowRight, Clock
 } from 'lucide-react'
 
 // ===========================================
 // TYPEN
 // ===========================================
 
-type SlideType = 'info' | 'quiz' | 'truefalse' | 'quote_reveal' | 'term_reveal' | 'definition_match'
+type SlideType = 'info' | 'quiz' | 'truefalse' | 'quote_reveal' | 'term_reveal' | 'definition_match' | 'flipcard' | 'swipe_cards' | 'timeline'
 
 interface BaseSlide {
   type: SlideType
@@ -60,7 +61,31 @@ interface DefinitionMatchSlide extends BaseSlide {
   points: number
 }
 
-type Slide = InfoSlide | QuizSlide | TrueFalseSlide | QuoteRevealSlide | TermRevealSlide | DefinitionMatchSlide
+// NEU: Flipcard (3D Dialogkarten)
+interface FlipCardSlide extends BaseSlide {
+  type: 'flipcard'
+  instruction: string
+  cards: { front: string; back: string; emoji?: string }[]
+  points: number
+}
+
+// NEU: Swipe Cards (PRO/CONTRA wischen)
+interface SwipeCardsSlide extends BaseSlide {
+  type: 'swipe_cards'
+  instruction: string
+  cards: { statement: string; correct: 'PRO' | 'CONTRA' }[]
+  points: number
+}
+
+// NEU: Timeline
+interface TimelineSlide extends BaseSlide {
+  type: 'timeline'
+  instruction: string
+  events: { year: string; event: string; detail: string }[]
+  points: number
+}
+
+type Slide = InfoSlide | QuizSlide | TrueFalseSlide | QuoteRevealSlide | TermRevealSlide | DefinitionMatchSlide | FlipCardSlide | SwipeCardsSlide | TimelineSlide
 
 interface Section {
   id: string
@@ -77,7 +102,7 @@ interface Section {
 }
 
 // ===========================================
-// 4 AKTEURE MIT INHALTEN
+// 4 AKTEURE MIT INHALTEN (erweitert)
 // ===========================================
 
 const SECTIONS: Section[] = [
@@ -92,78 +117,62 @@ const SECTIONS: Section[] = [
     intro: 'Der Bundesrat unter Führung von Finanzministerin Karin Keller-Sutter befürwortet die Individualbesteuerung. Er sieht darin eine Chance, die sogenannte "Heiratsstrafe" abzuschaffen und Erwerbsanreize zu schaffen.',
     videoUrl: 'https://www.srf.ch/play/embed?urn=urn:srf:video:77a83d61-aeb0-4984-8e7b-37291a89b62c&startTime=12',
     videoTitle: 'Bundesrat präsentiert Position',
-    totalPoints: 40,
+    totalPoints: 55,
     slides: [
+      // NEU: 3D Flipcards
       {
-        type: 'quote_reveal',
-        title: 'Zitate der Finanzministerin',
-        instruction: 'Klicken Sie auf die Karten, um die zentralen Aussagen aufzudecken:',
-        quotes: [
-          {
-            author: 'Karin Keller-Sutter',
-            role: 'Bundesrätin, Finanzministerin',
-            quote: 'Die Beseitigung der Heiratsstrafe schafft einen Erwerbsanreiz. Das heisst, dass sich Leistung lohnt - auch bei den Steuern.',
-            key_point: 'Leistung soll sich lohnen'
-          },
-          {
-            author: 'Karin Keller-Sutter',
-            role: 'Bundesrätin, Finanzministerin', 
-            quote: 'Paare in vergleichbaren wirtschaftlichen Verhältnissen müssen heute oft unterschiedlich hohe Steuern zahlen. Nur weil sie verheiratet sind oder eben nicht.',
-            key_point: 'Ungleichbehandlung je nach Zivilstand'
-          }
+        type: 'flipcard',
+        title: '🎴 Dialogkarten',
+        instruction: 'Klicken Sie auf die Karten, um sie umzudrehen:',
+        cards: [
+          { front: 'Was ist die Heiratsstrafe?', back: 'Die steuerliche Mehrbelastung von Ehepaaren gegenüber Konkubinatspaaren mit gleichem Einkommen.', emoji: '💍' },
+          { front: 'Wie viele neue Stellen erwartet der Bund?', back: 'Bis zu 44\'000 neue Vollzeitstellen, weil sich Mehrarbeit mehr lohnt.', emoji: '👩‍💼' },
+          { front: 'Wer profitiert am meisten?', back: 'Doppelverdiener-Ehepaare, bei denen beide ähnlich viel verdienen.', emoji: '👫' }
         ],
-        points: 10
+        points: 15
       },
       {
         type: 'term_reveal',
         title: 'Schlüsselbegriffe',
-        instruction: 'Klicken Sie auf die Begriffe, um ihre Bedeutung zu erfahren:',
+        instruction: 'Klicken Sie auf die Begriffe:',
         terms: [
-          {
-            term: 'Heiratsstrafe',
-            definition: 'Die steuerliche Mehrbelastung von Ehepaaren gegenüber unverheirateten Paaren mit gleichem Einkommen.',
-            example: 'Ein Ehepaar mit zwei Einkommen zahlt mehr als ein Konkubinatspaar.'
-          },
-          {
-            term: 'Individualbesteuerung',
-            definition: 'Jede Person wird einzeln besteuert, unabhängig vom Zivilstand. Ehepaare füllen getrennte Steuererklärungen aus.',
-            example: 'Wie es heute schon bei unverheirateten Paaren der Fall ist.'
-          },
-          {
-            term: 'Steuerprogression',
-            definition: 'Je höher das Einkommen, desto höher der Steuersatz. Bei gemeinsamer Veranlagung steigt das Gesamteinkommen.',
-            example: '80\'000 + 60\'000 = 140\'000 wird höher besteuert als zwei Mal 70\'000 einzeln.'
-          }
+          { term: 'Heiratsstrafe', definition: 'Steuerliche Mehrbelastung von Ehepaaren.', example: 'Ein Ehepaar zahlt mehr als ein Konkubinatspaar.' },
+          { term: 'Individualbesteuerung', definition: 'Jede Person wird einzeln besteuert.', example: 'Ehepaare füllen getrennte Steuererklärungen aus.' },
+          { term: 'Steuerprogression', definition: 'Höheres Einkommen = höherer Steuersatz.', example: '140\'000 zusammen wird höher besteuert als 2x 70\'000.' }
         ],
         points: 10
       },
       {
         type: 'quiz',
         title: 'Verständnisfrage',
-        question: 'Welchen positiven Nebeneffekt erwartet der Bund durch die Individualbesteuerung?',
+        question: 'Welchen positiven Nebeneffekt erwartet der Bund?',
         options: [
           { text: 'Höhere Steuereinnahmen', correct: false },
           { text: 'Bis zu 44\'000 neue Vollzeitstellen', correct: true },
           { text: 'Weniger Bürokratie', correct: false },
           { text: 'Tiefere Mieten', correct: false }
         ],
-        explanation: 'Der Bund rechnet damit, dass v.a. Ehefrauen mehr arbeiten würden, weil ihnen mehr vom Lohn bliebe.',
+        explanation: 'Der Bund rechnet damit, dass v.a. Ehefrauen mehr arbeiten würden.',
         points: 10
       },
       {
         type: 'truefalse',
         title: 'Richtig oder Falsch?',
         statements: [
-          { 
-            text: 'Der Bundesrat ist gegen die Individualbesteuerung.', 
-            correct: false, 
-            explanation: 'Falsch! Der Bundesrat befürwortet die Reform.' 
-          },
-          { 
-            text: 'Mit der Reform würden Ehepaare weiterhin gemeinsam besteuert.', 
-            correct: false, 
-            explanation: 'Falsch! Jeder Ehepartner würde eine eigene Steuererklärung ausfüllen.' 
-          }
+          { text: 'Der Bundesrat ist gegen die Individualbesteuerung.', correct: false, explanation: 'Falsch! Der Bundesrat befürwortet die Reform.' },
+          { text: 'Ehepaare würden weiterhin gemeinsam besteuert.', correct: false, explanation: 'Falsch! Jeder füllt eine eigene Steuererklärung aus.' }
+        ],
+        points: 10
+      },
+      // NEU: Swipe Cards
+      {
+        type: 'swipe_cards',
+        title: '👈 PRO oder CONTRA? 👉',
+        instruction: 'Wischen Sie die Karten zur richtigen Seite:',
+        cards: [
+          { statement: 'Schafft Erwerbsanreize', correct: 'PRO' },
+          { statement: 'Bedeutet mehr Bürokratie', correct: 'CONTRA' },
+          { statement: 'Beseitigt Ungleichbehandlung', correct: 'PRO' }
         ],
         points: 10
       }
@@ -178,45 +187,46 @@ const SECTIONS: Section[] = [
     icon: 'ThumbsUp',
     colorClass: 'from-green-500 to-green-600',
     bgColor: 'bg-green-500',
-    intro: 'Ein breites Komitee von Parteien und Verbänden unterstützt die Individualbesteuerung. Sie sehen darin einen wichtigen Schritt zur Gleichstellung und zur Förderung der Erwerbstätigkeit von Frauen.',
+    intro: 'Ein breites Komitee unterstützt die Individualbesteuerung als Schritt zur Gleichstellung.',
     videoUrl: 'https://www.srf.ch/play/embed?urn=urn:srf:video:234b56bb-fbf4-4a3c-a13b-7c04ea154f4f',
     videoTitle: 'Befürworter:innen präsentieren Argumente',
-    totalPoints: 30,
+    totalPoints: 45,
     slides: [
+      // NEU: Timeline
+      {
+        type: 'timeline',
+        title: '📅 Zeitstrahl: Weg zur Abstimmung',
+        instruction: 'Entdecken Sie die wichtigsten Meilensteine:',
+        events: [
+          { year: '1984', event: 'Gleichstellungsartikel', detail: 'Gleichstellung von Mann und Frau wird in der Verfassung verankert.' },
+          { year: '2016', event: 'CVP-Initiative abgelehnt', detail: 'Volk lehnt Initiative gegen Heiratsstrafe ab (Zählfehler).' },
+          { year: '2024', event: 'Parlament beschliesst Reform', detail: 'National- und Ständerat stimmen der Individualbesteuerung zu.' },
+          { year: '2026', event: 'Volksabstimmung', detail: 'Am 8. März 2026 entscheidet das Volk.' }
+        ],
+        points: 15
+      },
       {
         type: 'term_reveal',
-        title: 'Argumente der Befürworter:innen',
-        instruction: 'Klicken Sie, um die Hauptargumente aufzudecken:',
+        title: 'Argumente PRO',
+        instruction: 'Klicken Sie, um die Argumente aufzudecken:',
         terms: [
-          {
-            term: 'Gleichbehandlung',
-            definition: 'Alle Paare werden gleich besteuert, unabhängig davon, ob sie verheiratet sind oder nicht.',
-            example: 'Ein Konkubinatspaar und ein Ehepaar mit gleichem Einkommen zahlen gleich viel Steuern.'
-          },
-          {
-            term: 'Erwerbsanreiz',
-            definition: 'Zweitverdienende behalten mehr vom Lohn, da ihr Einkommen nicht mehr zum Partner addiert wird.',
-            example: 'Eine Ehefrau mit 50\'000 Fr. Einkommen behält mehr, als wenn das Einkommen zum Mann addiert wird.'
-          },
-          {
-            term: 'Fachkräftemangel bekämpfen',
-            definition: 'Laut Befürworter:innen kann man mit der Individualbesteuerung das Arbeitskräftepotenzial der Frauen besser ausschöpfen.',
-            example: 'Der Bund rechnet mit bis zu 44\'000 zusätzlichen Vollzeitstellen.'
-          }
+          { term: 'Gleichbehandlung', definition: 'Alle Paare werden gleich besteuert, egal ob verheiratet.', example: 'Konkubinat = Ehe bei den Steuern.' },
+          { term: 'Erwerbsanreiz', definition: 'Zweitverdienende behalten mehr vom Lohn.', example: 'Lohnt sich wieder, mehr zu arbeiten.' },
+          { term: 'Fachkräftemangel', definition: 'Mehr Arbeitskräfte durch höhere Erwerbsbeteiligung.', example: '44\'000 neue Vollzeitstellen möglich.' }
         ],
         points: 15
       },
       {
         type: 'quiz',
         title: 'Verständnisfrage',
-        question: 'Wer profitiert laut Befürworter:innen am meisten von der Reform?',
+        question: 'Wer profitiert laut Befürworter:innen am meisten?',
         options: [
           { text: 'Einverdiener-Ehepaare', correct: false },
           { text: 'Unverheiratete Singles', correct: false },
           { text: 'Doppelverdiener-Ehepaare', correct: true },
           { text: 'Rentner:innen', correct: false }
         ],
-        explanation: 'Bei Doppelverdiener-Ehepaaren fällt die bisherige Mehrbelastung durch die gemeinsame Veranlagung weg.',
+        explanation: 'Die Mehrbelastung durch gemeinsame Veranlagung fällt weg.',
         points: 15
       }
     ]
@@ -230,78 +240,60 @@ const SECTIONS: Section[] = [
     icon: 'ThumbsDown',
     colorClass: 'from-red-500 to-red-600',
     bgColor: 'bg-red-500',
-    intro: 'Ein Komitee aus SVP, EVP, EDU und Mitte hat das Referendum ergriffen. Sie kritisieren, dass vor allem reiche Doppelverdiener profitieren würden und warnen vor Mehraufwand und neuen Ungerechtigkeiten.',
+    intro: 'SVP, EVP, EDU und Mitte haben das Referendum ergriffen. Sie warnen vor Mehraufwand und neuen Ungerechtigkeiten.',
     videoUrl: 'https://www.srf.ch/play/embed?urn=urn:srf:video:76af4420-abff-4a34-8aab-9941193b223e',
     videoTitle: 'Kontra-Komitee präsentiert Argumente',
-    totalPoints: 40,
+    totalPoints: 60,
     slides: [
       {
         type: 'quote_reveal',
         title: 'Aussagen des Nein-Komitees',
-        instruction: 'Klicken Sie auf die Karten, um die Kritikpunkte aufzudecken:',
+        instruction: 'Klicken Sie, um die Kritikpunkte aufzudecken:',
         quotes: [
-          {
-            author: 'Nein-Komitee',
-            role: 'SVP, EVP, EDU, Mitte',
-            quote: 'Begünstigt werden v.a. Doppelverdiener-Ehepaare mit ähnlichen, aber v.a. mit hohen Einkommen. Belastet werden Einverdiener-Familien und Paare mit ungleicher Einkommensverteilung.',
-            key_point: 'Profiteure sind die reichsten Doppelverdiener'
-          },
-          {
-            author: 'Nein-Komitee',
-            role: 'SVP, EVP, EDU, Mitte',
-            quote: 'Zwei Steuererklärungen auszufüllen, bedeutet einen erheblichen Mehraufwand - einerseits für die Ehepaare, aber dann auch für die Steuerbehörden, die das kontrollieren müssen.',
-            key_point: 'Erheblicher Mehraufwand für alle'
-          },
-          {
-            author: 'Nein-Komitee',
-            role: 'SVP, EVP, EDU, Mitte',
-            quote: 'Ja gut, die Frauen würden ganz leicht mehr arbeiten. Das wäre wirklich nur ein Tropfen auf den heissen Stein. Mit der Zuwanderung kommen jedes Jahr 80\'000 Leute.',
-            key_point: 'Kaum Effekt auf Fachkräftemangel'
-          }
+          { author: 'Nein-Komitee', role: 'SVP, EVP, EDU, Mitte', quote: 'Begünstigt werden v.a. Doppelverdiener mit hohen Einkommen. Belastet werden Einverdiener-Familien.', key_point: 'Reiche profitieren' },
+          { author: 'Nein-Komitee', role: 'SVP, EVP, EDU, Mitte', quote: 'Zwei Steuererklärungen bedeuten erheblichen Mehraufwand für Ehepaare und Behörden.', key_point: 'Mehr Bürokratie' },
+          { author: 'Nein-Komitee', role: 'SVP, EVP, EDU, Mitte', quote: 'Die Frauen würden ganz leicht mehr arbeiten. Das wäre nur ein Tropfen auf den heissen Stein.', key_point: 'Kaum Wirkung' }
         ],
         points: 10
       },
+      // NEU: 3D Flipcards für Gegner
       {
-        type: 'term_reveal',
-        title: 'Kritikpunkte verstehen',
-        instruction: 'Klicken Sie auf die Begriffe, um die Kritik zu verstehen:',
-        terms: [
-          {
-            term: 'Doppelverdiener-Bonus',
-            definition: 'Das Nein-Komitee kritisiert, dass vor allem gut verdienende Paare mit zwei Einkommen profitieren.',
-            example: 'Ein Paar mit 2x 150\'000 Fr. profitiert mehr als eines mit 1x 100\'000 Fr.'
-          },
-          {
-            term: 'Mehraufwand',
-            definition: 'Zukünftig muss jedes Ehepaar zwei Steuererklärungen ausfüllen statt einer.',
-            example: 'Auch die Steuerbehörden müssen doppelt so viele Erklärungen kontrollieren.'
-          },
-          {
-            term: 'Einverdiener-Familien',
-            definition: 'Familien mit nur einem Einkommen hätten keinen Vorteil von der Reform.',
-            example: 'Ein Alleinverdiener mit 120\'000 Fr. wird gleich besteuert wie vorher.'
-          },
-          {
-            term: 'Komplizierte Vorlage',
-            definition: 'Die Gegner:innen sagen, die Vorlage sei zu kompliziert. Der Arbeitsaufwand bei der Steuererklärung würde für Ehepaare steigen.',
-            example: 'Vermögen, Abzüge und Kinder müssten neu aufgeteilt werden.'
-          }
+        type: 'flipcard',
+        title: '🎴 Kritikpunkte entdecken',
+        instruction: 'Drehen Sie die Karten um:',
+        cards: [
+          { front: 'Wer verliert bei der Reform?', back: 'Einverdiener-Familien und Paare mit ungleichem Einkommen haben keinen Vorteil.', emoji: '👨‍👩‍👧' },
+          { front: 'Wie hoch sind die Steuerausfälle?', back: '630 Millionen Franken pro Jahr allein bei der direkten Bundessteuer.', emoji: '💸' },
+          { front: 'Was sagen die Gegner zum Fachkräftemangel?', back: '"Nur ein Tropfen auf den heissen Stein" - jährlich wandern 80\'000 Personen ein.', emoji: '💧' }
         ],
-        points: 10
+        points: 15
       },
       {
         type: 'definition_match',
         title: 'Pro oder Contra?',
-        instruction: 'Ordnen Sie die Argumente der richtigen Seite zu:',
+        instruction: 'Ordnen Sie die Argumente zu:',
         pairs: [
           { term: 'Beseitigung der Heiratsstrafe', definition: 'PRO' },
-          { term: 'Erheblicher Mehraufwand für Ehepaare', definition: 'CONTRA' },
+          { term: 'Erheblicher Mehraufwand', definition: 'CONTRA' },
           { term: 'Erwerbsanreiz für Frauen', definition: 'PRO' },
-          { term: 'Bevorzugt reiche Doppelverdiener', definition: 'CONTRA' },
+          { term: 'Bevorzugt Gutverdienende', definition: 'CONTRA' },
           { term: 'Gleichbehandlung aller Paare', definition: 'PRO' },
           { term: 'Nur ein Tropfen auf den heissen Stein', definition: 'CONTRA' }
         ],
         points: 10
+      },
+      // NEU: Swipe Cards
+      {
+        type: 'swipe_cards',
+        title: '👈 PRO oder CONTRA? 👉',
+        instruction: 'Wischen Sie zur richtigen Seite:',
+        cards: [
+          { statement: '630 Mio. Fr. Steuerausfälle', correct: 'CONTRA' },
+          { statement: 'Gleichstellung von Mann und Frau', correct: 'PRO' },
+          { statement: 'Zwei Steuererklärungen = mehr Arbeit', correct: 'CONTRA' },
+          { statement: 'Mehr Lohn bleibt übrig', correct: 'PRO' }
+        ],
+        points: 15
       },
       {
         type: 'quiz',
@@ -313,7 +305,7 @@ const SECTIONS: Section[] = [
           { text: 'EVP', correct: false },
           { text: 'Mitte', correct: false }
         ],
-        explanation: 'Das Nein-Komitee besteht aus SVP, EVP, EDU und Mitte. Die SP unterstützt die Vorlage.',
+        explanation: 'Die SP unterstützt die Vorlage.',
         points: 10
       }
     ]
@@ -327,54 +319,59 @@ const SECTIONS: Section[] = [
     icon: 'MapPin',
     colorClass: 'from-orange-500 to-orange-600',
     bgColor: 'bg-orange-500',
-    intro: 'Die Kantone haben gemeinsam mit dem Nein-Komitee das Referendum ergriffen. Sie befürchten massive Steuerausfälle und einen hohen Umsetzungsaufwand bei der Umstellung des Steuersystems.',
+    intro: 'Die Kantone haben das Referendum ergriffen wegen befürchteter Steuerausfälle und Umsetzungsaufwand.',
     videoUrl: 'https://www.srf.ch/play/embed?urn=urn:srf:video:d3ff0b15-3323-484e-ad97-bde7e23efc52&startTime=455',
     videoTitle: 'Kantone erklären ihre Position',
-    totalPoints: 30,
+    totalPoints: 50,
     slides: [
       {
         type: 'info',
         title: 'Was ist ein Kantonsreferendum?',
-        content: 'Wenn mindestens 8 Kantone es verlangen, kommt ein Bundesgesetz vors Volk. Bei der Individualbesteuerung haben die Kantone dieses seltene Instrument genutzt, weil sie direkt von den Steuerausfällen betroffen wären.',
+        content: 'Wenn mindestens 8 Kantone es verlangen, kommt ein Bundesgesetz vors Volk. Die Kantone haben dieses seltene Instrument genutzt.',
         highlight: 'Das Kantonsreferendum zeigt, wie stark die Kantone die Reform ablehnen.'
+      },
+      // NEU: 3D Flipcards
+      {
+        type: 'flipcard',
+        title: '🎴 Fakten zu den Kantonen',
+        instruction: 'Drehen Sie die Karten:',
+        cards: [
+          { front: 'Wie viele Kantone braucht es für ein Referendum?', back: 'Mindestens 8 Kantone müssen das Referendum verlangen.', emoji: '🗳️' },
+          { front: 'Wie hoch sind die Steuerausfälle?', back: '630 Mio. Fr. beim Bund, plus Ausfälle bei Kantonen und Gemeinden.', emoji: '📉' },
+          { front: 'Was befürchten die Kantone?', back: 'Hohen Umsetzungsaufwand: neue Software, Formulare, Schulungen.', emoji: '⚙️' }
+        ],
+        points: 15
       },
       {
         type: 'term_reveal',
         title: 'Bedenken der Kantone',
-        instruction: 'Klicken Sie, um die Argumente der Kantone zu verstehen:',
+        instruction: 'Klicken Sie, um mehr zu erfahren:',
         terms: [
-          {
-            term: 'Steuerausfälle',
-            definition: 'Der Bund rechnet mit 630 Mio. Fr. weniger pro Jahr allein bei der direkten Bundessteuer.',
-            example: 'Dazu kommen noch Ausfälle bei den Kantons- und Gemeindesteuern.'
-          },
-          {
-            term: 'Umsetzungsaufwand',
-            definition: 'Die Steuerverwaltungen müssten komplett umgestellt werden.',
-            example: 'Neue Software, neue Formulare, Schulung der Mitarbeitenden.'
-          },
-          {
-            term: 'Föderalismus',
-            definition: 'Jeder Kanton hat eigene Steuergesetze, die angepasst werden müssten.',
-            example: 'Die Umsetzung würde in 26 Kantonen unterschiedlich ablaufen.'
-          }
+          { term: 'Steuerausfälle', definition: '630 Mio. Fr. weniger beim Bund pro Jahr.', example: 'Plus Ausfälle bei Kantons- und Gemeindesteuern.' },
+          { term: 'Umsetzungsaufwand', definition: 'Steuerverwaltungen müssen komplett umgestellt werden.', example: 'Neue Software, Formulare, Schulungen.' },
+          { term: 'Föderalismus', definition: '26 Kantone mit eigenen Steuergesetzen.', example: 'Umsetzung wäre überall unterschiedlich.' }
         ],
-        points: 15
+        points: 10
       },
       {
         type: 'truefalse',
         title: 'Richtig oder Falsch?',
         statements: [
-          { 
-            text: 'Für ein Kantonsreferendum braucht es mindestens 8 Kantone.', 
-            correct: true, 
-            explanation: 'Richtig! 8 Kantone müssen das Referendum verlangen.' 
-          },
-          { 
-            text: 'Die Kantone befürworten die Individualbesteuerung.', 
-            correct: false, 
-            explanation: 'Falsch! Die Kantone haben das Referendum dagegen ergriffen.' 
-          }
+          { text: 'Für ein Kantonsreferendum braucht es mindestens 8 Kantone.', correct: true, explanation: 'Richtig!' },
+          { text: 'Die Kantone befürworten die Individualbesteuerung.', correct: false, explanation: 'Falsch! Sie haben das Referendum dagegen ergriffen.' }
+        ],
+        points: 10
+      },
+      // NEU: Timeline
+      {
+        type: 'timeline',
+        title: '📅 Wie kam es zum Kantonsreferendum?',
+        instruction: 'Die wichtigsten Schritte:',
+        events: [
+          { year: 'Herbst 2024', event: 'Parlament beschliesst Gesetz', detail: 'National- und Ständerat stimmen der Reform zu.' },
+          { year: 'Winter 2024', event: 'Kantone sammeln Unterschriften', detail: 'Mehr als 8 Kantone fordern das Referendum.' },
+          { year: 'Frühling 2025', event: 'Referendum kommt zustande', detail: 'Das Volk wird über das Gesetz abstimmen.' },
+          { year: '8. März 2026', event: 'Volksabstimmung', detail: 'Das Schweizer Volk entscheidet.' }
         ],
         points: 15
       }
@@ -388,10 +385,324 @@ const SECTIONS: Section[] = [
 const IconMap: { [key: string]: any } = { Building2, Users, MapPin, ThumbsUp, ThumbsDown }
 
 // ===========================================
-// AKKORDEON SLIDE KOMPONENTEN
+// CSS für 3D Flip Animation (wird inline eingefügt)
+// ===========================================
+const flipCardStyles = `
+  .flip-card {
+    perspective: 1000px;
+    cursor: pointer;
+  }
+  .flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+  }
+  .flip-card.flipped .flip-card-inner {
+    transform: rotateY(180deg);
+  }
+  .flip-card-front, .flip-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    text-align: center;
+  }
+  .flip-card-front {
+    background: linear-gradient(135deg, #0d9488, #06b6d4);
+    color: white;
+  }
+  .flip-card-back {
+    background: white;
+    border: 2px solid #0d9488;
+    color: #374151;
+    transform: rotateY(180deg);
+  }
+  .swipe-card {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  .swipe-card.swiping-left {
+    transform: translateX(-100px) rotate(-10deg);
+    opacity: 0;
+  }
+  .swipe-card.swiping-right {
+    transform: translateX(100px) rotate(10deg);
+    opacity: 0;
+  }
+  @keyframes pointsPopup {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .points-popup {
+    animation: pointsPopup 0.5s ease-out;
+  }
+  @keyframes confetti {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(-50px) rotate(360deg); opacity: 0; }
+  }
+  .confetti {
+    animation: confetti 1s ease-out forwards;
+  }
+`
+
+// ===========================================
+// NEU: 3D FLIPCARD KOMPONENTE
+// ===========================================
+function FlipCardAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: { 
+  slide: FlipCardSlide; isOpen: boolean; onToggle: () => void; isCompleted: boolean; onComplete: () => void 
+}) {
+  const [flipped, setFlipped] = useState<Set<number>>(new Set())
+  const [showPoints, setShowPoints] = useState(false)
+  const allFlipped = flipped.size === slide.cards.length
+
+  useEffect(() => {
+    if (allFlipped && !isCompleted) {
+      setShowPoints(true)
+      setTimeout(() => onComplete(), 500)
+    }
+  }, [allFlipped, isCompleted, onComplete])
+
+  return (
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-150">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">🎴</span>
+          <span className="font-semibold text-gray-900">{slide.title}</span>
+          {isCompleted && (
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1 points-popup">
+              <Sparkles className="h-3 w-3" /> +{slide.points}P
+            </span>
+          )}
+        </div>
+        {isOpen ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
+      </button>
+      {isOpen && (
+        <div className="p-4 border-t border-gray-100">
+          <p className="text-gray-600 text-sm mb-4">{slide.instruction}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {slide.cards.map((card, index) => (
+              <div 
+                key={index}
+                onClick={() => { const n = new Set(flipped); n.add(index); setFlipped(n); }}
+                className={`flip-card h-40 ${flipped.has(index) ? 'flipped' : ''}`}
+              >
+                <div className="flip-card-inner">
+                  <div className="flip-card-front">
+                    {card.emoji && <span className="text-4xl mb-2">{card.emoji}</span>}
+                    <p className="font-medium text-sm">{card.front}</p>
+                    <p className="text-xs mt-2 opacity-75">Klicken zum Umdrehen</p>
+                  </div>
+                  <div className="flip-card-back">
+                    <p className="text-sm">{card.back}</p>
+                    <CheckCircle2 className="h-5 w-5 text-teal-500 mt-2" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {!allFlipped && (
+            <p className="text-center text-sm text-gray-500 mt-4">
+              Noch {slide.cards.length - flipped.size} Karte(n) umdrehen
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ===========================================
+// NEU: SWIPE CARDS KOMPONENTE
+// ===========================================
+function SwipeCardsAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: { 
+  slide: SwipeCardsSlide; isOpen: boolean; onToggle: () => void; isCompleted: boolean; onComplete: () => void 
+}) {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [answers, setAnswers] = useState<{ [key: number]: 'PRO' | 'CONTRA' | null }>({})
+  const [swipeDirection, setSwipeDirection] = useState<string | null>(null)
+  const [score, setScore] = useState(0)
+
+  const allAnswered = Object.keys(answers).length === slide.cards.length
+
+  useEffect(() => {
+    if (allAnswered && !isCompleted) {
+      setTimeout(() => onComplete(), 500)
+    }
+  }, [allAnswered, isCompleted, onComplete])
+
+  const handleSwipe = (direction: 'PRO' | 'CONTRA') => {
+    const card = slide.cards[currentIndex]
+    const isCorrect = card.correct === direction
+    
+    setSwipeDirection(direction === 'PRO' ? 'swiping-right' : 'swiping-left')
+    setAnswers({ ...answers, [currentIndex]: direction })
+    if (isCorrect) setScore(score + 1)
+    
+    setTimeout(() => {
+      setSwipeDirection(null)
+      if (currentIndex < slide.cards.length - 1) {
+        setCurrentIndex(currentIndex + 1)
+      }
+    }, 300)
+  }
+
+  const currentCard = slide.cards[currentIndex]
+  const isLast = currentIndex >= slide.cards.length - 1 && answers[currentIndex] !== undefined
+
+  return (
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-150">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">👆</span>
+          <span className="font-semibold text-gray-900">{slide.title}</span>
+          {isCompleted && (
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1 points-popup">
+              <Sparkles className="h-3 w-3" /> +{slide.points}P
+            </span>
+          )}
+        </div>
+        {isOpen ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
+      </button>
+      {isOpen && (
+        <div className="p-4 border-t border-gray-100">
+          <p className="text-gray-600 text-sm mb-4">{slide.instruction}</p>
+          
+          {!isLast ? (
+            <>
+              {/* Swipe Card */}
+              <div className={`swipe-card bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-6 text-center mb-4 border-2 border-slate-200 ${swipeDirection || ''}`}>
+                <p className="text-lg font-medium text-gray-800">{currentCard?.statement}</p>
+                <p className="text-sm text-gray-500 mt-2">Karte {currentIndex + 1} von {slide.cards.length}</p>
+              </div>
+              
+              {/* Swipe Buttons */}
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => handleSwipe('CONTRA')}
+                  className="flex-1 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg transform hover:scale-105 transition-transform"
+                >
+                  <ThumbsDown className="h-5 w-5" /> CONTRA
+                </button>
+                <button 
+                  onClick={() => handleSwipe('PRO')}
+                  className="flex-1 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg transform hover:scale-105 transition-transform"
+                >
+                  PRO <ThumbsUp className="h-5 w-5" />
+                </button>
+              </div>
+            </>
+          ) : (
+            /* Ergebnis */
+            <div className="text-center py-4">
+              <div className="text-4xl mb-2">{score === slide.cards.length ? '🎉' : '👍'}</div>
+              <p className="text-lg font-bold text-gray-900">
+                {score} von {slide.cards.length} richtig!
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
+                {score === slide.cards.length ? 'Perfekt!' : 'Gut gemacht!'}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ===========================================
+// NEU: TIMELINE KOMPONENTE
+// ===========================================
+function TimelineAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: { 
+  slide: TimelineSlide; isOpen: boolean; onToggle: () => void; isCompleted: boolean; onComplete: () => void 
+}) {
+  const [revealed, setRevealed] = useState<Set<number>>(new Set())
+  const allRevealed = revealed.size === slide.events.length
+
+  useEffect(() => {
+    if (allRevealed && !isCompleted) {
+      onComplete()
+    }
+  }, [allRevealed, isCompleted, onComplete])
+
+  return (
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-150">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">📅</span>
+          <span className="font-semibold text-gray-900">{slide.title}</span>
+          {isCompleted && (
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1 points-popup">
+              <Sparkles className="h-3 w-3" /> +{slide.points}P
+            </span>
+          )}
+        </div>
+        {isOpen ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
+      </button>
+      {isOpen && (
+        <div className="p-4 border-t border-gray-100">
+          <p className="text-gray-600 text-sm mb-4">{slide.instruction}</p>
+          
+          <div className="relative">
+            {/* Timeline Line */}
+            <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-teal-400 to-cyan-500"></div>
+            
+            {/* Events */}
+            <div className="space-y-4">
+              {slide.events.map((event, index) => (
+                <div 
+                  key={index}
+                  onClick={() => { const n = new Set(revealed); n.add(index); setRevealed(n); }}
+                  className={`relative pl-10 cursor-pointer transition-all ${revealed.has(index) ? '' : 'hover:bg-gray-50 rounded-lg'}`}
+                >
+                  {/* Timeline Dot */}
+                  <div className={`absolute left-2 top-1 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                    revealed.has(index) 
+                      ? 'bg-teal-500 border-teal-500' 
+                      : 'bg-white border-gray-300 hover:border-teal-400'
+                  }`}>
+                    {revealed.has(index) && <CheckCircle2 className="h-3 w-3 text-white" />}
+                  </div>
+                  
+                  {/* Content */}
+                  <div className={`p-3 rounded-lg border transition-all ${
+                    revealed.has(index) 
+                      ? 'bg-teal-50 border-teal-200' 
+                      : 'bg-gray-50 border-gray-200'
+                  }`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock className="h-4 w-4 text-teal-600" />
+                      <span className="font-bold text-teal-700">{event.year}</span>
+                    </div>
+                    <p className="font-semibold text-gray-900 text-sm">{event.event}</p>
+                    {revealed.has(index) && (
+                      <p className="text-gray-600 text-sm mt-1">{event.detail}</p>
+                    )}
+                    {!revealed.has(index) && (
+                      <p className="text-gray-400 text-xs mt-1">Klicken für Details...</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ===========================================
+// BESTEHENDE AKKORDEON KOMPONENTEN (gekürzt)
 // ===========================================
 
-// Quote Reveal Slide (Akkordeon)
 function QuoteRevealAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: { 
   slide: QuoteRevealSlide; isOpen: boolean; onToggle: () => void; isCompleted: boolean; onComplete: () => void 
 }) {
@@ -403,11 +714,12 @@ function QuoteRevealAccordion({ slide, isOpen, onToggle, isCompleted, onComplete
   }, [allRevealed, isCompleted, onComplete])
 
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100">
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-150">
         <div className="flex items-center gap-3">
+          <Quote className="h-5 w-5 text-teal-600" />
           <span className="font-semibold text-gray-900">{slide.title}</span>
-          {isCompleted && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">+{slide.points}P ✓</span>}
+          {isCompleted && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full points-popup">+{slide.points}P ✓</span>}
         </div>
         {isOpen ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
       </button>
@@ -416,11 +728,8 @@ function QuoteRevealAccordion({ slide, isOpen, onToggle, isCompleted, onComplete
           <p className="text-gray-600 text-sm mb-3">{slide.instruction}</p>
           <div className="space-y-2">
             {slide.quotes.map((q, index) => (
-              <button
-                key={index}
-                onClick={() => { const n = new Set(revealed); n.add(index); setRevealed(n); }}
-                className={`w-full text-left p-3 rounded-lg border transition-all ${revealed.has(index) ? 'border-teal-300 bg-teal-50' : 'border-gray-200 bg-white hover:border-teal-200'}`}
-              >
+              <button key={index} onClick={() => { const n = new Set(revealed); n.add(index); setRevealed(n); }}
+                className={`w-full text-left p-3 rounded-lg border transition-all ${revealed.has(index) ? 'border-teal-300 bg-teal-50' : 'border-gray-200 bg-white hover:border-teal-200'}`}>
                 {revealed.has(index) ? (
                   <div>
                     <div className="flex items-center gap-2 mb-1">
@@ -445,7 +754,6 @@ function QuoteRevealAccordion({ slide, isOpen, onToggle, isCompleted, onComplete
   )
 }
 
-// Term Reveal Slide (Akkordeon)
 function TermRevealAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: { 
   slide: TermRevealSlide; isOpen: boolean; onToggle: () => void; isCompleted: boolean; onComplete: () => void 
 }) {
@@ -457,11 +765,12 @@ function TermRevealAccordion({ slide, isOpen, onToggle, isCompleted, onComplete 
   }, [allRevealed, isCompleted, onComplete])
 
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100">
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-150">
         <div className="flex items-center gap-3">
+          <BookOpen className="h-5 w-5 text-teal-600" />
           <span className="font-semibold text-gray-900">{slide.title}</span>
-          {isCompleted && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">+{slide.points}P ✓</span>}
+          {isCompleted && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full points-popup">+{slide.points}P ✓</span>}
         </div>
         {isOpen ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
       </button>
@@ -471,10 +780,8 @@ function TermRevealAccordion({ slide, isOpen, onToggle, isCompleted, onComplete 
           <div className="space-y-2">
             {slide.terms.map((t, index) => (
               <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => { const n = new Set(revealed); n.add(index); setRevealed(n); }}
-                  className={`w-full text-left p-3 flex items-center justify-between ${revealed.has(index) ? 'bg-teal-50' : 'bg-white hover:bg-gray-50'}`}
-                >
+                <button onClick={() => { const n = new Set(revealed); n.add(index); setRevealed(n); }}
+                  className={`w-full text-left p-3 flex items-center justify-between ${revealed.has(index) ? 'bg-teal-50' : 'bg-white hover:bg-gray-50'}`}>
                   <div className="flex items-center gap-2">
                     <BookOpen className={`h-4 w-4 ${revealed.has(index) ? 'text-teal-600' : 'text-gray-400'}`} />
                     <span className="font-semibold text-gray-900 text-sm">{t.term}</span>
@@ -496,7 +803,6 @@ function TermRevealAccordion({ slide, isOpen, onToggle, isCompleted, onComplete 
   )
 }
 
-// Quiz Slide (Akkordeon)
 function QuizAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: { 
   slide: QuizSlide; isOpen: boolean; onToggle: () => void; isCompleted: boolean; onComplete: () => void 
 }) {
@@ -510,11 +816,12 @@ function QuizAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: {
   }
 
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100">
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-150">
         <div className="flex items-center gap-3">
+          <span className="text-xl">❓</span>
           <span className="font-semibold text-gray-900">{slide.title}</span>
-          {isCompleted && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">+{slide.points}P ✓</span>}
+          {isCompleted && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full points-popup">+{slide.points}P ✓</span>}
         </div>
         {isOpen ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
       </button>
@@ -527,20 +834,13 @@ function QuizAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: {
               const showCorrect = showResult && opt.correct
               const showWrong = showResult && isSelected && !opt.correct
               return (
-                <button
-                  key={index}
-                  onClick={() => !showResult && setSelected(index)}
-                  disabled={showResult}
+                <button key={index} onClick={() => !showResult && setSelected(index)} disabled={showResult}
                   className={`w-full text-left p-2 rounded-lg border transition-all flex items-center gap-2 ${
-                    showCorrect ? 'border-green-400 bg-green-50' :
-                    showWrong ? 'border-red-400 bg-red-50' :
-                    isSelected ? 'border-teal-400 bg-teal-50' :
-                    'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
+                    showCorrect ? 'border-green-400 bg-green-50' : showWrong ? 'border-red-400 bg-red-50' :
+                    isSelected ? 'border-teal-400 bg-teal-50' : 'border-gray-200 hover:border-gray-300'
+                  }`}>
                   <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                    showCorrect ? 'bg-green-500 text-white' :
-                    showWrong ? 'bg-red-500 text-white' :
+                    showCorrect ? 'bg-green-500 text-white' : showWrong ? 'bg-red-500 text-white' :
                     isSelected ? 'bg-teal-500 text-white' : 'bg-gray-200'
                   }`}>{String.fromCharCode(65 + index)}</span>
                   <span className="flex-1 text-sm">{opt.text}</span>
@@ -565,7 +865,6 @@ function QuizAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: {
   )
 }
 
-// True/False Slide (Akkordeon)
 function TrueFalseAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: { 
   slide: TrueFalseSlide; isOpen: boolean; onToggle: () => void; isCompleted: boolean; onComplete: () => void 
 }) {
@@ -573,17 +872,15 @@ function TrueFalseAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }
   const [showResults, setShowResults] = useState(false)
   const allAnswered = Object.keys(answers).filter(k => answers[parseInt(k)] !== null).length === slide.statements.length
 
-  const handleSubmit = () => {
-    setShowResults(true)
-    if (!isCompleted) onComplete()
-  }
+  const handleSubmit = () => { setShowResults(true); if (!isCompleted) onComplete() }
 
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100">
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-150">
         <div className="flex items-center gap-3">
+          <span className="text-xl">✓✗</span>
           <span className="font-semibold text-gray-900">{slide.title}</span>
-          {isCompleted && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">+{slide.points}P ✓</span>}
+          {isCompleted && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full points-popup">+{slide.points}P ✓</span>}
         </div>
         {isOpen ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
       </button>
@@ -598,8 +895,10 @@ function TrueFalseAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }
                 <div key={index} className={`p-3 rounded-lg border ${isCorrect ? 'border-green-300 bg-green-50' : isWrong ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}>
                   <p className="text-gray-800 text-sm mb-2">{s.text}</p>
                   <div className="flex gap-2">
-                    <button onClick={() => !showResults && setAnswers({ ...answers, [index]: true })} disabled={showResults} className={`flex-1 py-1.5 rounded text-xs font-semibold ${answer === true ? showResults ? s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>✓ Richtig</button>
-                    <button onClick={() => !showResults && setAnswers({ ...answers, [index]: false })} disabled={showResults} className={`flex-1 py-1.5 rounded text-xs font-semibold ${answer === false ? showResults ? !s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>✗ Falsch</button>
+                    <button onClick={() => !showResults && setAnswers({ ...answers, [index]: true })} disabled={showResults}
+                      className={`flex-1 py-1.5 rounded text-xs font-semibold ${answer === true ? showResults ? s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>✓ Richtig</button>
+                    <button onClick={() => !showResults && setAnswers({ ...answers, [index]: false })} disabled={showResults}
+                      className={`flex-1 py-1.5 rounded text-xs font-semibold ${answer === false ? showResults ? !s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>✗ Falsch</button>
                   </div>
                   {showResults && <p className={`mt-2 text-xs ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>{s.explanation}</p>}
                 </div>
@@ -607,9 +906,7 @@ function TrueFalseAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }
             })}
           </div>
           {!showResults && allAnswered && (
-            <button onClick={handleSubmit} className="w-full py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-semibold rounded-lg">
-              Prüfen
-            </button>
+            <button onClick={handleSubmit} className="w-full py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-semibold rounded-lg">Prüfen</button>
           )}
         </div>
       )}
@@ -617,7 +914,6 @@ function TrueFalseAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }
   )
 }
 
-// Definition Match Slide (Akkordeon)
 function DefinitionMatchAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: { 
   slide: DefinitionMatchSlide; isOpen: boolean; onToggle: () => void; isCompleted: boolean; onComplete: () => void 
 }) {
@@ -626,17 +922,15 @@ function DefinitionMatchAccordion({ slide, isOpen, onToggle, isCompleted, onComp
   const options = Array.from(new Set(slide.pairs.map(p => p.definition)))
   const allAnswered = Object.keys(answers).length === slide.pairs.length
 
-  const handleSubmit = () => {
-    setShowResults(true)
-    if (!isCompleted) onComplete()
-  }
+  const handleSubmit = () => { setShowResults(true); if (!isCompleted) onComplete() }
 
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100">
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-150">
         <div className="flex items-center gap-3">
+          <span className="text-xl">🔗</span>
           <span className="font-semibold text-gray-900">{slide.title}</span>
-          {isCompleted && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">+{slide.points}P ✓</span>}
+          {isCompleted && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full points-popup">+{slide.points}P ✓</span>}
         </div>
         {isOpen ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
       </button>
@@ -653,22 +947,11 @@ function DefinitionMatchAccordion({ slide, isOpen, onToggle, isCompleted, onComp
                   <p className="font-medium text-gray-900 text-sm mb-2">{pair.term}</p>
                   <div className="flex gap-2">
                     {options.map((opt) => (
-                      <button
-                        key={opt}
-                        onClick={() => !showResults && setAnswers({ ...answers, [index]: opt })}
-                        disabled={showResults}
+                      <button key={opt} onClick={() => !showResults && setAnswers({ ...answers, [index]: opt })} disabled={showResults}
                         className={`flex-1 px-2 py-1.5 rounded text-xs font-semibold ${
-                          answer === opt
-                            ? showResults
-                              ? opt === pair.definition ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-                              : 'bg-teal-500 text-white'
-                            : showResults && opt === pair.definition
-                              ? 'bg-green-200 text-green-800'
-                              : 'bg-gray-100 hover:bg-gray-200'
-                        }`}
-                      >
-                        {opt}
-                      </button>
+                          answer === opt ? showResults ? opt === pair.definition ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white'
+                          : showResults && opt === pair.definition ? 'bg-green-200 text-green-800' : 'bg-gray-100 hover:bg-gray-200'
+                        }`}>{opt}</button>
                     ))}
                   </div>
                 </div>
@@ -676,9 +959,7 @@ function DefinitionMatchAccordion({ slide, isOpen, onToggle, isCompleted, onComp
             })}
           </div>
           {!showResults && allAnswered && (
-            <button onClick={handleSubmit} className="w-full py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-semibold rounded-lg">
-              Prüfen
-            </button>
+            <button onClick={handleSubmit} className="w-full py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-semibold rounded-lg">Prüfen</button>
           )}
         </div>
       )}
@@ -686,16 +967,16 @@ function DefinitionMatchAccordion({ slide, isOpen, onToggle, isCompleted, onComp
   )
 }
 
-// Info Slide (Akkordeon)
 function InfoAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: { 
   slide: InfoSlide; isOpen: boolean; onToggle: () => void; isCompleted: boolean; onComplete: () => void 
 }) {
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100">
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-150">
         <div className="flex items-center gap-3">
+          <span className="text-xl">ℹ️</span>
           <span className="font-semibold text-gray-900">{slide.title}</span>
-          {isCompleted && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">✓</span>}
+          {isCompleted && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">✓</span>}
         </div>
         {isOpen ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
       </button>
@@ -708,9 +989,7 @@ function InfoAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: {
             </div>
           )}
           {!isCompleted && (
-            <button onClick={onComplete} className="text-sm text-teal-600 font-semibold hover:text-teal-700">
-              ✓ Gelesen
-            </button>
+            <button onClick={onComplete} className="text-sm text-teal-600 font-semibold hover:text-teal-700">✓ Gelesen</button>
           )}
         </div>
       )}
@@ -722,16 +1001,8 @@ function InfoAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: {
 // SECTION VIEW
 // ===========================================
 
-function SectionView({ 
-  section, 
-  onClose, 
-  onComplete,
-  initialCompletedSlides
-}: { 
-  section: Section
-  onClose: () => void
-  onComplete: (completedSlides: Set<number>) => void
-  initialCompletedSlides: Set<number>
+function SectionView({ section, onClose, onComplete, initialCompletedSlides }: { 
+  section: Section; onClose: () => void; onComplete: (completedSlides: Set<number>) => void; initialCompletedSlides: Set<number>
 }) {
   const [completedSlides, setCompletedSlides] = useState<Set<number>>(initialCompletedSlides)
   const [openAccordion, setOpenAccordion] = useState<number | null>(0)
@@ -754,6 +1025,9 @@ function SectionView({
     const complete = () => handleSlideComplete(index)
 
     switch (slide.type) {
+      case 'flipcard': return <FlipCardAccordion key={index} slide={slide} isOpen={isOpen} onToggle={toggle} isCompleted={isCompleted} onComplete={complete} />
+      case 'swipe_cards': return <SwipeCardsAccordion key={index} slide={slide} isOpen={isOpen} onToggle={toggle} isCompleted={isCompleted} onComplete={complete} />
+      case 'timeline': return <TimelineAccordion key={index} slide={slide} isOpen={isOpen} onToggle={toggle} isCompleted={isCompleted} onComplete={complete} />
       case 'info': return <InfoAccordion key={index} slide={slide} isOpen={isOpen} onToggle={toggle} isCompleted={isCompleted} onComplete={complete} />
       case 'quiz': return <QuizAccordion key={index} slide={slide} isOpen={isOpen} onToggle={toggle} isCompleted={isCompleted} onComplete={complete} />
       case 'truefalse': return <TrueFalseAccordion key={index} slide={slide} isOpen={isOpen} onToggle={toggle} isCompleted={isCompleted} onComplete={complete} />
@@ -766,16 +1040,17 @@ function SectionView({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
-      {/* Header */}
+      <style dangerouslySetInnerHTML={{ __html: flipCardStyles }} />
+      
       <header className={`bg-gradient-to-r ${section.colorClass} text-white sticky top-0 z-10`}>
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <button onClick={onClose} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
               <X className="h-5 w-5" /><span>Schliessen</span>
             </button>
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-2 text-sm bg-white/20 px-3 py-1 rounded-full">
               <Award className="h-4 w-4" />
-              <span className="font-semibold">{earnedPoints} / {section.totalPoints} Punkte</span>
+              <span className="font-semibold">{earnedPoints} / {section.totalPoints}</span>
             </div>
           </div>
           <h1 className="text-lg font-bold mt-1">{section.title}</h1>
@@ -783,36 +1058,27 @@ function SectionView({
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-4">
-        {/* Intro */}
         <div className="bg-white rounded-xl shadow-sm p-4 mb-4">
           <p className="text-gray-700 text-sm">{section.intro}</p>
         </div>
 
-        {/* Video */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-4">
-          <div className="bg-gray-900">
-            <iframe 
-              className="w-full aspect-video" 
-              src={section.videoUrl} 
-              title={section.videoTitle} 
-              frameBorder="0" 
-              allow="autoplay; fullscreen" 
-              allowFullScreen 
-            />
-          </div>
+          <iframe className="w-full aspect-video" src={section.videoUrl} title={section.videoTitle} frameBorder="0" allow="autoplay; fullscreen" allowFullScreen />
         </div>
 
-        {/* Aufgaben als Akkordeons */}
+        <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-teal-500" /> Interaktive Aufgaben
+        </h3>
+        
         <div className="space-y-3">
-          <h3 className="text-lg font-bold text-gray-900">Interaktive Aufgaben</h3>
           {section.slides.map((slide, index) => renderSlide(slide, index))}
         </div>
 
-        {/* Abschluss */}
         {completedSlides.size === section.slides.length && (
-          <div className="bg-green-100 border border-green-300 rounded-xl p-4 mt-6 text-center">
-            <CheckCircle2 className="h-8 w-8 text-green-600 mx-auto mb-2" />
-            <p className="text-green-800 font-semibold">Alle Aufgaben erledigt!</p>
+          <div className="bg-gradient-to-r from-green-400 to-teal-500 rounded-xl p-6 mt-6 text-center text-white">
+            <div className="text-4xl mb-2">🎉</div>
+            <p className="font-bold text-lg">Alle Aufgaben erledigt!</p>
+            <p className="text-sm opacity-90">{earnedPoints} Punkte erreicht</p>
           </div>
         )}
       </main>
@@ -837,7 +1103,6 @@ export default function ProContraPage() {
     const load = async () => {
       const user = auth.currentUser
       if (!user) { router.push('/'); return }
-      
       try {
         const userDoc = await getDoc(doc(db, 'users', user.uid))
         if (userDoc.exists()) {
@@ -854,64 +1119,38 @@ export default function ProContraPage() {
   }, [router])
 
   const handleSectionComplete = async (sectionId: string, completedSlides: Set<number>) => {
-    const section = SECTIONS.find(s => s.id === sectionId)!
-    
-    const newSectionData = {
-      ...sectionData,
-      [sectionId]: { completedSlides: Array.from(completedSlides) }
-    }
+    const newSectionData = { ...sectionData, [sectionId]: { completedSlides: Array.from(completedSlides) } }
     setSectionData(newSectionData)
 
-    // Calculate total score
     let newTotal = 0
     SECTIONS.forEach(s => {
       const data = newSectionData[s.id]
       if (data) {
         s.slides.forEach((slide, i) => {
-          if (data.completedSlides.includes(i) && 'points' in slide) {
-            newTotal += slide.points || 0
-          }
+          if (data.completedSlides.includes(i) && 'points' in slide) newTotal += slide.points || 0
         })
       }
     })
     setTotalScore(newTotal)
-
     await saveProgress(newTotal, newSectionData)
   }
 
   const saveProgress = async (score: number, data: typeof sectionData) => {
     const user = auth.currentUser
     if (!user) return
-    
     try {
       const userRef = doc(db, 'users', user.uid)
       const userDoc = await getDoc(userRef)
-      
       if (userDoc.exists()) {
         const userData = userDoc.data()
         const modules = userData.modules || {}
-        
-        const allComplete = SECTIONS.every(s => {
-          const d = data[s.id]
-          return d && d.completedSlides.length === s.slides.length
-        })
-        
-        modules.procontra = {
-          completed: allComplete,
-          score,
-          progress: Math.round((score / maxPoints) * 100),
-          sectionData: data,
-          lastUpdated: new Date().toISOString()
-        }
-        
+        const allComplete = SECTIONS.every(s => { const d = data[s.id]; return d && d.completedSlides.length === s.slides.length })
+        modules.procontra = { completed: allComplete, score, progress: Math.round((score / maxPoints) * 100), sectionData: data, lastUpdated: new Date().toISOString() }
         let totalPoints = 0
         Object.keys(modules).forEach(k => { if (modules[k].score) totalPoints += modules[k].score })
-        
         const allModules = ['grundlagen', 'vertiefung', 'procontra', 'lernkontrolle', 'umfrage']
         const overallProgress = Math.round((allModules.filter(id => modules[id]?.completed).length / allModules.length) * 100)
-        
         await updateDoc(userRef, { modules, totalPoints, overallProgress })
-        
         if (allComplete && !userData.badges?.procontra) {
           await updateDoc(userRef, { [`badges.procontra`]: { moduleId: 'procontra', moduleName: '3. Pro- und Contra', lerncode: userData.code, issuedAt: new Date().toISOString() } })
         }
@@ -923,81 +1162,58 @@ export default function ProContraPage() {
     const section = SECTIONS.find(s => s.id === sectionId)!
     const data = sectionData[sectionId]
     if (!data) return { earned: 0, total: section.totalPoints, complete: false }
-    
     let earned = 0
-    section.slides.forEach((slide, i) => {
-      if (data.completedSlides.includes(i) && 'points' in slide) {
-        earned += slide.points || 0
-      }
-    })
-    
-    const complete = data.completedSlides.length === section.slides.length
-    return { earned, total: section.totalPoints, complete }
+    section.slides.forEach((slide, i) => { if (data.completedSlides.includes(i) && 'points' in slide) earned += slide.points || 0 })
+    return { earned, total: section.totalPoints, complete: data.completedSlides.length === section.slides.length }
   }
 
   if (loading) return <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div></div>
 
-  // Section View
   if (activeSection) {
     const section = SECTIONS.find(s => s.id === activeSection)!
     const data = sectionData[activeSection]
-    return (
-      <SectionView 
-        section={section}
-        onClose={() => setActiveSection(null)}
-        onComplete={(c) => handleSectionComplete(activeSection, c)}
-        initialCompletedSlides={new Set(data?.completedSlides || [])}
-      />
-    )
+    return <SectionView section={section} onClose={() => setActiveSection(null)} onComplete={(c) => handleSectionComplete(activeSection, c)} initialCompletedSlides={new Set(data?.completedSlides || [])} />
   }
 
   const isComplete = SECTIONS.every(s => getSectionProgress(s.id).complete)
 
-  // Übersicht
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+      <style dangerouslySetInnerHTML={{ __html: flipCardStyles }} />
+      
       <header className="bg-white shadow-md sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
             <ArrowLeft className="h-5 w-5" /><span>Dashboard</span>
           </button>
-          <div className={`flex items-center gap-2 font-semibold ${isComplete ? 'text-green-600' : 'text-teal-600'}`}>
+          <div className={`flex items-center gap-2 font-semibold px-3 py-1 rounded-full ${isComplete ? 'bg-green-100 text-green-700' : 'bg-teal-100 text-teal-700'}`}>
             <Award className="h-5 w-5" /><span>{totalScore} / {maxPoints}</span>
           </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6">
-        {/* Titel */}
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Pro und Contra</h1>
           <p className="text-gray-600">Abstimmung vom 8. März 2026: Individualbesteuerung</p>
         </div>
 
-        {/* Intro */}
-        <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-6">
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-6">
           <p className="text-amber-800">
             <strong>📣 Bei Abstimmungen gehen die Meinungen auseinander.</strong><br />
             Lernen Sie die verschiedenen Akteure und ihre Argumente kennen.
           </p>
         </div>
 
-        {/* Klickbare Akteur-Karten */}
         <div className="grid grid-cols-2 gap-4 mb-6">
           {SECTIONS.map((section) => {
             const Icon = IconMap[section.icon] || Users
             const progress = getSectionProgress(section.id)
-            
             return (
-              <button
-                key={section.id}
-                onClick={() => setActiveSection(section.id)}
-                className={`p-4 rounded-xl border-2 transition-all text-left hover:shadow-lg ${
-                  progress.complete 
-                    ? 'bg-green-50 border-green-300' 
-                    : 'bg-white border-gray-200 hover:border-gray-300'
-                }`}
-              >
+              <button key={section.id} onClick={() => setActiveSection(section.id)}
+                className={`p-4 rounded-xl border-2 transition-all text-left hover:shadow-lg hover:scale-[1.02] ${
+                  progress.complete ? 'bg-green-50 border-green-300' : 'bg-white border-gray-200 hover:border-gray-300'
+                }`}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className={`p-2 rounded-lg ${progress.complete ? 'bg-green-500' : section.bgColor}`}>
                     <Icon className="h-5 w-5 text-white" />
@@ -1016,12 +1232,11 @@ export default function ProContraPage() {
           })}
         </div>
 
-        {/* Abschluss */}
         {isComplete && (
           <div className="bg-gradient-to-r from-green-500 to-teal-500 rounded-xl p-6 text-white text-center">
-            <Award className="h-12 w-12 mx-auto mb-3" />
-            <h3 className="text-2xl font-bold mb-2">🎉 Modul abgeschlossen!</h3>
-            <p>Sie haben alle Perspektiven kennengelernt.</p>
+            <div className="text-5xl mb-3">🎉</div>
+            <h3 className="text-2xl font-bold mb-2">Modul abgeschlossen!</h3>
+            <p>Sie haben alle Perspektiven kennengelernt und {totalScore} Punkte erreicht.</p>
           </div>
         )}
       </main>

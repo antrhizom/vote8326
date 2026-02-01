@@ -3,9 +3,9 @@ import { useRouter } from 'next/router'
 import { doc, updateDoc, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
 import { 
-  ArrowLeft, ArrowRight, CheckCircle2, Award, XCircle, 
-  Play, Building2, Users, MapPin, ThumbsUp, ThumbsDown,
-  Eye, EyeOff, Quote, BookOpen, Lightbulb, ChevronRight, X, Video
+  ArrowLeft, CheckCircle2, Award, XCircle, 
+  Building2, Users, MapPin, ThumbsUp, ThumbsDown,
+  Eye, EyeOff, Quote, BookOpen, ChevronDown, ChevronUp, X
 } from 'lucide-react'
 
 // ===========================================
@@ -67,13 +67,11 @@ interface Section {
   title: string
   shortTitle: string
   icon: string
-  color: string
   colorClass: string
   bgColor: string
   intro: string
   videoUrl: string
   videoTitle: string
-  videoPoints: number
   slides: Slide[]
   totalPoints: number
 }
@@ -89,14 +87,12 @@ const SECTIONS: Section[] = [
     title: 'Position Bundesrat',
     shortTitle: 'Bundesrat',
     icon: 'Building2',
-    color: 'blue',
     colorClass: 'from-blue-500 to-blue-600',
     bgColor: 'bg-blue-500',
     intro: 'Der Bundesrat unter Führung von Finanzministerin Karin Keller-Sutter befürwortet die Individualbesteuerung. Er sieht darin eine Chance, die sogenannte "Heiratsstrafe" abzuschaffen und Erwerbsanreize zu schaffen.',
     videoUrl: 'https://www.srf.ch/play/embed?urn=urn:srf:video:77a83d61-aeb0-4984-8e7b-37291a89b62c&startTime=12',
     videoTitle: 'Bundesrat präsentiert Position',
-    videoPoints: 10,
-    totalPoints: 50,
+    totalPoints: 40,
     slides: [
       {
         type: 'quote_reveal',
@@ -180,14 +176,12 @@ const SECTIONS: Section[] = [
     title: 'Komitee Befürworter:innen',
     shortTitle: 'Befürworter:innen',
     icon: 'ThumbsUp',
-    color: 'green',
     colorClass: 'from-green-500 to-green-600',
     bgColor: 'bg-green-500',
     intro: 'Ein breites Komitee von Parteien und Verbänden unterstützt die Individualbesteuerung. Sie sehen darin einen wichtigen Schritt zur Gleichstellung und zur Förderung der Erwerbstätigkeit von Frauen.',
-    videoUrl: '[PLATZHALTER]',
+    videoUrl: 'https://www.srf.ch/play/embed?urn=urn:srf:video:234b56bb-fbf4-4a3c-a13b-7c04ea154f4f',
     videoTitle: 'Befürworter:innen präsentieren Argumente',
-    videoPoints: 10,
-    totalPoints: 40,
+    totalPoints: 30,
     slides: [
       {
         type: 'term_reveal',
@@ -234,14 +228,12 @@ const SECTIONS: Section[] = [
     title: 'Komitee Gegner:innen',
     shortTitle: 'Gegner:innen',
     icon: 'ThumbsDown',
-    color: 'red',
     colorClass: 'from-red-500 to-red-600',
     bgColor: 'bg-red-500',
     intro: 'Ein Komitee aus SVP, EVP, EDU und Mitte hat das Referendum ergriffen. Sie kritisieren, dass vor allem reiche Doppelverdiener profitieren würden und warnen vor Mehraufwand und neuen Ungerechtigkeiten.',
     videoUrl: 'https://www.srf.ch/play/embed?urn=urn:srf:video:76af4420-abff-4a34-8aab-9941193b223e',
     videoTitle: 'Kontra-Komitee präsentiert Argumente',
-    videoPoints: 10,
-    totalPoints: 50,
+    totalPoints: 40,
     slides: [
       {
         type: 'quote_reveal',
@@ -333,14 +325,12 @@ const SECTIONS: Section[] = [
     title: 'Kantone (Kantonsreferendum)',
     shortTitle: 'Kantone',
     icon: 'MapPin',
-    color: 'orange',
     colorClass: 'from-orange-500 to-orange-600',
     bgColor: 'bg-orange-500',
     intro: 'Die Kantone haben gemeinsam mit dem Nein-Komitee das Referendum ergriffen. Sie befürchten massive Steuerausfälle und einen hohen Umsetzungsaufwand bei der Umstellung des Steuersystems.',
-    videoUrl: '[PLATZHALTER]',
+    videoUrl: 'https://www.srf.ch/play/embed?urn=urn:srf:video:d3ff0b15-3323-484e-ad97-bde7e23efc52&startTime=455',
     videoTitle: 'Kantone erklären ihre Position',
-    videoPoints: 10,
-    totalPoints: 40,
+    totalPoints: 30,
     slides: [
       {
         type: 'info',
@@ -398,437 +388,378 @@ const SECTIONS: Section[] = [
 const IconMap: { [key: string]: any } = { Building2, Users, MapPin, ThumbsUp, ThumbsDown }
 
 // ===========================================
-// SLIDE KOMPONENTEN
+// AKKORDEON SLIDE KOMPONENTEN
 // ===========================================
 
-// Info Slide
-function InfoSlideComponent({ slide, onComplete }: { slide: InfoSlide; onComplete: () => void }) {
-  const [read, setRead] = useState(false)
-  
-  return (
-    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-      <h4 className="font-bold text-gray-900 mb-2">{slide.title}</h4>
-      <p className="text-gray-700 text-sm mb-3">{slide.content}</p>
-      {slide.highlight && (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-3">
-          <p className="text-yellow-800 text-sm font-medium">{slide.highlight}</p>
-        </div>
-      )}
-      {!read ? (
-        <button onClick={() => { setRead(true); onComplete(); }} className="text-sm text-teal-600 font-semibold hover:text-teal-700">
-          ✓ Gelesen
-        </button>
-      ) : (
-        <span className="text-sm text-green-600 font-semibold flex items-center gap-1">
-          <CheckCircle2 className="h-4 w-4" /> Erledigt
-        </span>
-      )}
-    </div>
-  )
-}
-
-// Quote Reveal Slide
-function QuoteRevealSlideComponent({ slide, onComplete }: { slide: QuoteRevealSlide; onComplete: () => void }) {
+// Quote Reveal Slide (Akkordeon)
+function QuoteRevealAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: { 
+  slide: QuoteRevealSlide; isOpen: boolean; onToggle: () => void; isCompleted: boolean; onComplete: () => void 
+}) {
   const [revealed, setRevealed] = useState<Set<number>>(new Set())
-  const [completed, setCompleted] = useState(false)
   const allRevealed = revealed.size === slide.quotes.length
 
   useEffect(() => {
-    if (allRevealed && !completed) {
-      setCompleted(true)
-      onComplete()
-    }
-  }, [allRevealed, completed, onComplete])
-
-  const toggleReveal = (index: number) => {
-    const newRevealed = new Set(revealed)
-    newRevealed.add(index)
-    setRevealed(newRevealed)
-  }
+    if (allRevealed && !isCompleted) onComplete()
+  }, [allRevealed, isCompleted, onComplete])
 
   return (
-    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-      <div className="flex items-center justify-between mb-2">
-        <h4 className="font-bold text-gray-900">{slide.title}</h4>
-        {completed && <span className="text-xs text-green-600 font-semibold flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> +{slide.points}P</span>}
-      </div>
-      <p className="text-gray-600 text-sm mb-3">{slide.instruction}</p>
-      
-      <div className="space-y-2">
-        {slide.quotes.map((q, index) => (
-          <button
-            key={index}
-            onClick={() => toggleReveal(index)}
-            className={`w-full text-left p-3 rounded-lg border transition-all ${
-              revealed.has(index) 
-                ? 'border-teal-300 bg-teal-50' 
-                : 'border-gray-200 bg-white hover:border-teal-200'
-            }`}
-          >
-            {revealed.has(index) ? (
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <Quote className="h-3 w-3 text-teal-600" />
-                  <span className="font-semibold text-gray-900 text-sm">{q.author}</span>
-                </div>
-                <p className="text-gray-700 italic text-sm mb-2">"{q.quote}"</p>
-                <span className="bg-teal-100 text-teal-800 text-xs px-2 py-0.5 rounded-full">💡 {q.key_point}</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-gray-500">
-                <EyeOff className="h-4 w-4" />
-                <span className="text-sm">Zitat {index + 1} aufdecken...</span>
-              </div>
-            )}
-          </button>
-        ))}
-      </div>
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100">
+        <div className="flex items-center gap-3">
+          <span className="font-semibold text-gray-900">{slide.title}</span>
+          {isCompleted && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">+{slide.points}P ✓</span>}
+        </div>
+        {isOpen ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
+      </button>
+      {isOpen && (
+        <div className="p-4 border-t border-gray-100">
+          <p className="text-gray-600 text-sm mb-3">{slide.instruction}</p>
+          <div className="space-y-2">
+            {slide.quotes.map((q, index) => (
+              <button
+                key={index}
+                onClick={() => { const n = new Set(revealed); n.add(index); setRevealed(n); }}
+                className={`w-full text-left p-3 rounded-lg border transition-all ${revealed.has(index) ? 'border-teal-300 bg-teal-50' : 'border-gray-200 bg-white hover:border-teal-200'}`}
+              >
+                {revealed.has(index) ? (
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Quote className="h-3 w-3 text-teal-600" />
+                      <span className="font-semibold text-gray-900 text-sm">{q.author}</span>
+                    </div>
+                    <p className="text-gray-700 italic text-sm mb-2">"{q.quote}"</p>
+                    <span className="bg-teal-100 text-teal-800 text-xs px-2 py-0.5 rounded-full">💡 {q.key_point}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <EyeOff className="h-4 w-4" />
+                    <span className="text-sm">Zitat {index + 1} aufdecken...</span>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-// Term Reveal Slide
-function TermRevealSlideComponent({ slide, onComplete }: { slide: TermRevealSlide; onComplete: () => void }) {
+// Term Reveal Slide (Akkordeon)
+function TermRevealAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: { 
+  slide: TermRevealSlide; isOpen: boolean; onToggle: () => void; isCompleted: boolean; onComplete: () => void 
+}) {
   const [revealed, setRevealed] = useState<Set<number>>(new Set())
-  const [completed, setCompleted] = useState(false)
   const allRevealed = revealed.size === slide.terms.length
 
   useEffect(() => {
-    if (allRevealed && !completed) {
-      setCompleted(true)
-      onComplete()
-    }
-  }, [allRevealed, completed, onComplete])
+    if (allRevealed && !isCompleted) onComplete()
+  }, [allRevealed, isCompleted, onComplete])
 
   return (
-    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-      <div className="flex items-center justify-between mb-2">
-        <h4 className="font-bold text-gray-900">{slide.title}</h4>
-        {completed && <span className="text-xs text-green-600 font-semibold flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> +{slide.points}P</span>}
-      </div>
-      <p className="text-gray-600 text-sm mb-3">{slide.instruction}</p>
-      
-      <div className="space-y-2">
-        {slide.terms.map((t, index) => (
-          <div key={index} className="border border-gray-200 rounded-lg overflow-hidden bg-white">
-            <button
-              onClick={() => {
-                const newRevealed = new Set(revealed)
-                newRevealed.add(index)
-                setRevealed(newRevealed)
-              }}
-              className={`w-full text-left p-3 flex items-center justify-between ${revealed.has(index) ? 'bg-teal-50' : 'hover:bg-gray-50'}`}
-            >
-              <div className="flex items-center gap-2">
-                <BookOpen className={`h-4 w-4 ${revealed.has(index) ? 'text-teal-600' : 'text-gray-400'}`} />
-                <span className="font-semibold text-gray-900 text-sm">{t.term}</span>
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100">
+        <div className="flex items-center gap-3">
+          <span className="font-semibold text-gray-900">{slide.title}</span>
+          {isCompleted && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">+{slide.points}P ✓</span>}
+        </div>
+        {isOpen ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
+      </button>
+      {isOpen && (
+        <div className="p-4 border-t border-gray-100">
+          <p className="text-gray-600 text-sm mb-3">{slide.instruction}</p>
+          <div className="space-y-2">
+            {slide.terms.map((t, index) => (
+              <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => { const n = new Set(revealed); n.add(index); setRevealed(n); }}
+                  className={`w-full text-left p-3 flex items-center justify-between ${revealed.has(index) ? 'bg-teal-50' : 'bg-white hover:bg-gray-50'}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <BookOpen className={`h-4 w-4 ${revealed.has(index) ? 'text-teal-600' : 'text-gray-400'}`} />
+                    <span className="font-semibold text-gray-900 text-sm">{t.term}</span>
+                  </div>
+                  {revealed.has(index) ? <CheckCircle2 className="h-4 w-4 text-teal-600" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+                </button>
+                {revealed.has(index) && (
+                  <div className="p-3 border-t border-gray-100 bg-white">
+                    <p className="text-gray-700 text-sm mb-2">{t.definition}</p>
+                    {t.example && <p className="text-xs text-gray-500 bg-gray-100 p-2 rounded"><strong>Beispiel:</strong> {t.example}</p>}
+                  </div>
+                )}
               </div>
-              {revealed.has(index) ? <CheckCircle2 className="h-4 w-4 text-teal-600" /> : <ChevronRight className="h-4 w-4 text-gray-400" />}
-            </button>
-            {revealed.has(index) && (
-              <div className="p-3 border-t border-gray-100 bg-white">
-                <p className="text-gray-700 text-sm mb-2">{t.definition}</p>
-                {t.example && <p className="text-xs text-gray-500 bg-gray-100 p-2 rounded"><strong>Beispiel:</strong> {t.example}</p>}
-              </div>
-            )}
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
 
-// Definition Match Slide
-function DefinitionMatchSlideComponent({ slide, onComplete }: { slide: DefinitionMatchSlide; onComplete: () => void }) {
+// Quiz Slide (Akkordeon)
+function QuizAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: { 
+  slide: QuizSlide; isOpen: boolean; onToggle: () => void; isCompleted: boolean; onComplete: () => void 
+}) {
+  const [selected, setSelected] = useState<number | null>(null)
+  const [showResult, setShowResult] = useState(false)
+
+  const handleSubmit = () => {
+    if (selected === null) return
+    setShowResult(true)
+    if (!isCompleted) onComplete()
+  }
+
+  return (
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100">
+        <div className="flex items-center gap-3">
+          <span className="font-semibold text-gray-900">{slide.title}</span>
+          {isCompleted && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">+{slide.points}P ✓</span>}
+        </div>
+        {isOpen ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
+      </button>
+      {isOpen && (
+        <div className="p-4 border-t border-gray-100">
+          <p className="text-gray-700 text-sm mb-3">{slide.question}</p>
+          <div className="space-y-2 mb-3">
+            {slide.options.map((opt, index) => {
+              const isSelected = selected === index
+              const showCorrect = showResult && opt.correct
+              const showWrong = showResult && isSelected && !opt.correct
+              return (
+                <button
+                  key={index}
+                  onClick={() => !showResult && setSelected(index)}
+                  disabled={showResult}
+                  className={`w-full text-left p-2 rounded-lg border transition-all flex items-center gap-2 ${
+                    showCorrect ? 'border-green-400 bg-green-50' :
+                    showWrong ? 'border-red-400 bg-red-50' :
+                    isSelected ? 'border-teal-400 bg-teal-50' :
+                    'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                    showCorrect ? 'bg-green-500 text-white' :
+                    showWrong ? 'bg-red-500 text-white' :
+                    isSelected ? 'bg-teal-500 text-white' : 'bg-gray-200'
+                  }`}>{String.fromCharCode(65 + index)}</span>
+                  <span className="flex-1 text-sm">{opt.text}</span>
+                  {showCorrect && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                  {showWrong && <XCircle className="h-4 w-4 text-red-500" />}
+                </button>
+              )
+            })}
+          </div>
+          {showResult ? (
+            <div className={`p-2 rounded-lg text-sm ${slide.options[selected!].correct ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
+              {slide.explanation}
+            </div>
+          ) : selected !== null && (
+            <button onClick={handleSubmit} className="w-full py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-semibold rounded-lg">
+              Prüfen
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// True/False Slide (Akkordeon)
+function TrueFalseAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: { 
+  slide: TrueFalseSlide; isOpen: boolean; onToggle: () => void; isCompleted: boolean; onComplete: () => void 
+}) {
+  const [answers, setAnswers] = useState<{ [key: number]: boolean | null }>({})
+  const [showResults, setShowResults] = useState(false)
+  const allAnswered = Object.keys(answers).filter(k => answers[parseInt(k)] !== null).length === slide.statements.length
+
+  const handleSubmit = () => {
+    setShowResults(true)
+    if (!isCompleted) onComplete()
+  }
+
+  return (
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100">
+        <div className="flex items-center gap-3">
+          <span className="font-semibold text-gray-900">{slide.title}</span>
+          {isCompleted && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">+{slide.points}P ✓</span>}
+        </div>
+        {isOpen ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
+      </button>
+      {isOpen && (
+        <div className="p-4 border-t border-gray-100">
+          <div className="space-y-3 mb-3">
+            {slide.statements.map((s, index) => {
+              const answer = answers[index]
+              const isCorrect = showResults && answer === s.correct
+              const isWrong = showResults && answer !== null && answer !== s.correct
+              return (
+                <div key={index} className={`p-3 rounded-lg border ${isCorrect ? 'border-green-300 bg-green-50' : isWrong ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}>
+                  <p className="text-gray-800 text-sm mb-2">{s.text}</p>
+                  <div className="flex gap-2">
+                    <button onClick={() => !showResults && setAnswers({ ...answers, [index]: true })} disabled={showResults} className={`flex-1 py-1.5 rounded text-xs font-semibold ${answer === true ? showResults ? s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>✓ Richtig</button>
+                    <button onClick={() => !showResults && setAnswers({ ...answers, [index]: false })} disabled={showResults} className={`flex-1 py-1.5 rounded text-xs font-semibold ${answer === false ? showResults ? !s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>✗ Falsch</button>
+                  </div>
+                  {showResults && <p className={`mt-2 text-xs ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>{s.explanation}</p>}
+                </div>
+              )
+            })}
+          </div>
+          {!showResults && allAnswered && (
+            <button onClick={handleSubmit} className="w-full py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-semibold rounded-lg">
+              Prüfen
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Definition Match Slide (Akkordeon)
+function DefinitionMatchAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: { 
+  slide: DefinitionMatchSlide; isOpen: boolean; onToggle: () => void; isCompleted: boolean; onComplete: () => void 
+}) {
   const [answers, setAnswers] = useState<{ [key: number]: string }>({})
   const [showResults, setShowResults] = useState(false)
-  const [completed, setCompleted] = useState(false)
-  
   const options = Array.from(new Set(slide.pairs.map(p => p.definition)))
   const allAnswered = Object.keys(answers).length === slide.pairs.length
 
   const handleSubmit = () => {
     setShowResults(true)
-    if (!completed) {
-      setCompleted(true)
-      onComplete()
-    }
+    if (!isCompleted) onComplete()
   }
 
   return (
-    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-      <div className="flex items-center justify-between mb-2">
-        <h4 className="font-bold text-gray-900">{slide.title}</h4>
-        {completed && <span className="text-xs text-green-600 font-semibold flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> +{slide.points}P</span>}
-      </div>
-      <p className="text-gray-600 text-sm mb-3">{slide.instruction}</p>
-      
-      <div className="space-y-2 mb-3">
-        {slide.pairs.map((pair, index) => {
-          const answer = answers[index]
-          const isCorrect = showResults && answer === pair.definition
-          const isWrong = showResults && answer && answer !== pair.definition
-          
-          return (
-            <div key={index} className={`p-2 rounded-lg border ${isCorrect ? 'border-green-300 bg-green-50' : isWrong ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'}`}>
-              <p className="font-medium text-gray-900 text-sm mb-2">{pair.term}</p>
-              <div className="flex gap-2">
-                {options.map((opt) => (
-                  <button
-                    key={opt}
-                    onClick={() => !showResults && setAnswers({ ...answers, [index]: opt })}
-                    disabled={showResults}
-                    className={`flex-1 px-2 py-1.5 rounded text-xs font-semibold transition-all ${
-                      answer === opt
-                        ? showResults
-                          ? opt === pair.definition ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-                          : 'bg-teal-500 text-white'
-                        : showResults && opt === pair.definition
-                          ? 'bg-green-200 text-green-800'
-                          : 'bg-gray-100 hover:bg-gray-200'
-                    }`}
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {!showResults && allAnswered && (
-        <button onClick={handleSubmit} className="w-full py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-semibold rounded-lg">
-          Prüfen
-        </button>
-      )}
-    </div>
-  )
-}
-
-// Quiz Slide
-function QuizSlideComponent({ slide, onComplete }: { slide: QuizSlide; onComplete: () => void }) {
-  const [selected, setSelected] = useState<number | null>(null)
-  const [showResult, setShowResult] = useState(false)
-  const [completed, setCompleted] = useState(false)
-
-  const handleSubmit = () => {
-    if (selected === null) return
-    setShowResult(true)
-    if (!completed) {
-      setCompleted(true)
-      onComplete()
-    }
-  }
-
-  return (
-    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-      <div className="flex items-center justify-between mb-2">
-        <h4 className="font-bold text-gray-900">{slide.title}</h4>
-        {completed && <span className="text-xs text-green-600 font-semibold flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> +{slide.points}P</span>}
-      </div>
-      <p className="text-gray-700 text-sm mb-3">{slide.question}</p>
-      
-      <div className="space-y-2 mb-3">
-        {slide.options.map((opt, index) => {
-          const isSelected = selected === index
-          const showCorrect = showResult && opt.correct
-          const showWrong = showResult && isSelected && !opt.correct
-          
-          return (
-            <button
-              key={index}
-              onClick={() => !showResult && setSelected(index)}
-              disabled={showResult}
-              className={`w-full text-left p-2 rounded-lg border transition-all flex items-center gap-2 ${
-                showCorrect ? 'border-green-400 bg-green-50' :
-                showWrong ? 'border-red-400 bg-red-50' :
-                isSelected ? 'border-teal-400 bg-teal-50' :
-                'border-gray-200 bg-white hover:border-gray-300'
-              }`}
-            >
-              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                showCorrect ? 'bg-green-500 text-white' :
-                showWrong ? 'bg-red-500 text-white' :
-                isSelected ? 'bg-teal-500 text-white' : 'bg-gray-200'
-              }`}>{String.fromCharCode(65 + index)}</span>
-              <span className="flex-1 text-sm">{opt.text}</span>
-              {showCorrect && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-              {showWrong && <XCircle className="h-4 w-4 text-red-500" />}
-            </button>
-          )
-        })}
-      </div>
-
-      {showResult ? (
-        <div className={`p-2 rounded-lg text-sm ${slide.options[selected!].correct ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
-          {slide.explanation}
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100">
+        <div className="flex items-center gap-3">
+          <span className="font-semibold text-gray-900">{slide.title}</span>
+          {isCompleted && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">+{slide.points}P ✓</span>}
         </div>
-      ) : selected !== null && (
-        <button onClick={handleSubmit} className="w-full py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-semibold rounded-lg">
-          Prüfen
-        </button>
+        {isOpen ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
+      </button>
+      {isOpen && (
+        <div className="p-4 border-t border-gray-100">
+          <p className="text-gray-600 text-sm mb-3">{slide.instruction}</p>
+          <div className="space-y-2 mb-3">
+            {slide.pairs.map((pair, index) => {
+              const answer = answers[index]
+              const isCorrect = showResults && answer === pair.definition
+              const isWrong = showResults && answer && answer !== pair.definition
+              return (
+                <div key={index} className={`p-2 rounded-lg border ${isCorrect ? 'border-green-300 bg-green-50' : isWrong ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'}`}>
+                  <p className="font-medium text-gray-900 text-sm mb-2">{pair.term}</p>
+                  <div className="flex gap-2">
+                    {options.map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => !showResults && setAnswers({ ...answers, [index]: opt })}
+                        disabled={showResults}
+                        className={`flex-1 px-2 py-1.5 rounded text-xs font-semibold ${
+                          answer === opt
+                            ? showResults
+                              ? opt === pair.definition ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                              : 'bg-teal-500 text-white'
+                            : showResults && opt === pair.definition
+                              ? 'bg-green-200 text-green-800'
+                              : 'bg-gray-100 hover:bg-gray-200'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          {!showResults && allAnswered && (
+            <button onClick={handleSubmit} className="w-full py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-semibold rounded-lg">
+              Prüfen
+            </button>
+          )}
+        </div>
       )}
     </div>
   )
 }
 
-// True/False Slide
-function TrueFalseSlideComponent({ slide, onComplete }: { slide: TrueFalseSlide; onComplete: () => void }) {
-  const [answers, setAnswers] = useState<{ [key: number]: boolean | null }>({})
-  const [showResults, setShowResults] = useState(false)
-  const [completed, setCompleted] = useState(false)
-  const allAnswered = Object.keys(answers).filter(k => answers[parseInt(k)] !== null).length === slide.statements.length
-
-  const handleSubmit = () => {
-    setShowResults(true)
-    if (!completed) {
-      setCompleted(true)
-      onComplete()
-    }
-  }
-
+// Info Slide (Akkordeon)
+function InfoAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: { 
+  slide: InfoSlide; isOpen: boolean; onToggle: () => void; isCompleted: boolean; onComplete: () => void 
+}) {
   return (
-    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-      <div className="flex items-center justify-between mb-2">
-        <h4 className="font-bold text-gray-900">{slide.title}</h4>
-        {completed && <span className="text-xs text-green-600 font-semibold flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> +{slide.points}P</span>}
-      </div>
-      
-      <div className="space-y-3 mb-3">
-        {slide.statements.map((s, index) => {
-          const answer = answers[index]
-          const isCorrect = showResults && answer === s.correct
-          const isWrong = showResults && answer !== null && answer !== s.correct
-          
-          return (
-            <div key={index} className={`p-3 rounded-lg border ${isCorrect ? 'border-green-300 bg-green-50' : isWrong ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'}`}>
-              <p className="text-gray-800 text-sm mb-2">{s.text}</p>
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => !showResults && setAnswers({ ...answers, [index]: true })} 
-                  disabled={showResults}
-                  className={`flex-1 py-1.5 rounded text-xs font-semibold ${answer === true ? showResults ? s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
-                >✓ Richtig</button>
-                <button 
-                  onClick={() => !showResults && setAnswers({ ...answers, [index]: false })} 
-                  disabled={showResults}
-                  className={`flex-1 py-1.5 rounded text-xs font-semibold ${answer === false ? showResults ? !s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
-                >✗ Falsch</button>
-              </div>
-              {showResults && <p className={`mt-2 text-xs ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>{s.explanation}</p>}
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100">
+        <div className="flex items-center gap-3">
+          <span className="font-semibold text-gray-900">{slide.title}</span>
+          {isCompleted && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">✓</span>}
+        </div>
+        {isOpen ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
+      </button>
+      {isOpen && (
+        <div className="p-4 border-t border-gray-100">
+          <p className="text-gray-700 text-sm mb-3">{slide.content}</p>
+          {slide.highlight && (
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-3">
+              <p className="text-yellow-800 text-sm">{slide.highlight}</p>
             </div>
-          )
-        })}
-      </div>
-
-      {!showResults && allAnswered && (
-        <button onClick={handleSubmit} className="w-full py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-semibold rounded-lg">
-          Prüfen
-        </button>
+          )}
+          {!isCompleted && (
+            <button onClick={onComplete} className="text-sm text-teal-600 font-semibold hover:text-teal-700">
+              ✓ Gelesen
+            </button>
+          )}
+        </div>
       )}
     </div>
   )
 }
 
 // ===========================================
-// SECTION VIEW (Video + Aufgaben auf einer Seite)
+// SECTION VIEW
 // ===========================================
 
-// Video-Dauer pro Sektion in Sekunden (anpassen an echte Videolängen!)
-const VIDEO_DURATIONS: { [key: string]: number } = {
-  bundesrat: 120,      // 2 Minuten
-  befuerworter: 90,    // 1.5 Minuten (Platzhalter)
-  gegner: 150,         // 2.5 Minuten
-  kantone: 90          // 1.5 Minuten (Platzhalter)
-}
-
-function SectionView({
-  section,
-  onClose,
+function SectionView({ 
+  section, 
+  onClose, 
   onComplete,
-  initialVideoWatched,
   initialCompletedSlides
-}: {
+}: { 
   section: Section
   onClose: () => void
-  onComplete: (videoWatched: boolean, completedSlides: Set<number>) => void
-  initialVideoWatched: boolean
+  onComplete: (completedSlides: Set<number>) => void
   initialCompletedSlides: Set<number>
 }) {
-  const [videoWatched, setVideoWatched] = useState(initialVideoWatched)
   const [completedSlides, setCompletedSlides] = useState<Set<number>>(initialCompletedSlides)
-  const isPlaceholder = section.videoUrl.includes('PLATZHALTER')
-
-  // Timer State
-  const [timeWatched, setTimeWatched] = useState(0)
-  const [timerActive, setTimerActive] = useState(false)
-  const videoDuration = VIDEO_DURATIONS[section.id] || 120 // Default 2 Min
-  const timerComplete = timeWatched >= videoDuration
-
-  // Timer starten wenn Video-Bereich sichtbar ist
-  useEffect(() => {
-    // Timer nur starten wenn Video noch nicht als geschaut markiert ist
-    if (videoWatched) {
-      setTimeWatched(videoDuration) // Bereits geschaut = Timer voll
-      return
-    }
-
-    setTimerActive(true)
-    const interval = setInterval(() => {
-      setTimeWatched(prev => {
-        if (prev >= videoDuration) {
-          clearInterval(interval)
-          return videoDuration
-        }
-        return prev + 1
-      })
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [videoWatched, videoDuration])
-
-  const handleVideoConfirm = () => {
-    if (timerComplete) {
-      setVideoWatched(true)
-    }
-  }
-
-  // Format time remaining
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
-
-  const timeRemaining = Math.max(0, videoDuration - timeWatched)
-  const progressPercent = Math.min(100, (timeWatched / videoDuration) * 100)
+  const [openAccordion, setOpenAccordion] = useState<number | null>(0)
 
   const handleSlideComplete = (index: number) => {
     const newCompleted = new Set(completedSlides)
     newCompleted.add(index)
     setCompletedSlides(newCompleted)
+    onComplete(newCompleted)
   }
 
-  const allSlidesCompleted = completedSlides.size === section.slides.length
-  const earnedPoints = (videoWatched ? section.videoPoints : 0) + 
-    section.slides.reduce((sum, slide, i) => completedSlides.has(i) ? sum + (('points' in slide ? slide.points : 0) || 0) : sum, 0)
-
-  // Auto-save on changes
-  useEffect(() => {
-    onComplete(videoWatched, completedSlides)
-  }, [videoWatched, completedSlides])
+  const earnedPoints = section.slides.reduce((sum, slide, i) => 
+    completedSlides.has(i) && 'points' in slide ? sum + (slide.points || 0) : sum, 0
+  )
 
   const renderSlide = (slide: Slide, index: number) => {
+    const isOpen = openAccordion === index
     const isCompleted = completedSlides.has(index)
-    
+    const toggle = () => setOpenAccordion(isOpen ? null : index)
+    const complete = () => handleSlideComplete(index)
+
     switch (slide.type) {
-      case 'info': return <InfoSlideComponent key={index} slide={slide} onComplete={() => handleSlideComplete(index)} />
-      case 'quiz': return <QuizSlideComponent key={index} slide={slide} onComplete={() => handleSlideComplete(index)} />
-      case 'truefalse': return <TrueFalseSlideComponent key={index} slide={slide} onComplete={() => handleSlideComplete(index)} />
-      case 'quote_reveal': return <QuoteRevealSlideComponent key={index} slide={slide} onComplete={() => handleSlideComplete(index)} />
-      case 'term_reveal': return <TermRevealSlideComponent key={index} slide={slide} onComplete={() => handleSlideComplete(index)} />
-      case 'definition_match': return <DefinitionMatchSlideComponent key={index} slide={slide} onComplete={() => handleSlideComplete(index)} />
+      case 'info': return <InfoAccordion key={index} slide={slide} isOpen={isOpen} onToggle={toggle} isCompleted={isCompleted} onComplete={complete} />
+      case 'quiz': return <QuizAccordion key={index} slide={slide} isOpen={isOpen} onToggle={toggle} isCompleted={isCompleted} onComplete={complete} />
+      case 'truefalse': return <TrueFalseAccordion key={index} slide={slide} isOpen={isOpen} onToggle={toggle} isCompleted={isCompleted} onComplete={complete} />
+      case 'quote_reveal': return <QuoteRevealAccordion key={index} slide={slide} isOpen={isOpen} onToggle={toggle} isCompleted={isCompleted} onComplete={complete} />
+      case 'term_reveal': return <TermRevealAccordion key={index} slide={slide} isOpen={isOpen} onToggle={toggle} isCompleted={isCompleted} onComplete={complete} />
+      case 'definition_match': return <DefinitionMatchAccordion key={index} slide={slide} isOpen={isOpen} onToggle={toggle} isCompleted={isCompleted} onComplete={complete} />
       default: return null
     }
   }
@@ -860,105 +791,28 @@ function SectionView({
         {/* Video */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-4">
           <div className="bg-gray-900">
-            {isPlaceholder ? (
-              <div className="aspect-video flex items-center justify-center text-gray-400">
-                <div className="text-center">
-                  <Play className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">{section.videoTitle}</p>
-                  <p className="text-xs text-gray-500 mt-1">Video-Platzhalter</p>
-                </div>
-              </div>
-            ) : (
-              <iframe className="w-full aspect-video" src={section.videoUrl} title={section.videoTitle} frameBorder="0" allow="autoplay; fullscreen" allowFullScreen />
-            )}
-          </div>
-          
-          {/* Video Bestätigung mit Timer */}
-          <div className={`p-3 border-t ${videoWatched ? 'bg-green-50' : 'bg-gray-50'}`}>
-            {videoWatched ? (
-              <div className="flex items-center gap-2 text-green-700">
-                <CheckCircle2 className="h-5 w-5" />
-                <span className="font-medium text-sm">Video angeschaut</span>
-                <span className="ml-auto text-xs font-semibold">+{section.videoPoints} Punkte</span>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {/* Timer-Fortschrittsanzeige */}
-                <div className="space-y-1">
-                  <div className="flex justify-between text-xs text-gray-600">
-                    <span>Mindest-Verweildauer: {formatTime(videoDuration)}</span>
-                    <span className={timerComplete ? 'text-green-600 font-semibold' : ''}>
-                      {timerComplete ? '✓ Fertig!' : `Noch ${formatTime(timeRemaining)}`}
-                    </span>
-                  </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full transition-all duration-1000 ${timerComplete ? 'bg-green-500' : 'bg-teal-500'}`}
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Bestätigungs-Button */}
-                <button
-                  onClick={handleVideoConfirm}
-                  disabled={!timerComplete}
-                  className={`w-full flex items-center justify-center gap-2 py-2 font-semibold rounded-lg text-sm transition-all ${
-                    timerComplete
-                      ? 'bg-green-500 hover:bg-green-600 text-white cursor-pointer'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  <Video className="h-4 w-4" />
-                  {timerComplete
-                    ? `Video angeschaut bestätigen (+${section.videoPoints} Punkte)`
-                    : `Bitte Video schauen (${formatTime(timeRemaining)})`
-                  }
-                </button>
-              </div>
-            )}
+            <iframe 
+              className="w-full aspect-video" 
+              src={section.videoUrl} 
+              title={section.videoTitle} 
+              frameBorder="0" 
+              allow="autoplay; fullscreen" 
+              allowFullScreen 
+            />
           </div>
         </div>
 
-        {/* Aufgaben - gesperrt bis Video geschaut */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-gray-900">Interaktive Aufgaben</h3>
-            {!videoWatched && (
-              <span className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded-full">
-                🔒 Erst nach Video verfügbar
-              </span>
-            )}
-          </div>
-
-          {videoWatched ? (
-            // Aufgaben freigeschaltet
-            section.slides.map((slide, index) => renderSlide(slide, index))
-          ) : (
-            // Aufgaben gesperrt - Vorschau anzeigen
-            <div className="space-y-3 opacity-50 pointer-events-none">
-              {section.slides.map((slide, index) => (
-                <div key={index} className="p-4 bg-gray-100 rounded-xl border border-gray-200 relative">
-                  <div className="absolute inset-0 bg-gray-50/80 rounded-xl flex items-center justify-center z-10">
-                    <div className="text-center text-gray-500">
-                      <div className="text-2xl mb-1">🔒</div>
-                      <p className="text-sm font-medium">Gesperrt</p>
-                    </div>
-                  </div>
-                  <h4 className="font-bold text-gray-400 mb-2">{slide.title}</h4>
-                  <p className="text-gray-400 text-sm">Diese Aufgabe wird nach dem Video freigeschaltet...</p>
-                </div>
-              ))}
-            </div>
-          )}
+        {/* Aufgaben als Akkordeons */}
+        <div className="space-y-3">
+          <h3 className="text-lg font-bold text-gray-900">Interaktive Aufgaben</h3>
+          {section.slides.map((slide, index) => renderSlide(slide, index))}
         </div>
 
         {/* Abschluss */}
-        {videoWatched && allSlidesCompleted && (
+        {completedSlides.size === section.slides.length && (
           <div className="bg-green-100 border border-green-300 rounded-xl p-4 mt-6 text-center">
             <CheckCircle2 className="h-8 w-8 text-green-600 mx-auto mb-2" />
-            <p className="text-green-800 font-semibold">Sektion abgeschlossen!</p>
-            <p className="text-green-700 text-sm">Sie haben {earnedPoints} Punkte erreicht.</p>
+            <p className="text-green-800 font-semibold">Alle Aufgaben erledigt!</p>
           </div>
         )}
       </main>
@@ -974,7 +828,7 @@ export default function ProContraPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [activeSection, setActiveSection] = useState<string | null>(null)
-  const [sectionData, setSectionData] = useState<{ [key: string]: { videoWatched: boolean; completedSlides: number[] } }>({})
+  const [sectionData, setSectionData] = useState<{ [key: string]: { completedSlides: number[] } }>({})
   const [totalScore, setTotalScore] = useState(0)
 
   const maxPoints = SECTIONS.reduce((sum, s) => sum + s.totalPoints, 0)
@@ -999,15 +853,12 @@ export default function ProContraPage() {
     load()
   }, [router])
 
-  const handleSectionComplete = async (sectionId: string, videoWatched: boolean, completedSlides: Set<number>) => {
+  const handleSectionComplete = async (sectionId: string, completedSlides: Set<number>) => {
     const section = SECTIONS.find(s => s.id === sectionId)!
     
     const newSectionData = {
       ...sectionData,
-      [sectionId]: {
-        videoWatched,
-        completedSlides: Array.from(completedSlides)
-      }
+      [sectionId]: { completedSlides: Array.from(completedSlides) }
     }
     setSectionData(newSectionData)
 
@@ -1016,7 +867,6 @@ export default function ProContraPage() {
     SECTIONS.forEach(s => {
       const data = newSectionData[s.id]
       if (data) {
-        if (data.videoWatched) newTotal += s.videoPoints
         s.slides.forEach((slide, i) => {
           if (data.completedSlides.includes(i) && 'points' in slide) {
             newTotal += slide.points || 0
@@ -1026,7 +876,6 @@ export default function ProContraPage() {
     })
     setTotalScore(newTotal)
 
-    // Save to Firebase
     await saveProgress(newTotal, newSectionData)
   }
 
@@ -1042,10 +891,9 @@ export default function ProContraPage() {
         const userData = userDoc.data()
         const modules = userData.modules || {}
         
-        // Check if all sections are complete
         const allComplete = SECTIONS.every(s => {
           const d = data[s.id]
-          return d && d.videoWatched && d.completedSlides.length === s.slides.length
+          return d && d.completedSlides.length === s.slides.length
         })
         
         modules.procontra = {
@@ -1076,14 +924,14 @@ export default function ProContraPage() {
     const data = sectionData[sectionId]
     if (!data) return { earned: 0, total: section.totalPoints, complete: false }
     
-    let earned = data.videoWatched ? section.videoPoints : 0
+    let earned = 0
     section.slides.forEach((slide, i) => {
       if (data.completedSlides.includes(i) && 'points' in slide) {
         earned += slide.points || 0
       }
     })
     
-    const complete = data.videoWatched && data.completedSlides.length === section.slides.length
+    const complete = data.completedSlides.length === section.slides.length
     return { earned, total: section.totalPoints, complete }
   }
 
@@ -1097,8 +945,7 @@ export default function ProContraPage() {
       <SectionView 
         section={section}
         onClose={() => setActiveSection(null)}
-        onComplete={(v, c) => handleSectionComplete(activeSection, v, c)}
-        initialVideoWatched={data?.videoWatched || false}
+        onComplete={(c) => handleSectionComplete(activeSection, c)}
         initialCompletedSlides={new Set(data?.completedSlides || [])}
       />
     )
@@ -1161,7 +1008,6 @@ export default function ProContraPage() {
                   </div>
                   {progress.complete && <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />}
                 </div>
-                {/* Progress bar */}
                 <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                   <div className={`h-full ${progress.complete ? 'bg-green-500' : section.bgColor} transition-all`} style={{ width: `${(progress.earned / progress.total) * 100}%` }} />
                 </div>

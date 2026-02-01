@@ -69,16 +69,16 @@ export default function AbstimmungDashboard() {
         // Initialize modules if they don't exist
         if (!data.modules) {
           data.modules = {
+            ausgangslage: { completed: false, score: 0, progress: 0 },
             grundlagen: { completed: false, score: 0, progress: 0 },
-            vertiefung: { completed: false, score: 0, progress: 0 },
-            umfrage: { completed: false, score: 0, progress: 0 },
             procontra: { completed: false, score: 0, progress: 0 },
-            lernkontrolle: { completed: false, score: 0, progress: 0 }
+            vertiefung: { completed: false, score: 0, progress: 0 },
+            spielerisch: { completed: false, score: 0, progress: 0 }
           }
         }
         
         // Ensure all required modules exist
-        const requiredModules = ['grundlagen', 'vertiefung', 'umfrage', 'procontra', 'lernkontrolle']
+        const requiredModules = ['ausgangslage', 'grundlagen', 'procontra', 'vertiefung', 'spielerisch']
         requiredModules.forEach(moduleId => {
           if (!data.modules[moduleId]) {
             data.modules[moduleId] = { completed: false, score: 0, progress: 0 }
@@ -145,7 +145,7 @@ export default function AbstimmungDashboard() {
       const calculateUserPoints = (user: UserData) => {
         if (!user.modules) return 0
         
-        const mainModules = ['grundlagen', 'vertiefung', 'umfrage', 'procontra', 'lernkontrolle']
+        const mainModules = ['ausgangslage', 'grundlagen', 'procontra', 'vertiefung', 'spielerisch']
         let userTotal = 0
         
         mainModules.forEach(moduleId => {
@@ -514,7 +514,8 @@ function LearningAreaCard({ area, progress, modules, userData, onModuleClick, on
 
       {/* Module Liste */}
       <div className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Lernsets</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-1">Lernsets</h3>
+        <p className="text-sm text-gray-500 mb-4">Abstimmung vom 8. März 2026 – Individualbesteuerung</p>
         <div className="space-y-3">
           {modulesList.map((module) => (
             <ModuleButton

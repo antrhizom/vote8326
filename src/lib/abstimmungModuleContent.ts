@@ -11,10 +11,21 @@ export interface ModuleData {
 }
 
 export const moduleData: { [key: string]: ModuleData } = {
-  // 1. Grundlagen: Info Bund und Medien
+  // 1. Ausgangslage kollaborativ interaktiv
+  ausgangslage: {
+    id: 'ausgangslage',
+    title: '1. Ausgangslage kollaborativ interaktiv',
+    description: 'Erarbeiten Sie gemeinsam die Ausgangslage zur Individualbesteuerung.',
+    estimatedTime: '15 Min',
+    maxPoints: 100,
+    type: 'h5p',
+    h5pUrl: '/h5p/ausgangslage.html'
+  },
+  
+  // 2. Grundlagen Info Bund Medien
   grundlagen: {
     id: 'grundlagen',
-    title: '1. Grundlagen: Info Bund und Medien',
+    title: '2. Grundlagen Info Bund Medien',
     description: 'Lernen Sie die Grundlagen über Bundesinformationen und Medienberichterstattung kennen.',
     estimatedTime: '15 Min',
     maxPoints: 100,
@@ -22,10 +33,21 @@ export const moduleData: { [key: string]: ModuleData } = {
     h5pUrl: '/h5p/grundlagen.html'
   },
   
-  // 2. Vertiefung interaktiv
+  // 3. Pro Contra
+  procontra: {
+    id: 'procontra',
+    title: '3. Pro Contra',
+    description: 'Lernen Sie die verschiedenen Perspektiven zur Individualbesteuerung kennen.',
+    estimatedTime: '20 Min',
+    maxPoints: 210,
+    type: 'interactive',
+    h5pUrl: null // Uses custom page
+  },
+  
+  // 4. Vertiefung interaktiv
   vertiefung: {
     id: 'vertiefung',
-    title: '2. Vertiefung interaktiv',
+    title: '4. Vertiefung interaktiv',
     description: 'Vertiefen Sie Ihr Wissen mit interaktiven Übungen und praktischen Beispielen.',
     estimatedTime: '20 Min',
     maxPoints: 100,
@@ -33,37 +55,15 @@ export const moduleData: { [key: string]: ModuleData } = {
     h5pUrl: '/h5p/vertiefung.html'
   },
   
-  // 3. Pro- und Contra
-  procontra: {
-    id: 'procontra',
-    title: '3. Pro- und Contra',
-    description: 'Schauen Sie ein Video zur Individualbesteuerung und bearbeiten Sie eine interaktive Aufgabe.',
-    estimatedTime: '10 Min',
-    maxPoints: 100,
-    type: 'interactive',
-    h5pUrl: null // Uses custom page
-  },
-  
-  // 4. Lernkontrolle
-  lernkontrolle: {
-    id: 'lernkontrolle',
-    title: '4. Lernkontrolle',
-    description: 'Testen Sie Ihr Gesamtwissen in einer abschließenden Lernkontrolle.',
+  // 5. Spielerisch
+  spielerisch: {
+    id: 'spielerisch',
+    title: '5. Spielerisch',
+    description: 'Festigen Sie Ihr Wissen spielerisch mit Quiz und Challenges.',
     estimatedTime: '15 Min',
     maxPoints: 100,
     type: 'h5p',
-    h5pUrl: '/h5p/lernkontrolle.html'
-  },
-  
-  // 5. Umfrage Lernset (vorher Modul 3)
-  umfrage: {
-    id: 'umfrage',
-    title: '5. Umfrage Lernset',
-    description: 'Nehmen Sie an einer Umfrage teil und reflektieren Sie über das Gelernte.',
-    estimatedTime: '10 Min',
-    maxPoints: 100,
-    type: 'h5p',
-    h5pUrl: '/h5p/68fb34ef86d593ad28dc1d00.html'
+    h5pUrl: '/h5p/spielerisch.html'
   }
 }
 
@@ -78,9 +78,9 @@ export interface LearningArea {
 export const learningAreas = {
   abstimmung2026: {
     id: 'abstimmung2026',
-    title: 'Abstimmung 2026 - Lernumgebung',
-    description: 'Bereiten Sie sich optimal auf die kommende Abstimmung vor.',
-    modules: ['grundlagen', 'vertiefung', 'procontra', 'lernkontrolle', 'umfrage'],
+    title: 'Abstimmung vom 8. März 2026',
+    description: 'Individualbesteuerung: Bereiten Sie sich optimal auf die kommende Abstimmung vor.',
+    modules: ['ausgangslage', 'grundlagen', 'procontra', 'vertiefung', 'spielerisch'],
     color: 'teal'
   }
 }

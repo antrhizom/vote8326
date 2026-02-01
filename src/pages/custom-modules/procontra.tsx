@@ -460,15 +460,26 @@ function FlipCardAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }:
   slide: FlipCardSlide; isOpen: boolean; onToggle: () => void; isCompleted: boolean; onComplete: () => void 
 }) {
   const [flipped, setFlipped] = useState<Set<number>>(new Set())
-  const [showPoints, setShowPoints] = useState(false)
+  const [hasCompleted, setHasCompleted] = useState(false)
+  
   const allFlipped = flipped.size === slide.cards.length
 
+  // Only complete when ALL cards are flipped
   useEffect(() => {
-    if (allFlipped && !isCompleted) {
-      setShowPoints(true)
-      setTimeout(() => onComplete(), 500)
+    if (allFlipped && !isCompleted && !hasCompleted) {
+      setHasCompleted(true)
+      // Small delay to show the visual feedback
+      setTimeout(() => onComplete(), 300)
     }
-  }, [allFlipped, isCompleted, onComplete])
+  }, [allFlipped, isCompleted, hasCompleted, onComplete])
+
+  const handleFlip = (index: number) => {
+    if (!flipped.has(index)) {
+      const newFlipped = new Set(flipped)
+      newFlipped.add(index)
+      setFlipped(newFlipped)
+    }
+  }
 
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
@@ -476,7 +487,7 @@ function FlipCardAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }:
         <div className="flex items-center gap-3">
           <span className="text-2xl">🎴</span>
           <span className="font-semibold text-gray-900">{slide.title}</span>
-          {isCompleted && (
+          {(isCompleted || (allFlipped && hasCompleted)) && (
             <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1 points-popup">
               <Sparkles className="h-3 w-3" /> +{slide.points}P
             </span>
@@ -491,7 +502,7 @@ function FlipCardAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }:
             {slide.cards.map((card, index) => (
               <div 
                 key={index}
-                onClick={() => { const n = new Set(flipped); n.add(index); setFlipped(n); }}
+                onClick={() => handleFlip(index)}
                 className={`flip-card h-40 ${flipped.has(index) ? 'flipped' : ''}`}
               >
                 <div className="flip-card-inner">
@@ -508,9 +519,14 @@ function FlipCardAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }:
               </div>
             ))}
           </div>
-          {!allFlipped && (
+          {!allFlipped && !isCompleted && (
             <p className="text-center text-sm text-gray-500 mt-4">
               Noch {slide.cards.length - flipped.size} Karte(n) umdrehen
+            </p>
+          )}
+          {allFlipped && !isCompleted && !hasCompleted && (
+            <p className="text-center text-sm text-green-600 mt-4 font-semibold">
+              ✓ Alle Karten aufgedeckt!
             </p>
           )}
         </div>
@@ -1148,7 +1164,7 @@ export default function ProContraPage() {
         modules.procontra = { completed: allComplete, score, progress: Math.round((score / maxPoints) * 100), sectionData: data, lastUpdated: new Date().toISOString() }
         let totalPoints = 0
         Object.keys(modules).forEach(k => { if (modules[k].score) totalPoints += modules[k].score })
-        const allModules = ['grundlagen', 'vertiefung', 'procontra', 'lernkontrolle', 'umfrage']
+        const allModules = ['ausgangslage', 'grundlagen', 'procontra', 'vertiefung', 'spielerisch']
         const overallProgress = Math.round((allModules.filter(id => modules[id]?.completed).length / allModules.length) * 100)
         await updateDoc(userRef, { modules, totalPoints, overallProgress })
         if (allComplete && !userData.badges?.procontra) {

@@ -1,11 +1,11 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { doc, updateDoc, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
 import {
   ArrowLeft, CheckCircle2, Award,
   Film, Radio, ThumbsUp, ThumbsDown, Star,
-  Volume2
+  Volume2, ExternalLink
 } from 'lucide-react'
 
 // ===========================================
@@ -14,7 +14,14 @@ import {
 // Kapitel 2: Audio wählen (50P) + Bonus zweites Audio (+30)
 // "Wer profitiert" gehört zum Rendez-vous Audio
 // "Arbeitsmarkt" gehört zum Echo der Zeit Audio
+// KEIN Tracking - Audio wird per iframe eingebettet
 // ===========================================
+
+// SRF Audio Embed URLs - für iframe Einbettung
+const SRF_EMBED_URLS = {
+  rendezvous: 'https://www.srf.ch/play/embed?urn=urn:srf:audio:0a5f5262-293a-3556-bdf1-9ede96808d61',
+  echo: 'https://www.srf.ch/play/embed?urn=urn:srf:audio:3a4f8b4b-cbe9-3b28-a210-21977898e358'
+}
 
 type Chapter = 'video' | 'audio' | null
 
@@ -32,9 +39,7 @@ export default function GrundlagenPage() {
 
   // Audio - erste Auswahl ist Pflicht, zweite ist Bonus
   const [selectedAudio, setSelectedAudio] = useState<string | null>(null)
-  const [audioListened, setAudioListened] = useState(false)
-  const [audioProgress, setAudioProgress] = useState(0)
-  const audioRef = useRef<HTMLAudioElement>(null)
+  const [audioConfirmed, setAudioConfirmed] = useState(false)
 
   // Rendez-vous: Wer profitiert Zuordnung
   const [matchingAnswers, setMatchingAnswers] = useState<{[key: string]: string}>({})
@@ -45,14 +50,11 @@ export default function GrundlagenPage() {
   const [echoQuizSubmitted, setEchoQuizSubmitted] = useState(false)
 
   // Bonus Audio
-  const [bonusAudioListened, setBonusAudioListened] = useState(false)
-  const [bonusAudioProgress, setBonusAudioProgress] = useState(0)
-  const bonusAudioRef = useRef<HTMLAudioElement>(null)
+  const [bonusAudioConfirmed, setBonusAudioConfirmed] = useState(false)
   const [bonusQuizAnswers, setBonusQuizAnswers] = useState<{[key: string]: string}>({})
   const [bonusQuizSubmitted, setBonusQuizSubmitted] = useState(false)
 
   const maxPoints = 100 // Grundpunkte (50 Video + 50 Audio)
-  const maxBonus = 30 // Audio-Bonus für zweites Audio
 
   useEffect(() => {
     const load = async () => {
@@ -75,31 +77,6 @@ export default function GrundlagenPage() {
     }
     load()
   }, [router])
-
-  // Audio Progress Tracking
-  const handleAudioTimeUpdate = (isBonus: boolean = false) => {
-    const audio = isBonus ? bonusAudioRef.current : audioRef.current
-    if (audio && audio.duration) {
-      const progress = (audio.currentTime / audio.duration) * 100
-      if (isBonus) {
-        setBonusAudioProgress(progress)
-        if (progress >= 90) setBonusAudioListened(true)
-      } else {
-        setAudioProgress(progress)
-        if (progress >= 90) setAudioListened(true)
-      }
-    }
-  }
-
-  const handleAudioEnded = (isBonus: boolean = false) => {
-    if (isBonus) {
-      setBonusAudioListened(true)
-      setBonusAudioProgress(100)
-    } else {
-      setAudioListened(true)
-      setAudioProgress(100)
-    }
-  }
 
   const completeSection = async (sectionId: string, points: number, isBonus: boolean = false) => {
     if (completedSections.has(sectionId)) return
@@ -289,8 +266,9 @@ export default function GrundlagenPage() {
               <div>
                 <h4 className="font-semibold text-blue-800">Über die Audio-Beiträge</h4>
                 <p className="text-sm text-blue-700 mt-1">
-                  Wählen Sie <strong>einen</strong> der zwei SRF-Beiträge. Sie müssen ihn <strong>vollständig anhören</strong> (mind. 90%),
-                  bevor Sie die Aufgaben lösen können. Das zweite Audio bringt <strong>+30 Bonus-Punkte</strong>.
+                  Wählen Sie <strong>einen</strong> der zwei SRF-Beiträge und hören Sie ihn an.
+                  Bestätigen Sie danach, dass Sie den Beitrag gehört haben, um die Aufgaben freizuschalten.
+                  Das zweite Audio bringt <strong>+30 Bonus-Punkte</strong>.
                 </p>
               </div>
             </div>
@@ -509,7 +487,7 @@ export default function GrundlagenPage() {
               <div>
                 <h3 className="font-bold text-gray-900 mb-2">So funktioniert's</h3>
                 <div className="space-y-2 text-sm text-gray-700">
-                  <p><strong>1. Pflicht (50 Punkte):</strong> Wählen Sie einen Beitrag und hören Sie ihn <strong>vollständig</strong> an (mind. 90%).</p>
+                  <p><strong>1. Pflicht (50 Punkte):</strong> Wählen Sie einen Beitrag und hören Sie ihn an.</p>
                   <p><strong>2. Bonus (+30 Punkte):</strong> Hören Sie optional den zweiten Beitrag für Extra-Punkte.</p>
                 </div>
               </div>
@@ -565,23 +543,34 @@ export default function GrundlagenPage() {
                   </div>
                 </div>
                 <div className="p-6">
-                  <div className="bg-gray-100 rounded-lg p-4 mb-4">
-                    <audio ref={audioRef} controls className="w-full" onTimeUpdate={() => handleAudioTimeUpdate(false)} onEnded={() => handleAudioEnded(false)}>
-                      <source src="https://www.srf.ch/play/radio/redirect/detail/0a5f5262-293a-3556-bdf1-9ede96808d61" type="audio/mpeg" />
-                    </audio>
-                    <div className="mt-3">
-                      <div className="flex justify-between text-xs text-gray-500 mb-1">
-                        <span>Fortschritt</span><span>{Math.round(audioProgress)}%</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div className={`h-full transition-all ${audioProgress >= 90 ? 'bg-green-500' : 'bg-red-500'}`} style={{ width: `${audioProgress}%` }} />
-                      </div>
-                      {audioProgress < 90 && <p className="text-xs text-orange-600 mt-1">⚠️ Hören Sie mindestens 90% an</p>}
-                      {audioListened && <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Audio vollständig!</p>}
-                    </div>
+                  {/* SRF Embed Player */}
+                  <div className="bg-gray-100 rounded-lg overflow-hidden mb-4">
+                    <iframe
+                      src={SRF_EMBED_URLS.rendezvous}
+                      className="w-full h-[200px]"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; encrypted-media; gyroscope"
+                      allowFullScreen
+                      title="SRF Rendez-vous"
+                    />
                   </div>
 
-                  {audioListened && (
+                  {!audioConfirmed && (
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                      <p className="text-sm text-orange-800 mb-3">
+                        Hören Sie den Beitrag vollständig an und bestätigen Sie danach:
+                      </p>
+                      <button
+                        onClick={() => setAudioConfirmed(true)}
+                        className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold flex items-center justify-center gap-2"
+                      >
+                        <CheckCircle2 className="h-5 w-5" />
+                        Ich habe den Beitrag gehört
+                      </button>
+                    </div>
+                  )}
+
+                  {audioConfirmed && (
                     <div className="space-y-4 mt-6">
                       <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
                         <h4 className="font-bold text-gray-900">🎯 Aufgabe: Wer profitiert?</h4>
@@ -645,23 +634,34 @@ export default function GrundlagenPage() {
                   </div>
                 </div>
                 <div className="p-6">
-                  <div className="bg-gray-100 rounded-lg p-4 mb-4">
-                    <audio ref={audioRef} controls className="w-full" onTimeUpdate={() => handleAudioTimeUpdate(false)} onEnded={() => handleAudioEnded(false)}>
-                      <source src="https://www.srf.ch/play/radio/redirect/detail/3a4f8b4b-cbe9-3b28-a210-21977898e358" type="audio/mpeg" />
-                    </audio>
-                    <div className="mt-3">
-                      <div className="flex justify-between text-xs text-gray-500 mb-1">
-                        <span>Fortschritt</span><span>{Math.round(audioProgress)}%</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div className={`h-full transition-all ${audioProgress >= 90 ? 'bg-green-500' : 'bg-red-500'}`} style={{ width: `${audioProgress}%` }} />
-                      </div>
-                      {audioProgress < 90 && <p className="text-xs text-orange-600 mt-1">⚠️ Hören Sie mindestens 90% an</p>}
-                      {audioListened && <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Audio vollständig!</p>}
-                    </div>
+                  {/* SRF Embed Player */}
+                  <div className="bg-gray-100 rounded-lg overflow-hidden mb-4">
+                    <iframe
+                      src={SRF_EMBED_URLS.echo}
+                      className="w-full h-[200px]"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; encrypted-media; gyroscope"
+                      allowFullScreen
+                      title="SRF Echo der Zeit"
+                    />
                   </div>
 
-                  {audioListened && (
+                  {!audioConfirmed && (
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                      <p className="text-sm text-orange-800 mb-3">
+                        Hören Sie den Beitrag vollständig an und bestätigen Sie danach:
+                      </p>
+                      <button
+                        onClick={() => setAudioConfirmed(true)}
+                        className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold flex items-center justify-center gap-2"
+                      >
+                        <CheckCircle2 className="h-5 w-5" />
+                        Ich habe den Beitrag gehört
+                      </button>
+                    </div>
+                  )}
+
+                  {audioConfirmed && (
                     <div className="space-y-4 mt-6">
                       <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
                         <h4 className="font-bold text-gray-900">🎯 Aufgabe: Fragen zum Arbeitsmarkt</h4>
@@ -749,7 +749,7 @@ export default function GrundlagenPage() {
                   <div className="bg-yellow-400 p-3 rounded-xl"><Star className="h-6 w-6 text-white" /></div>
                   <div className="flex-1">
                     <h3 className="font-bold text-gray-900 text-lg mb-2">Bonus: +30 Punkte</h3>
-                    <p className="text-gray-700 mb-4">Hören Sie den anderen Beitrag vollständig an.</p>
+                    <p className="text-gray-700 mb-4">Hören Sie den anderen Beitrag an.</p>
 
                     <div className="bg-white rounded-lg p-4 border border-yellow-200">
                       <div className="flex items-center gap-3 mb-3">
@@ -760,19 +760,29 @@ export default function GrundlagenPage() {
                         </div>
                       </div>
 
-                      <div className="bg-gray-100 rounded-lg p-3 mb-3">
-                        <audio ref={bonusAudioRef} controls className="w-full" onTimeUpdate={() => handleAudioTimeUpdate(true)} onEnded={() => handleAudioEnded(true)}>
-                          <source src={otherAudio === 'echo' ? 'https://www.srf.ch/play/radio/redirect/detail/3a4f8b4b-cbe9-3b28-a210-21977898e358' : 'https://www.srf.ch/play/radio/redirect/detail/0a5f5262-293a-3556-bdf1-9ede96808d61'} type="audio/mpeg" />
-                        </audio>
-                        <div className="mt-2">
-                          <div className="flex justify-between text-xs text-gray-500 mb-1"><span>Fortschritt</span><span>{Math.round(bonusAudioProgress)}%</span></div>
-                          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div className={`h-full transition-all ${bonusAudioProgress >= 90 ? 'bg-green-500' : 'bg-yellow-500'}`} style={{ width: `${bonusAudioProgress}%` }} />
-                          </div>
-                        </div>
+                      {/* SRF Embed Player für Bonus */}
+                      <div className="bg-gray-100 rounded-lg overflow-hidden mb-4">
+                        <iframe
+                          src={otherAudio === 'echo' ? SRF_EMBED_URLS.echo : SRF_EMBED_URLS.rendezvous}
+                          className="w-full h-[200px]"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; encrypted-media; gyroscope"
+                          allowFullScreen
+                          title={otherAudio === 'echo' ? 'SRF Echo der Zeit' : 'SRF Rendez-vous'}
+                        />
                       </div>
 
-                      {bonusAudioListened && (
+                      {!bonusAudioConfirmed && (
+                        <button
+                          onClick={() => setBonusAudioConfirmed(true)}
+                          className="w-full py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-semibold flex items-center justify-center gap-2"
+                        >
+                          <CheckCircle2 className="h-5 w-5" />
+                          Ich habe den Beitrag gehört
+                        </button>
+                      )}
+
+                      {bonusAudioConfirmed && (
                         <div className="space-y-3">
                           <h4 className="font-semibold text-gray-900">Bonus-Frage:</h4>
                           {otherAudio === 'echo' ? (

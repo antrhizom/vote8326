@@ -5,23 +5,42 @@ import { auth, db } from '@/lib/firebase'
 import {
   ArrowLeft, CheckCircle2, Award,
   Film, Radio, ThumbsUp, ThumbsDown, Star,
-  Volume2, ExternalLink
+  Volume2, ChevronRight, ListOrdered, Info
 } from 'lucide-react'
 
 // ===========================================
 // GRUNDLAGEN INFO BUND MEDIEN - KAPITEL-STRUKTUR
 // Kapitel 1: Video (50P)
 // Kapitel 2: Audio wählen (50P) + Bonus zweites Audio (+30)
-// "Wer profitiert" gehört zum Rendez-vous Audio
-// "Arbeitsmarkt" gehört zum Echo der Zeit Audio
-// KEIN Tracking - Audio wird per iframe eingebettet
+// NEUE AUFGABE: Reihenfolge der Inhalte anklicken mit Kurzinfos
 // ===========================================
 
-// SRF Audio Embed URLs - für iframe Einbettung
+// SRF Audio Embed URLs
 const SRF_EMBED_URLS = {
   rendezvous: 'https://www.srf.ch/play/embed?urn=urn:srf:audio:0a5f5262-293a-3556-bdf1-9ede96808d61',
   echo: 'https://www.srf.ch/play/embed?urn=urn:srf:audio:3a4f8b4b-cbe9-3b28-a210-21977898e358'
 }
+
+// Reihenfolge-Inhalte für Rendez-vous
+const RENDEZVOUS_SEQUENCE = [
+  { id: 1, title: 'Einleitung: Abstimmung am 8. März', info: 'Die Individualbesteuerung wäre eine grosse Änderung des Steuersystems. Doppelverdiener profitieren, Einverdiener werden benachteiligt.' },
+  { id: 2, title: 'Parteien-Positionen', info: 'Dafür: FDP, SP, Grüne, GLP. Dagegen: SVP und Mitte.' },
+  { id: 3, title: 'Yvonne Bürgin (Mitte)', info: '«Die Ehe soll eine Wirtschaftsgemeinschaft bleiben. Das wollen wir beibehalten.»' },
+  { id: 4, title: 'Katrin Bertschy (GLP)', info: '«Fast alle Länder in Europa haben Individualbesteuerung. Niemand behauptet, die Ehe sei gefährdet.»' },
+  { id: 5, title: 'Wer profitiert, wer verliert', info: 'Doppelverdiener zahlen weniger (Heiratsstrafe fällt weg). Einverdiener zahlen mehr wegen Progression.' },
+  { id: 6, title: 'Alternative der Mitte-Partei', info: 'Eigene Initiative: Steuern zweimal berechnen (als Verheiratete und Unverheiratete), tieferer Betrag gilt.' },
+]
+
+// Reihenfolge-Inhalte für Echo der Zeit
+const ECHO_SEQUENCE = [
+  { id: 1, title: 'Einleitung: Heiratsstrafe', info: 'Doppelverdiener-Ehepaare zahlen heute mehr Steuern als Unverheiratete. Das soll sich ändern.' },
+  { id: 2, title: 'Problem der Progression', info: 'Wenn ein Partner das Pensum erhöht, bleibt oft nicht mehr Geld übrig - es geht an die Steuern.' },
+  { id: 3, title: 'Studie Uni Luzern (Martin Mosler)', info: 'Schätzung: 15\'400 Personen treten neu in den Arbeitsmarkt ein, ca. 16\'300 neue Vollzeitstellen.' },
+  { id: 4, title: 'Andere Studien bestätigen', info: '10\'000 bis 20\'000 neue Stellen durch mehr erwerbstätige Eheleute.' },
+  { id: 5, title: 'Warum mehr Arbeit?', info: '«Mehr Lohn auf dem Konto führt dazu, dass Menschen mehr arbeiten wollen.»' },
+  { id: 6, title: 'Effekt bei Frauen stärker', info: 'Ca. 11\'500 Frauen würden neu erwerbstätig. Effekt ist bei Frauen grösser, weil Pensen tiefer sind.' },
+  { id: 7, title: 'Einschränkungen', info: 'Erwerbsquote Frauen bereits 80%. 10-20\'000 Stellen bei 4.5 Mio total = keine fundamentale Änderung.' },
+]
 
 type Chapter = 'video' | 'audio' | null
 
@@ -37,24 +56,28 @@ export default function GrundlagenPage() {
   const [quizAnswers, setQuizAnswers] = useState<{[key: string]: string}>({})
   const [quizSubmitted, setQuizSubmitted] = useState(false)
 
-  // Audio - erste Auswahl ist Pflicht, zweite ist Bonus
+  // Audio
   const [selectedAudio, setSelectedAudio] = useState<string | null>(null)
-  const [audioConfirmed, setAudioConfirmed] = useState(false)
 
-  // Rendez-vous: Wer profitiert Zuordnung
+  // Rendez-vous: Reihenfolge + Wer profitiert
+  const [rvClickedItems, setRvClickedItems] = useState<Set<number>>(new Set())
+  const [rvExpandedItem, setRvExpandedItem] = useState<number | null>(null)
   const [matchingAnswers, setMatchingAnswers] = useState<{[key: string]: string}>({})
   const [matchingSubmitted, setMatchingSubmitted] = useState(false)
 
-  // Echo der Zeit: Arbeitsmarkt Quiz
+  // Echo der Zeit: Reihenfolge + Quiz
+  const [echoClickedItems, setEchoClickedItems] = useState<Set<number>>(new Set())
+  const [echoExpandedItem, setEchoExpandedItem] = useState<number | null>(null)
   const [echoQuizAnswers, setEchoQuizAnswers] = useState<{[key: string]: string}>({})
   const [echoQuizSubmitted, setEchoQuizSubmitted] = useState(false)
 
   // Bonus Audio
-  const [bonusAudioConfirmed, setBonusAudioConfirmed] = useState(false)
+  const [bonusClickedItems, setBonusClickedItems] = useState<Set<number>>(new Set())
+  const [bonusExpandedItem, setBonusExpandedItem] = useState<number | null>(null)
   const [bonusQuizAnswers, setBonusQuizAnswers] = useState<{[key: string]: string}>({})
   const [bonusQuizSubmitted, setBonusQuizSubmitted] = useState(false)
 
-  const maxPoints = 100 // Grundpunkte (50 Video + 50 Audio)
+  const maxPoints = 100
 
   useEffect(() => {
     const load = async () => {
@@ -144,6 +167,26 @@ export default function GrundlagenPage() {
     if (selectedAudio === 'echo') return 'rendezvous'
     if (selectedAudio === 'rendezvous') return 'echo'
     return null
+  }
+
+  // Reihenfolge-Item klicken
+  const handleSequenceClick = (id: number, type: 'rv' | 'echo' | 'bonus') => {
+    if (type === 'rv') {
+      const newClicked = new Set(rvClickedItems)
+      newClicked.add(id)
+      setRvClickedItems(newClicked)
+      setRvExpandedItem(rvExpandedItem === id ? null : id)
+    } else if (type === 'echo') {
+      const newClicked = new Set(echoClickedItems)
+      newClicked.add(id)
+      setEchoClickedItems(newClicked)
+      setEchoExpandedItem(echoExpandedItem === id ? null : id)
+    } else {
+      const newClicked = new Set(bonusClickedItems)
+      newClicked.add(id)
+      setBonusClickedItems(newClicked)
+      setBonusExpandedItem(bonusExpandedItem === id ? null : id)
+    }
   }
 
   if (loading) {
@@ -258,20 +301,6 @@ export default function GrundlagenPage() {
                 </div>
               )}
             </button>
-          </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <Radio className="h-5 w-5 text-blue-500 mt-0.5" />
-              <div>
-                <h4 className="font-semibold text-blue-800">Über die Audio-Beiträge</h4>
-                <p className="text-sm text-blue-700 mt-1">
-                  Wählen Sie <strong>einen</strong> der zwei SRF-Beiträge und hören Sie ihn an.
-                  Bestätigen Sie danach, dass Sie den Beitrag gehört haben, um die Aufgaben freizuschalten.
-                  Das zweite Audio bringt <strong>+30 Bonus-Punkte</strong>.
-                </p>
-              </div>
-            </div>
           </div>
 
           {isComplete && (
@@ -481,19 +510,6 @@ export default function GrundlagenPage() {
         </header>
 
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-          <div className="bg-white rounded-xl p-6 shadow-sm border-2 border-red-200">
-            <div className="flex items-start gap-3">
-              <Radio className="h-6 w-6 text-red-500 mt-0.5" />
-              <div>
-                <h3 className="font-bold text-gray-900 mb-2">So funktioniert's</h3>
-                <div className="space-y-2 text-sm text-gray-700">
-                  <p><strong>1. Pflicht (50 Punkte):</strong> Wählen Sie einen Beitrag und hören Sie ihn an.</p>
-                  <p><strong>2. Bonus (+30 Punkte):</strong> Hören Sie optional den zweiten Beitrag für Extra-Punkte.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* AUDIO AUSWAHL */}
           {!selectedAudio && !firstAudioDone && (
             <div className="space-y-4">
@@ -509,7 +525,6 @@ export default function GrundlagenPage() {
                     </div>
                   </div>
                   <p className="text-gray-700 text-sm"><strong>Thema:</strong> Was ändert sich? Wer profitiert, wer verliert?</p>
-                  <p className="text-xs text-indigo-600 mt-2 font-medium">+ Aufgabe: Zuordnung "Wer profitiert?"</p>
                 </button>
 
                 <button onClick={() => setSelectedAudio('echo')}
@@ -522,7 +537,6 @@ export default function GrundlagenPage() {
                     </div>
                   </div>
                   <p className="text-gray-700 text-sm"><strong>Thema:</strong> Auswirkungen auf den Arbeitsmarkt</p>
-                  <p className="text-xs text-indigo-600 mt-2 font-medium">+ Aufgabe: Fragen zum Arbeitsmarkt</p>
                 </button>
               </div>
             </div>
@@ -532,6 +546,7 @@ export default function GrundlagenPage() {
           {selectedAudio === 'rendezvous' && !firstAudioDone && (
             <div className="space-y-6">
               <button onClick={() => setSelectedAudio(null)} className="text-sm text-gray-500 hover:text-gray-700">← Andere Auswahl</button>
+
               <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                 <div className="bg-red-50 p-4 border-b">
                   <div className="flex items-center gap-3">
@@ -543,8 +558,7 @@ export default function GrundlagenPage() {
                   </div>
                 </div>
                 <div className="p-6">
-                  {/* SRF Embed Player */}
-                  <div className="bg-gray-100 rounded-lg overflow-hidden mb-4">
+                  <div className="bg-gray-100 rounded-lg overflow-hidden mb-6">
                     <iframe
                       src={SRF_EMBED_URLS.rendezvous}
                       className="w-full h-[200px]"
@@ -555,65 +569,90 @@ export default function GrundlagenPage() {
                     />
                   </div>
 
-                  {!audioConfirmed && (
-                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
-                      <p className="text-sm text-orange-800 mb-3">
-                        Hören Sie den Beitrag vollständig an und bestätigen Sie danach:
-                      </p>
-                      <button
-                        onClick={() => setAudioConfirmed(true)}
-                        className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold flex items-center justify-center gap-2"
-                      >
-                        <CheckCircle2 className="h-5 w-5" />
-                        Ich habe den Beitrag gehört
-                      </button>
-                    </div>
-                  )}
-
-                  {audioConfirmed && (
-                    <div className="space-y-4 mt-6">
-                      <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
-                        <h4 className="font-bold text-gray-900">🎯 Aufgabe: Wer profitiert?</h4>
-                        <p className="text-sm text-gray-600 mt-1">Ordnen Sie zu, wer mehr und wer weniger Steuern zahlen würde.</p>
+                  {/* Aufgabe 1: Reihenfolge */}
+                  <div className="mb-6">
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <ListOrdered className="h-5 w-5 text-purple-600" />
+                        <h4 className="font-bold text-gray-900">Aufgabe 1: Inhalte erkunden</h4>
                       </div>
-                      <div className="space-y-3">
-                        {[
-                          { group: 'Doppelverdiener-Ehepaar mit ähnlichem Einkommen', correct: 'weniger', hint: 'Die Heiratsstrafe fällt weg' },
-                          { group: 'Einverdiener-Ehepaar', correct: 'mehr', hint: 'Verlieren den Splitting-Vorteil' },
-                          { group: 'Unverheiratete mit niedrigem/mittlerem Einkommen', correct: 'weniger', hint: 'Durch neue Tarife' },
-                          { group: 'Gutverdienende Doppelverdiener (verheiratet)', correct: 'weniger', hint: 'Profitieren am meisten' },
-                          { group: 'Ehepaar mit sehr ungleich verteiltem Einkommen', correct: 'mehr', hint: 'Besonders mit Kindern' },
-                        ].map((item, idx) => {
-                          const answer = matchingAnswers[`m${idx}`]
-                          const isCorrect = matchingSubmitted && answer === item.correct
-                          const isWrong = matchingSubmitted && answer && answer !== item.correct
-                          return (
-                            <div key={idx} className={`p-4 rounded-lg border ${isCorrect ? 'border-green-400 bg-green-50' : isWrong ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-white'}`}>
-                              <p className="font-medium text-gray-800 mb-2">{item.group}</p>
-                              <div className="flex gap-2">
-                                <button onClick={() => !matchingSubmitted && setMatchingAnswers({...matchingAnswers, [`m${idx}`]: 'weniger'})} disabled={matchingSubmitted}
-                                  className={`flex-1 py-2 px-3 rounded text-sm font-medium flex items-center justify-center gap-1 ${answer === 'weniger' ? (matchingSubmitted ? (item.correct === 'weniger' ? 'bg-green-500 text-white' : 'bg-red-500 text-white') : 'bg-indigo-500 text-white') : (matchingSubmitted && item.correct === 'weniger' ? 'bg-green-200 text-green-800' : 'bg-gray-100 hover:bg-gray-200')}`}>
-                                  <ThumbsUp className="h-4 w-4" /> Weniger
-                                </button>
-                                <button onClick={() => !matchingSubmitted && setMatchingAnswers({...matchingAnswers, [`m${idx}`]: 'mehr'})} disabled={matchingSubmitted}
-                                  className={`flex-1 py-2 px-3 rounded text-sm font-medium flex items-center justify-center gap-1 ${answer === 'mehr' ? (matchingSubmitted ? (item.correct === 'mehr' ? 'bg-green-500 text-white' : 'bg-red-500 text-white') : 'bg-indigo-500 text-white') : (matchingSubmitted && item.correct === 'mehr' ? 'bg-green-200 text-green-800' : 'bg-gray-100 hover:bg-gray-200')}`}>
-                                  <ThumbsDown className="h-4 w-4" /> Mehr
-                                </button>
+                      <p className="text-sm text-gray-600">Klicken Sie auf die Themen, um mehr zu erfahren. ({rvClickedItems.size}/{RENDEZVOUS_SEQUENCE.length} erkundet)</p>
+                    </div>
+                    <div className="space-y-2">
+                      {RENDEZVOUS_SEQUENCE.map((item) => {
+                        const isClicked = rvClickedItems.has(item.id)
+                        const isExpanded = rvExpandedItem === item.id
+                        return (
+                          <div key={item.id}>
+                            <button
+                              onClick={() => handleSequenceClick(item.id, 'rv')}
+                              className={`w-full p-3 rounded-lg text-left transition-all flex items-center justify-between ${isClicked ? 'bg-purple-100 border-purple-300' : 'bg-gray-50 hover:bg-gray-100'} border`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${isClicked ? 'bg-purple-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                                  {item.id}
+                                </span>
+                                <span className={`font-medium ${isClicked ? 'text-purple-800' : 'text-gray-700'}`}>{item.title}</span>
                               </div>
-                              {matchingSubmitted && <p className="text-xs text-gray-500 mt-2 italic">{item.hint}</p>}
-                            </div>
-                          )
-                        })}
-                      </div>
-                      {!matchingSubmitted && Object.keys(matchingAnswers).length >= 5 && (
-                        <button onClick={() => { setMatchingSubmitted(true); completeSection('audio_first', 50) }}
-                          className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold">
-                          Antworten prüfen (+50 Punkte)
-                        </button>
-                      )}
-                      {matchingSubmitted && <div className="p-4 bg-green-100 rounded-lg text-green-800"><strong>✓ Pflicht-Audio abgeschlossen! +50 Punkte</strong></div>}
+                              <ChevronRight className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-90' : ''} ${isClicked ? 'text-purple-500' : 'text-gray-400'}`} />
+                            </button>
+                            {isExpanded && (
+                              <div className="ml-9 mt-2 p-3 bg-purple-50 rounded-lg border-l-4 border-purple-400">
+                                <div className="flex items-start gap-2">
+                                  <Info className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                                  <p className="text-sm text-purple-800">{item.info}</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
                     </div>
-                  )}
+                  </div>
+
+                  {/* Aufgabe 2: Wer profitiert */}
+                  <div>
+                    <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200 mb-4">
+                      <h4 className="font-bold text-gray-900">Aufgabe 2: Wer profitiert?</h4>
+                      <p className="text-sm text-gray-600 mt-1">Ordnen Sie zu, wer mehr und wer weniger Steuern zahlen würde.</p>
+                    </div>
+                    <div className="space-y-3">
+                      {[
+                        { group: 'Doppelverdiener-Ehepaar mit ähnlichem Einkommen', correct: 'weniger', hint: 'Die Heiratsstrafe fällt weg' },
+                        { group: 'Einverdiener-Ehepaar', correct: 'mehr', hint: 'Verlieren den Splitting-Vorteil' },
+                        { group: 'Unverheiratete mit niedrigem/mittlerem Einkommen', correct: 'weniger', hint: 'Durch neue Tarife' },
+                        { group: 'Gutverdienende Doppelverdiener (verheiratet)', correct: 'weniger', hint: 'Profitieren am meisten' },
+                        { group: 'Ehepaar mit sehr ungleich verteiltem Einkommen', correct: 'mehr', hint: 'Besonders mit Kindern' },
+                      ].map((item, idx) => {
+                        const answer = matchingAnswers[`m${idx}`]
+                        const isCorrect = matchingSubmitted && answer === item.correct
+                        const isWrong = matchingSubmitted && answer && answer !== item.correct
+                        return (
+                          <div key={idx} className={`p-4 rounded-lg border ${isCorrect ? 'border-green-400 bg-green-50' : isWrong ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-white'}`}>
+                            <p className="font-medium text-gray-800 mb-2">{item.group}</p>
+                            <div className="flex gap-2">
+                              <button onClick={() => !matchingSubmitted && setMatchingAnswers({...matchingAnswers, [`m${idx}`]: 'weniger'})} disabled={matchingSubmitted}
+                                className={`flex-1 py-2 px-3 rounded text-sm font-medium flex items-center justify-center gap-1 ${answer === 'weniger' ? (matchingSubmitted ? (item.correct === 'weniger' ? 'bg-green-500 text-white' : 'bg-red-500 text-white') : 'bg-indigo-500 text-white') : (matchingSubmitted && item.correct === 'weniger' ? 'bg-green-200 text-green-800' : 'bg-gray-100 hover:bg-gray-200')}`}>
+                                <ThumbsUp className="h-4 w-4" /> Weniger
+                              </button>
+                              <button onClick={() => !matchingSubmitted && setMatchingAnswers({...matchingAnswers, [`m${idx}`]: 'mehr'})} disabled={matchingSubmitted}
+                                className={`flex-1 py-2 px-3 rounded text-sm font-medium flex items-center justify-center gap-1 ${answer === 'mehr' ? (matchingSubmitted ? (item.correct === 'mehr' ? 'bg-green-500 text-white' : 'bg-red-500 text-white') : 'bg-indigo-500 text-white') : (matchingSubmitted && item.correct === 'mehr' ? 'bg-green-200 text-green-800' : 'bg-gray-100 hover:bg-gray-200')}`}>
+                                <ThumbsDown className="h-4 w-4" /> Mehr
+                              </button>
+                            </div>
+                            {matchingSubmitted && <p className="text-xs text-gray-500 mt-2 italic">{item.hint}</p>}
+                          </div>
+                        )
+                      })}
+                    </div>
+                    {!matchingSubmitted && Object.keys(matchingAnswers).length >= 5 && (
+                      <button onClick={() => { setMatchingSubmitted(true); completeSection('audio_first', 50) }}
+                        className="w-full py-3 mt-4 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold">
+                        Antworten prüfen (+50 Punkte)
+                      </button>
+                    )}
+                    {matchingSubmitted && <div className="p-4 mt-4 bg-green-100 rounded-lg text-green-800"><strong>✓ Pflicht-Audio abgeschlossen! +50 Punkte</strong></div>}
+                  </div>
                 </div>
               </div>
             </div>
@@ -623,6 +662,7 @@ export default function GrundlagenPage() {
           {selectedAudio === 'echo' && !firstAudioDone && (
             <div className="space-y-6">
               <button onClick={() => setSelectedAudio(null)} className="text-sm text-gray-500 hover:text-gray-700">← Andere Auswahl</button>
+
               <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                 <div className="bg-red-50 p-4 border-b">
                   <div className="flex items-center gap-3">
@@ -634,8 +674,7 @@ export default function GrundlagenPage() {
                   </div>
                 </div>
                 <div className="p-6">
-                  {/* SRF Embed Player */}
-                  <div className="bg-gray-100 rounded-lg overflow-hidden mb-4">
+                  <div className="bg-gray-100 rounded-lg overflow-hidden mb-6">
                     <iframe
                       src={SRF_EMBED_URLS.echo}
                       className="w-full h-[200px]"
@@ -646,27 +685,54 @@ export default function GrundlagenPage() {
                     />
                   </div>
 
-                  {!audioConfirmed && (
-                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
-                      <p className="text-sm text-orange-800 mb-3">
-                        Hören Sie den Beitrag vollständig an und bestätigen Sie danach:
-                      </p>
-                      <button
-                        onClick={() => setAudioConfirmed(true)}
-                        className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold flex items-center justify-center gap-2"
-                      >
-                        <CheckCircle2 className="h-5 w-5" />
-                        Ich habe den Beitrag gehört
-                      </button>
-                    </div>
-                  )}
-
-                  {audioConfirmed && (
-                    <div className="space-y-4 mt-6">
-                      <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
-                        <h4 className="font-bold text-gray-900">🎯 Aufgabe: Fragen zum Arbeitsmarkt</h4>
+                  {/* Aufgabe 1: Reihenfolge */}
+                  <div className="mb-6">
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <ListOrdered className="h-5 w-5 text-purple-600" />
+                        <h4 className="font-bold text-gray-900">Aufgabe 1: Inhalte erkunden</h4>
                       </div>
+                      <p className="text-sm text-gray-600">Klicken Sie auf die Themen, um mehr zu erfahren. ({echoClickedItems.size}/{ECHO_SEQUENCE.length} erkundet)</p>
+                    </div>
+                    <div className="space-y-2">
+                      {ECHO_SEQUENCE.map((item) => {
+                        const isClicked = echoClickedItems.has(item.id)
+                        const isExpanded = echoExpandedItem === item.id
+                        return (
+                          <div key={item.id}>
+                            <button
+                              onClick={() => handleSequenceClick(item.id, 'echo')}
+                              className={`w-full p-3 rounded-lg text-left transition-all flex items-center justify-between ${isClicked ? 'bg-purple-100 border-purple-300' : 'bg-gray-50 hover:bg-gray-100'} border`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${isClicked ? 'bg-purple-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                                  {item.id}
+                                </span>
+                                <span className={`font-medium ${isClicked ? 'text-purple-800' : 'text-gray-700'}`}>{item.title}</span>
+                              </div>
+                              <ChevronRight className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-90' : ''} ${isClicked ? 'text-purple-500' : 'text-gray-400'}`} />
+                            </button>
+                            {isExpanded && (
+                              <div className="ml-9 mt-2 p-3 bg-purple-50 rounded-lg border-l-4 border-purple-400">
+                                <div className="flex items-start gap-2">
+                                  <Info className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                                  <p className="text-sm text-purple-800">{item.info}</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
 
+                  {/* Aufgabe 2: Quiz */}
+                  <div>
+                    <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200 mb-4">
+                      <h4 className="font-bold text-gray-900">Aufgabe 2: Fragen zum Arbeitsmarkt</h4>
+                    </div>
+
+                    <div className="space-y-4">
                       <div className="bg-gray-50 rounded-lg p-4">
                         <p className="font-medium text-gray-800 mb-3">1. Was ist das Problem bei Doppelverdiener-Ehepaaren heute?</p>
                         <div className="space-y-2">
@@ -720,22 +786,22 @@ export default function GrundlagenPage() {
                           })}
                         </div>
                       </div>
-
-                      {!echoQuizSubmitted && echoQuizAnswers.eq1 && echoQuizAnswers.eq2 && echoQuizAnswers.eq3 && (
-                        <button onClick={() => { setEchoQuizSubmitted(true); completeSection('audio_first', 50) }}
-                          className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold">
-                          Antworten prüfen (+50 Punkte)
-                        </button>
-                      )}
-                      {echoQuizSubmitted && <div className="p-4 bg-green-100 rounded-lg text-green-800"><strong>✓ Pflicht-Audio abgeschlossen! +50 Punkte</strong></div>}
                     </div>
-                  )}
+
+                    {!echoQuizSubmitted && echoQuizAnswers.eq1 && echoQuizAnswers.eq2 && echoQuizAnswers.eq3 && (
+                      <button onClick={() => { setEchoQuizSubmitted(true); completeSection('audio_first', 50) }}
+                        className="w-full py-3 mt-4 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold">
+                        Antworten prüfen (+50 Punkte)
+                      </button>
+                    )}
+                    {echoQuizSubmitted && <div className="p-4 mt-4 bg-green-100 rounded-lg text-green-800"><strong>✓ Pflicht-Audio abgeschlossen! +50 Punkte</strong></div>}
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* BONUS */}
+          {/* BONUS AUDIO */}
           {firstAudioDone && !bonusAudioDone && (
             <div className="space-y-6">
               <div className="bg-green-100 border border-green-300 rounded-xl p-6 text-center">
@@ -749,7 +815,7 @@ export default function GrundlagenPage() {
                   <div className="bg-yellow-400 p-3 rounded-xl"><Star className="h-6 w-6 text-white" /></div>
                   <div className="flex-1">
                     <h3 className="font-bold text-gray-900 text-lg mb-2">Bonus: +30 Punkte</h3>
-                    <p className="text-gray-700 mb-4">Hören Sie den anderen Beitrag an.</p>
+                    <p className="text-gray-700 mb-4">Hören Sie den anderen Beitrag und erkunden Sie die Inhalte.</p>
 
                     <div className="bg-white rounded-lg p-4 border border-yellow-200">
                       <div className="flex items-center gap-3 mb-3">
@@ -760,7 +826,6 @@ export default function GrundlagenPage() {
                         </div>
                       </div>
 
-                      {/* SRF Embed Player für Bonus */}
                       <div className="bg-gray-100 rounded-lg overflow-hidden mb-4">
                         <iframe
                           src={otherAudio === 'echo' ? SRF_EMBED_URLS.echo : SRF_EMBED_URLS.rendezvous}
@@ -772,65 +837,91 @@ export default function GrundlagenPage() {
                         />
                       </div>
 
-                      {!bonusAudioConfirmed && (
-                        <button
-                          onClick={() => setBonusAudioConfirmed(true)}
-                          className="w-full py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-semibold flex items-center justify-center gap-2"
-                        >
-                          <CheckCircle2 className="h-5 w-5" />
-                          Ich habe den Beitrag gehört
-                        </button>
-                      )}
-
-                      {bonusAudioConfirmed && (
-                        <div className="space-y-3">
-                          <h4 className="font-semibold text-gray-900">Bonus-Frage:</h4>
-                          {otherAudio === 'echo' ? (
-                            <div className="bg-gray-50 rounded-lg p-3">
-                              <p className="font-medium text-gray-800 mb-2 text-sm">Wie viele Vollzeitstellen könnten entstehen?</p>
-                              <div className="grid grid-cols-2 gap-2">
-                                {['5\'000 - 8\'000', '10\'000 - 20\'000'].map(opt => {
-                                  const isSelected = bonusQuizAnswers.bq1 === opt
-                                  const correct = '10\'000 - 20\'000'
-                                  const isCorrect = bonusQuizSubmitted && opt === correct
-                                  const isWrong = bonusQuizSubmitted && isSelected && opt !== correct
-                                  return (
-                                    <button key={opt} onClick={() => !bonusQuizSubmitted && setBonusQuizAnswers({...bonusQuizAnswers, bq1: opt})} disabled={bonusQuizSubmitted}
-                                      className={`p-2 rounded-lg text-sm font-medium transition-all ${isCorrect ? 'bg-green-500 text-white' : isWrong ? 'bg-red-500 text-white' : isSelected ? 'bg-yellow-500 text-white' : 'bg-white border border-gray-300'}`}>
-                                      {opt}
-                                    </button>
-                                  )
-                                })}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="bg-gray-50 rounded-lg p-3">
-                              <p className="font-medium text-gray-800 mb-2 text-sm">Wer profitiert am meisten?</p>
-                              <div className="space-y-2">
-                                {['Einverdiener-Ehepaare', 'Doppelverdiener-Ehepaare mit ähnlichem Einkommen'].map(opt => {
-                                  const isSelected = bonusQuizAnswers.bq1 === opt
-                                  const correct = 'Doppelverdiener-Ehepaare mit ähnlichem Einkommen'
-                                  const isCorrect = bonusQuizSubmitted && opt === correct
-                                  const isWrong = bonusQuizSubmitted && isSelected && opt !== correct
-                                  return (
-                                    <button key={opt} onClick={() => !bonusQuizSubmitted && setBonusQuizAnswers({...bonusQuizAnswers, bq1: opt})} disabled={bonusQuizSubmitted}
-                                      className={`w-full p-2 rounded-lg text-sm font-medium text-left transition-all ${isCorrect ? 'bg-green-500 text-white' : isWrong ? 'bg-red-500 text-white' : isSelected ? 'bg-yellow-500 text-white' : 'bg-white border border-gray-300'}`}>
-                                      {opt}
-                                    </button>
-                                  )
-                                })}
-                              </div>
-                            </div>
-                          )}
-                          {!bonusQuizSubmitted && bonusQuizAnswers.bq1 && (
-                            <button onClick={() => { setBonusQuizSubmitted(true); completeSection('audio_bonus', 30, true) }}
-                              className="w-full py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-semibold">
-                              Bonus erhalten (+30)
-                            </button>
-                          )}
-                          {bonusQuizSubmitted && <div className="p-3 bg-yellow-100 rounded-lg text-yellow-800 flex items-center gap-2"><Star className="h-5 w-5" /><strong>+30 Bonus!</strong></div>}
+                      {/* Bonus: Inhalte erkunden */}
+                      <div className="mb-4">
+                        <div className="bg-purple-50 p-3 rounded-lg border border-purple-200 mb-3">
+                          <div className="flex items-center gap-2">
+                            <ListOrdered className="h-4 w-4 text-purple-600" />
+                            <span className="text-sm font-medium text-gray-900">Inhalte erkunden ({bonusClickedItems.size}/{otherAudio === 'echo' ? ECHO_SEQUENCE.length : RENDEZVOUS_SEQUENCE.length})</span>
+                          </div>
                         </div>
-                      )}
+                        <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                          {(otherAudio === 'echo' ? ECHO_SEQUENCE : RENDEZVOUS_SEQUENCE).map((item) => {
+                            const isClicked = bonusClickedItems.has(item.id)
+                            const isExpanded = bonusExpandedItem === item.id
+                            return (
+                              <div key={item.id}>
+                                <button
+                                  onClick={() => handleSequenceClick(item.id, 'bonus')}
+                                  className={`w-full p-2 rounded-lg text-left transition-all flex items-center justify-between text-sm ${isClicked ? 'bg-purple-100 border-purple-300' : 'bg-gray-50 hover:bg-gray-100'} border`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${isClicked ? 'bg-purple-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                                      {item.id}
+                                    </span>
+                                    <span className={`font-medium ${isClicked ? 'text-purple-800' : 'text-gray-700'}`}>{item.title}</span>
+                                  </div>
+                                  <ChevronRight className={`h-3 w-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                                </button>
+                                {isExpanded && (
+                                  <div className="ml-7 mt-1 p-2 bg-purple-50 rounded text-xs text-purple-800 border-l-2 border-purple-400">
+                                    {item.info}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Bonus Frage */}
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-gray-900">Bonus-Frage:</h4>
+                        {otherAudio === 'echo' ? (
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <p className="font-medium text-gray-800 mb-2 text-sm">Wie viele Vollzeitstellen könnten entstehen?</p>
+                            <div className="grid grid-cols-2 gap-2">
+                              {['5\'000 - 8\'000', '10\'000 - 20\'000'].map(opt => {
+                                const isSelected = bonusQuizAnswers.bq1 === opt
+                                const correct = '10\'000 - 20\'000'
+                                const isCorrect = bonusQuizSubmitted && opt === correct
+                                const isWrong = bonusQuizSubmitted && isSelected && opt !== correct
+                                return (
+                                  <button key={opt} onClick={() => !bonusQuizSubmitted && setBonusQuizAnswers({...bonusQuizAnswers, bq1: opt})} disabled={bonusQuizSubmitted}
+                                    className={`p-2 rounded-lg text-sm font-medium transition-all ${isCorrect ? 'bg-green-500 text-white' : isWrong ? 'bg-red-500 text-white' : isSelected ? 'bg-yellow-500 text-white' : 'bg-white border border-gray-300'}`}>
+                                    {opt}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <p className="font-medium text-gray-800 mb-2 text-sm">Wer profitiert am meisten?</p>
+                            <div className="space-y-2">
+                              {['Einverdiener-Ehepaare', 'Doppelverdiener-Ehepaare mit ähnlichem Einkommen'].map(opt => {
+                                const isSelected = bonusQuizAnswers.bq1 === opt
+                                const correct = 'Doppelverdiener-Ehepaare mit ähnlichem Einkommen'
+                                const isCorrect = bonusQuizSubmitted && opt === correct
+                                const isWrong = bonusQuizSubmitted && isSelected && opt !== correct
+                                return (
+                                  <button key={opt} onClick={() => !bonusQuizSubmitted && setBonusQuizAnswers({...bonusQuizAnswers, bq1: opt})} disabled={bonusQuizSubmitted}
+                                    className={`w-full p-2 rounded-lg text-sm font-medium text-left transition-all ${isCorrect ? 'bg-green-500 text-white' : isWrong ? 'bg-red-500 text-white' : isSelected ? 'bg-yellow-500 text-white' : 'bg-white border border-gray-300'}`}>
+                                    {opt}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
+                        {!bonusQuizSubmitted && bonusQuizAnswers.bq1 && (
+                          <button onClick={() => { setBonusQuizSubmitted(true); completeSection('audio_bonus', 30, true) }}
+                            className="w-full py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-semibold">
+                            Bonus erhalten (+30)
+                          </button>
+                        )}
+                        {bonusQuizSubmitted && <div className="p-3 bg-yellow-100 rounded-lg text-yellow-800 flex items-center gap-2"><Star className="h-5 w-5" /><strong>+30 Bonus!</strong></div>}
+                      </div>
                     </div>
                   </div>
                 </div>

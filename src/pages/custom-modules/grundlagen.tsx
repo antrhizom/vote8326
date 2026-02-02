@@ -34,7 +34,7 @@ const RENDEZVOUS_SEQUENCE = [
 // Reihenfolge-Inhalte für Echo der Zeit
 const ECHO_SEQUENCE = [
   { id: 1, title: 'Einleitung: Heiratsstrafe', info: 'Doppelverdiener-Ehepaare zahlen heute mehr Steuern als Unverheiratete. Das soll sich ändern.' },
-  { id: 2, title: 'Problem der Progression', info: 'Wenn ein Partner das Pensum erhöht, bleibt oft nicht mehr Geld übrig - es geht an die Steuern.' },
+  { id: 2, title: 'Problem der Progression', info: 'Wenn eine Person im Ehepaar das Pensum erhöht, bleibt oft nicht mehr Geld übrig – es geht an die Steuern.' },
   { id: 3, title: 'Studie Uni Luzern (Martin Mosler)', info: 'Schätzung: 15\'400 Personen treten neu in den Arbeitsmarkt ein, ca. 16\'300 neue Vollzeitstellen.' },
   { id: 4, title: 'Andere Studien bestätigen', info: '10\'000 bis 20\'000 neue Stellen durch mehr erwerbstätige Eheleute.' },
   { id: 5, title: 'Warum mehr Arbeit?', info: '«Mehr Lohn auf dem Konto führt dazu, dass Menschen mehr arbeiten wollen.»' },

@@ -126,7 +126,7 @@ export default function SpielerischPage() {
         const existingCompleted = existingData.completedSections || []
 
         // Neue completed sections
-        const newCompleted = [...new Set([...existingCompleted, quizType])]
+        const newCompleted = Array.from(new Set([...existingCompleted, quizType]))
 
         // Scores berechnen
         let newLearningAppScore = quizType === 'learningapp' ? quizScore : (existingData.learningAppScore || 0)

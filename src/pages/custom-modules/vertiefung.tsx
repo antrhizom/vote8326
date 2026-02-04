@@ -116,35 +116,35 @@ const HISTORY_QUIZ = [
   }
 ]
 
-// Ziele der Steuern für Kapitel 2
+// Die drei Werkzeuge im Steuer-Werkzeugkasten (basierend auf dem Film)
 const STEUERZIELE = [
   {
-    id: 'finanzierung',
-    title: 'Finanzierung öffentlicher Aufgaben',
-    description: 'Steuern finanzieren Schulen, Spitäler, Strassen, Polizei und vieles mehr.',
-    example: 'Ohne Steuern gäbe es keine öffentlichen Schulen oder Universitäten.',
-    icon: '🏫'
+    id: 'fairness',
+    title: 'Werkzeug 1: Steuern für Fairness',
+    description: 'Die Steuerprogression sorgt dafür, dass wer mehr verdient, prozentual auch mehr beiträgt.',
+    example: 'Aber: Das reichste 1% besitzt 45% des Vermögens, zahlt aber nur 23% der direkten Steuern. Hier klafft eine Lücke!',
+    icon: '⚖️'
   },
   {
-    id: 'umverteilung',
-    title: 'Umverteilung',
-    description: 'Wer mehr verdient, zahlt mehr. Damit werden soziale Ungleichheiten ausgeglichen.',
-    example: 'Die AHV wird durch Steuern finanziert – alle profitieren, auch wer wenig eingezahlt hat.',
-    icon: '⚖️'
+    id: 'vermoegenssteuer',
+    title: 'Das Schweizer As: Die Vermögenssteuer',
+    description: 'Eine jährliche Abgabe auf das Nettovermögen – ein Werkzeug, das es fast nirgendwo sonst gibt.',
+    example: 'Dank der Vermögenssteuer zahlen Milliardäre in der Schweiz mehr als in Deutschland oder Österreich.',
+    icon: '🇨🇭'
   },
   {
     id: 'lenkung',
-    title: 'Lenkungswirkung',
-    description: 'Steuern können Verhalten beeinflussen – positiv wie negativ.',
-    example: 'Die Tabaksteuer macht Rauchen teurer. Die aktuelle Debatte: Beeinflusst das Steuersystem, ob Paare heiraten oder wie viel sie arbeiten?',
+    title: 'Werkzeug 2: Lenkungsabgaben',
+    description: 'Steuern, die unser Verhalten lenken – unerwünschtes Verhalten wird teurer, erwünschtes attraktiver.',
+    example: 'Beispiele: Tabaksteuer (Gesundheit), CO2-Abgabe (Klima), Grundstückgewinnsteuer (stabiler Immobilienmarkt).',
     icon: '🎯'
   },
   {
-    id: 'gerechtigkeit',
-    title: 'Steuergerechtigkeit',
-    description: 'Gleiche wirtschaftliche Verhältnisse sollen gleich besteuert werden.',
-    example: 'Die Heiratsstrafe verletzt dieses Prinzip: Zwei Paare mit gleichem Einkommen zahlen unterschiedlich viel Steuern – je nach Zivilstand.',
-    icon: '⚖️'
+    id: 'individualbesteuerung',
+    title: 'Werkzeug 3: Die Grundsatzfrage',
+    description: 'Seit 1984 ist das heutige System verfassungswidrig. Am 8. März 2026 können wir das ändern.',
+    example: 'Die Heiratsstrafe: Ehepaare rutschen durch zusammengerechnete Einkommen in höhere Steuerklassen.',
+    icon: '🗳️'
   }
 ]
 
@@ -158,40 +158,51 @@ const PARTY_POSITIONS = [
   { party: 'Mitte', position: 'contra', reason: 'Eigene Initiative mit alternativem Modell' }
 ]
 
-// Quiz für Kapitel 2 (Steuerziele)
+// Quiz für Kapitel 2 (basierend auf dem Film "Steuergerechtigkeit")
 const STEUERZIELE_QUIZ = [
   {
     id: 's1',
-    question: 'Welches Steuerprinzip wird durch die "Heiratsstrafe" verletzt?',
+    question: 'Wie viel Prozent des Vermögens in der Schweiz gehört dem reichsten 1%?',
     options: [
-      'Das Prinzip der Finanzierung',
-      'Das Prinzip der Steuergerechtigkeit',
-      'Das Prinzip der Lenkung',
-      'Das Prinzip der Einfachheit'
+      '23%',
+      '35%',
+      '45%',
+      '60%'
     ],
-    correct: 'Das Prinzip der Steuergerechtigkeit'
+    correct: '45%'
   },
   {
     id: 's2',
-    question: 'Warum könnte die Individualbesteuerung mehr Frauen in den Arbeitsmarkt bringen?',
+    question: 'Was ist das besondere "Schweizer As" im Steuersystem?',
     options: [
-      'Weil Frauen dann weniger Steuern zahlen müssen',
-      'Weil das zusätzliche Einkommen nicht mehr so stark besteuert wird',
-      'Weil Arbeitgebende Frauen bevorzugen müssen',
-      'Weil Männer dann weniger arbeiten dürfen'
+      'Die Mehrwertsteuer',
+      'Die Vermögenssteuer',
+      'Die Einkommenssteuer',
+      'Die Erbschaftssteuer'
     ],
-    correct: 'Weil das zusätzliche Einkommen nicht mehr so stark besteuert wird'
+    correct: 'Die Vermögenssteuer'
   },
   {
     id: 's3',
-    question: 'Was ist die "Heiratsstrafe"?',
+    question: 'Was ist das Hauptziel von Lenkungsabgaben wie der Tabaksteuer?',
     options: [
-      'Eine Gebühr für Hochzeiten',
-      'Höhere Steuern für verheiratete Doppelverdiener-Paare im Vergleich zu Unverheirateten',
-      'Ein Strafzuschlag für späte Steuererklärungen',
-      'Eine Steuer auf Erbschaften'
+      'Möglichst viel Geld für den Staat einzunehmen',
+      'Unerwünschtes Verhalten teurer und erwünschtes attraktiver zu machen',
+      'Die Wirtschaft anzukurbeln',
+      'Arbeitsplätze zu schaffen'
     ],
-    correct: 'Höhere Steuern für verheiratete Doppelverdiener-Paare im Vergleich zu Unverheirateten'
+    correct: 'Unerwünschtes Verhalten teurer und erwünschtes attraktiver zu machen'
+  },
+  {
+    id: 's4',
+    question: 'Seit wann ist das heutige Ehepaar-Steuersystem laut Bundesgericht verfassungswidrig?',
+    options: [
+      'Seit 1964',
+      'Seit 1984',
+      'Seit 2004',
+      'Seit 2016'
+    ],
+    correct: 'Seit 1984'
   }
 ]
 
@@ -663,8 +674,8 @@ export default function VertiefungPage() {
               <div className="flex items-center gap-3">
                 <Film className="h-6 w-6 text-blue-600" />
                 <div>
-                  <h3 className="font-bold text-gray-900">Film: Tagesschau zur Individualbesteuerung</h3>
-                  <p className="text-sm text-gray-500">Welche Familienmodelle profitieren, welche verlieren?</p>
+                  <h3 className="font-bold text-gray-900">Film: Der Steuer-Werkzeugkasten der Schweiz</h3>
+                  <p className="text-sm text-gray-500">Steuern als mächtige Werkzeuge für Fairness und Lenkung</p>
                 </div>
               </div>
             </div>
@@ -672,8 +683,8 @@ export default function VertiefungPage() {
               <div className="bg-gray-900 rounded-lg overflow-hidden">
                 <iframe
                   className="w-full aspect-video"
-                  src="https://www.srf.ch/play/embed?urn=urn:srf:video:7578f77a-59d8-4453-a1ba-eedb4ede1451"
-                  title="Tagesschau zur Individualbesteuerung"
+                  src="https://www.youtube.com/embed/wtjs1PG4y8s"
+                  title="Der Steuer-Werkzeugkasten der Schweiz"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
@@ -688,7 +699,7 @@ export default function VertiefungPage() {
               <div className="flex items-center gap-3">
                 <Scale className="h-6 w-6 text-cyan-600" />
                 <div>
-                  <h3 className="font-bold text-gray-900">Die vier Ziele des Steuersystems</h3>
+                  <h3 className="font-bold text-gray-900">Der Steuer-Werkzeugkasten</h3>
                   <p className="text-sm text-gray-500">Klicken Sie auf die Karten für Details ({exploredZiele.size}/{STEUERZIELE.length} erkundet)</p>
                 </div>
               </div>

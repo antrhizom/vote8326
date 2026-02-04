@@ -11,21 +11,10 @@ pipwerks.SCORM = {
 };
 
 var scorm = pipwerks.SCORM;
+var resultSent = false; // Verhindert mehrfaches Senden
 
 function init() {
   scorm.init();
-}
-
-function set(param, value) {
-  scorm.set(param, value);
-}
-
-function get(param) {
-  scorm.get(param);
-}
-
-function end() {
-  scorm.quit();
 }
 
 window.onload = function () {
@@ -33,77 +22,98 @@ window.onload = function () {
 };
 
 window.onunload = function () {
-  end();
+  scorm.quit();
 };
 
-var onCompleted = function (result) {
-  if (!result.score) {
+// Funktion um Ergebnis an Parent zu senden
+var sendResultToParent = function(scorePercent, maxScore) {
+  if (resultSent) {
+    console.log('Result bereits gesendet, überspringe...');
     return;
   }
 
-  var scorePercent = Math.round(result.score.scaled * 100);
-
-  // PostMessage an Parent-Fenster senden
   if (window.parent && window.parent !== window) {
+    resultSent = true;
     window.parent.postMessage({
       type: 'H5P_COMPLETED',
       score: scorePercent,
-      maxScore: 100,
-      success: result.success || (scorePercent >= 50)
+      maxScore: maxScore || 100,
+      success: scorePercent >= 50
     }, '*');
+    console.log('H5P Result gesendet:', scorePercent, '%');
   }
+};
 
-  var masteryScore;
-  if (scorm.version == '2004') {
-    masteryScore = scorm.get('cmi.scaled_passing_score');
-  } else if (scorm.version == '1.2') {
-    masteryScore = scorm.get('cmi.student_data.mastery_score') / 100;
-  }
+var onCompleted = function (result) {
+  var scorePercent = 0;
 
-  scorm.set('cmi.core.score.raw', result.score.scaled * 100);
-  scorm.set('cmi.core.score.min', '0');
-  scorm.set('cmi.core.score.max', '100');
-  scorm.set('cmi.core.score.scaled', result.score.scaled * 100);
-
-  if (masteryScore === undefined) {
-    scorm.status('set', 'completed');
-  } else {
-    var passed = result.score.scaled >= masteryScore;
-    if (scorm.version == '2004') {
-      scorm.status('set', 'completed');
-      if (passed) {
-        scorm.set('cmi.success_status', 'passed');
-      } else {
-        scorm.set('cmi.success_status', 'failed');
-      }
-    } else if (scorm.version == '1.2') {
-      if (passed) {
-        scorm.status('set', 'passed');
-      } else {
-        scorm.status('set', 'failed');
-      }
+  // Verschiedene Score-Formate unterstützen
+  if (result.score) {
+    if (typeof result.score.scaled === 'number') {
+      scorePercent = Math.round(result.score.scaled * 100);
+    } else if (typeof result.score.raw === 'number' && typeof result.score.max === 'number' && result.score.max > 0) {
+      scorePercent = Math.round((result.score.raw / result.score.max) * 100);
     }
   }
+
+  sendResultToParent(scorePercent, 100);
+
+  scorm.set('cmi.core.score.raw', scorePercent);
+  scorm.set('cmi.core.score.min', '0');
+  scorm.set('cmi.core.score.max', '100');
+  scorm.status('set', 'completed');
 };
 
 // Warten bis H5P geladen ist
 var waitForH5P = setInterval(function() {
   if (typeof H5P !== 'undefined' && H5P.externalDispatcher) {
     clearInterval(waitForH5P);
+    console.log('H5P externalDispatcher gefunden');
 
     H5P.externalDispatcher.on('xAPI', function (event) {
       var statement = event.data.statement;
+      var verb = statement.verb?.id || '';
 
-      // Auf "answered" oder "completed" Verben reagieren
-      if (statement.verb && statement.verb.id) {
-        var verb = statement.verb.id;
+      console.log('xAPI Event:', verb, statement.result);
 
-        if (verb.indexOf('answered') !== -1 || verb.indexOf('completed') !== -1) {
-          if (statement.result) {
-            onCompleted(statement.result);
-          }
-        }
+      // Nur auf "answered" reagieren (wird bei "Überprüfen" ausgelöst)
+      if (verb.indexOf('answered') !== -1 && statement.result) {
+        console.log('H5P answered Event mit Result:', statement.result);
+        onCompleted(statement.result);
       }
     });
   }
 }, 100);
+
+// Fallback: Direkt auf H5P Instanzen hören
+var waitForH5PInstances = setInterval(function() {
+  if (typeof H5P !== 'undefined' && H5P.instances && H5P.instances.length > 0) {
+    clearInterval(waitForH5PInstances);
+    console.log('H5P Instances gefunden:', H5P.instances.length);
+
+    H5P.instances.forEach(function(instance, index) {
+      if (instance.on) {
+        instance.on('xAPI', function(event) {
+          var statement = event.data.statement;
+          var verb = statement.verb?.id || '';
+
+          if (verb.indexOf('answered') !== -1 && statement.result) {
+            console.log('H5P Instance', index, 'answered:', statement.result);
+            onCompleted(statement.result);
+          }
+        });
+      }
+
+      // Speziell für MultiChoice: triggerXAPIScored Event
+      if (instance.triggerXAPIScored) {
+        var originalTrigger = instance.triggerXAPIScored;
+        instance.triggerXAPIScored = function(score, maxScore) {
+          console.log('triggerXAPIScored:', score, '/', maxScore);
+          var scorePercent = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+          sendResultToParent(scorePercent, 100);
+          return originalTrigger.apply(this, arguments);
+        };
+      }
+    });
+  }
+}, 200);

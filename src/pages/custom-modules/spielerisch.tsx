@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { doc, getDoc, updateDoc } from 'firebase/firestore'
+import { onAuthStateChanged } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
-import { ArrowLeft, Award, Gamepad2, CheckCircle2, Trophy, RefreshCw, HelpCircle, Download, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Award, Gamepad2, CheckCircle2, Trophy, RefreshCw, HelpCircle, Download } from 'lucide-react'
 
 // LearningApps URL - Steuern Grundwissen (Kontext Individualbesteuerung)
 const LEARNING_APP_EMBED_URL = 'https://LearningApps.org/show?id=p8z71p6tc26&fullscreen=1'
@@ -15,6 +16,7 @@ export default function SpielerischPage() {
   const [loading, setLoading] = useState(true)
   const [totalScore, setTotalScore] = useState(0)
   const [completedSections, setCompletedSections] = useState<Set<string>>(new Set())
+  const [userId, setUserId] = useState<string | null>(null)
 
   // LearningApp State
   const [learningAppScore, setLearningAppScore] = useState<number | null>(null)
@@ -28,15 +30,23 @@ export default function SpielerischPage() {
   const [showCelebration, setShowCelebration] = useState(false)
   const [celebrationText, setCelebrationText] = useState('')
 
+  // Ref um userId in PostMessage-Handler zu verwenden
+  const userIdRef = useRef<string | null>(null)
+
   const maxPointsLearningApp = 70
   const maxPointsH5P = 30
   const maxPoints = maxPointsLearningApp + maxPointsH5P
 
-  // Laden des Fortschritts
+  // Auth State Listener - wartet auf Authentifizierung
   useEffect(() => {
-    const load = async () => {
-      const user = auth.currentUser
-      if (!user) { router.push('/'); return }
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        router.push('/')
+        return
+      }
+
+      setUserId(user.uid)
+      userIdRef.current = user.uid
 
       try {
         const userDoc = await getDoc(doc(db, 'users', user.uid))
@@ -56,10 +66,11 @@ export default function SpielerischPage() {
             }
           }
         }
-      } catch (e) { console.error(e) }
+      } catch (e) { console.error('Fehler beim Laden der Daten:', e) }
       setLoading(false)
-    }
-    load()
+    })
+
+    return () => unsubscribe()
   }, [router])
 
   // PostMessage Listener für beide Quiz-Typen
@@ -112,11 +123,17 @@ export default function SpielerischPage() {
   }, [learningAppCompleted, h5pCompleted])
 
   const saveProgress = async (quizType: 'learningapp' | 'h5p', earnedPoints: number, quizScore: number) => {
-    const user = auth.currentUser
-    if (!user) return
+    // Verwende userIdRef um sicherzustellen, dass wir die userId haben
+    const currentUserId = userIdRef.current || auth.currentUser?.uid
+    if (!currentUserId) {
+      console.error('Kein Benutzer angemeldet - kann Fortschritt nicht speichern')
+      return
+    }
+
+    console.log('Speichere Fortschritt für Quiz:', quizType, 'Score:', quizScore, 'User:', currentUserId)
 
     try {
-      const userRef = doc(db, 'users', user.uid)
+      const userRef = doc(db, 'users', currentUserId)
       const userDoc = await getDoc(userRef)
 
       if (userDoc.exists()) {
@@ -168,16 +185,19 @@ export default function SpielerischPage() {
         const overallProgress = Math.round((allModules.filter(id => modules[id]?.completed).length / allModules.length) * 100)
 
         await updateDoc(userRef, { modules, totalPoints, totalBonus, overallProgress })
+        console.log('Fortschritt erfolgreich in Firebase gespeichert!')
       }
-    } catch (e) { console.error(e) }
+    } catch (e) {
+      console.error('Fehler beim Speichern des Fortschritts:', e)
+    }
   }
 
   const resetQuiz = async (quizType: 'learningapp' | 'h5p' | 'all') => {
-    const user = auth.currentUser
-    if (!user) return
+    const currentUserId = userIdRef.current || auth.currentUser?.uid
+    if (!currentUserId) return
 
     try {
-      const userRef = doc(db, 'users', user.uid)
+      const userRef = doc(db, 'users', currentUserId)
       const userDoc = await getDoc(userRef)
 
       if (userDoc.exists()) {
@@ -431,19 +451,14 @@ export default function SpielerischPage() {
             </div>
           </div>
 
-          {/* H5P Content - besser formatiert */}
-          <div className="p-6 bg-gradient-to-b from-purple-50/50 to-white">
-            <div className="max-w-2xl mx-auto">
-              <div className="bg-white rounded-xl shadow-md border border-purple-100 overflow-hidden">
-                <iframe
-                  src={H5P_QUIZ_URL}
-                  className="w-full border-0"
-                  style={{ minHeight: '350px', height: 'auto' }}
-                  allow="fullscreen"
-                  title="Eigenmietwert Multiple Choice (H5P)"
-                />
-              </div>
-            </div>
+          {/* H5P Content - eingebettet */}
+          <div className="relative" style={{ paddingBottom: '320px', height: 0 }}>
+            <iframe
+              src={H5P_QUIZ_URL}
+              className="absolute top-0 left-0 w-full h-full border-0"
+              allow="fullscreen"
+              title="Eigenmietwert Multiple Choice (H5P)"
+            />
           </div>
 
           {/* Footer mit Hinweis und Download */}
@@ -452,25 +467,14 @@ export default function SpielerischPage() {
               <p className="text-xs text-gray-500">
                 💡 Wählen Sie die korrekten Antworten aus. Ergebnisse werden automatisch erfasst.
               </p>
-              <div className="flex items-center gap-2">
-                <a
-                  href="/h5p-quiz/index.html"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  <span>Im neuen Tab öffnen</span>
-                </a>
-                <a
-                  href="/h5p-quiz-download/eigenmietwert-quiz.h5p"
-                  download="eigenmietwert-quiz.h5p"
-                  className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
-                >
-                  <Download className="h-3 w-3" />
-                  <span>H5P herunterladen</span>
-                </a>
-              </div>
+              <a
+                href="/h5p-quiz-download/eigenmietwert-quiz.h5p"
+                download="eigenmietwert-quiz.h5p"
+                className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+              >
+                <Download className="h-3 w-3" />
+                <span>H5P herunterladen</span>
+              </a>
             </div>
           </div>
         </div>

@@ -11,7 +11,7 @@ pipwerks.SCORM = {
 };
 
 var scorm = pipwerks.SCORM;
-var resultSent = false; // Verhindert mehrfaches Senden
+var lastSentScore = null; // Speichert letzten Score um Duplikate zu vermeiden
 
 function init() {
   scorm.init();
@@ -27,13 +27,14 @@ window.onunload = function () {
 
 // Funktion um Ergebnis an Parent zu senden
 var sendResultToParent = function(scorePercent, maxScore) {
-  if (resultSent) {
-    console.log('Result bereits gesendet, überspringe...');
+  // Nur senden wenn sich Score geändert hat
+  if (lastSentScore === scorePercent) {
+    console.log('Gleicher Score wie zuvor, überspringe...');
     return;
   }
 
   if (window.parent && window.parent !== window) {
-    resultSent = true;
+    lastSentScore = scorePercent;
     window.parent.postMessage({
       type: 'H5P_COMPLETED',
       score: scorePercent,
@@ -64,6 +65,12 @@ var onCompleted = function (result) {
   scorm.status('set', 'completed');
 };
 
+// Reset-Funktion für Wiederholen
+var resetScore = function() {
+  lastSentScore = null;
+  console.log('Score zurückgesetzt für neuen Versuch');
+};
+
 // Warten bis H5P geladen ist
 var waitForH5P = setInterval(function() {
   if (typeof H5P !== 'undefined' && H5P.externalDispatcher) {
@@ -76,10 +83,15 @@ var waitForH5P = setInterval(function() {
 
       console.log('xAPI Event:', verb, statement.result);
 
-      // Nur auf "answered" reagieren (wird bei "Überprüfen" ausgelöst)
+      // Bei "answered" Event - Ergebnis senden
       if (verb.indexOf('answered') !== -1 && statement.result) {
         console.log('H5P answered Event mit Result:', statement.result);
         onCompleted(statement.result);
+      }
+
+      // Bei Retry/Reset - Score zurücksetzen
+      if (verb.indexOf('attempted') !== -1 || verb.indexOf('initialized') !== -1) {
+        resetScore();
       }
     });
   }
@@ -101,17 +113,21 @@ var waitForH5PInstances = setInterval(function() {
             console.log('H5P Instance', index, 'answered:', statement.result);
             onCompleted(statement.result);
           }
+
+          // Bei Retry - Score zurücksetzen
+          if (verb.indexOf('attempted') !== -1 || verb.indexOf('initialized') !== -1) {
+            resetScore();
+          }
         });
       }
 
-      // Speziell für MultiChoice: triggerXAPIScored Event
-      if (instance.triggerXAPIScored) {
-        var originalTrigger = instance.triggerXAPIScored;
-        instance.triggerXAPIScored = function(score, maxScore) {
-          console.log('triggerXAPIScored:', score, '/', maxScore);
-          var scorePercent = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
-          sendResultToParent(scorePercent, 100);
-          return originalTrigger.apply(this, arguments);
+      // Retry-Button abfangen
+      if (instance.resetTask) {
+        var originalReset = instance.resetTask;
+        instance.resetTask = function() {
+          console.log('H5P resetTask aufgerufen');
+          resetScore();
+          return originalReset.apply(this, arguments);
         };
       }
     });

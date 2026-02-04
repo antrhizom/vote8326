@@ -102,25 +102,28 @@ export default function SpielerischPage() {
         }
       }
 
-      // H5P Nachrichten (Object-Format)
-      if (typeof event.data === 'object' && event.data?.type === 'H5P_COMPLETED' && !h5pCompleted) {
-        const score = event.data.score || 100
+      // H5P Nachrichten (Object-Format) - immer aktualisieren, auch bei Wiederholung
+      if (typeof event.data === 'object' && event.data?.type === 'H5P_COMPLETED') {
+        const score = event.data.score ?? 0
 
-        setH5pScore(score)
-        setH5pCompleted(true)
-        setCelebrationText(`H5P Quiz mit ${score}% abgeschlossen!`)
-        setShowCelebration(true)
+        // Nur aktualisieren wenn Score sich geändert hat oder noch nicht abgeschlossen
+        if (!h5pCompleted || score !== h5pScore) {
+          setH5pScore(score)
+          setH5pCompleted(true)
+          setCelebrationText(`H5P Quiz mit ${score}% abgeschlossen!`)
+          setShowCelebration(true)
 
-        const earnedPoints = Math.round((score / 100) * maxPointsH5P)
-        await saveProgress('h5p', earnedPoints, score)
+          const earnedPoints = Math.round((score / 100) * maxPointsH5P)
+          await saveProgress('h5p', earnedPoints, score)
 
-        setTimeout(() => setShowCelebration(false), 3000)
+          setTimeout(() => setShowCelebration(false), 3000)
+        }
       }
     }
 
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
-  }, [learningAppCompleted, h5pCompleted])
+  }, [learningAppCompleted, h5pCompleted, h5pScore])
 
   const saveProgress = async (quizType: 'learningapp' | 'h5p', earnedPoints: number, quizScore: number) => {
     // Verwende userIdRef um sicherzustellen, dass wir die userId haben

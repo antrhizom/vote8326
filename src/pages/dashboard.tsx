@@ -449,7 +449,7 @@ export default function AbstimmungDashboard() {
               // All modules use custom pages now
               router.push(`/custom-modules/${moduleId}`)
             }}
-            onCertificateClick={() => router.push('/certificate/abstimmung2026')}
+            onCertificateClick={() => router.push('/certificate')}
             router={router}
           />
         </div>
@@ -527,32 +527,38 @@ function LearningAreaCard({ area, progress, modules, userData, onModuleClick, on
           ))}
         </div>
 
-        {/* Zertifikat */}
+        {/* Badge/Zertifikat */}
         <div className="mt-6 pt-6 border-t border-gray-200">
-          <button
-            onClick={onCertificateClick}
-            disabled={progress.progress < 50}
-            className={`w-full flex items-center justify-between p-4 rounded-lg transition-all ${
-              progress.progress >= 50
-                ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 hover:from-yellow-500 hover:to-yellow-600 shadow-lg'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <Award className="h-6 w-6" />
-              <div className="text-left">
-                <div className="font-semibold">
-                  {progress.progress >= 50 ? 'Zertifikat anzeigen' : 'Zertifikat (noch nicht freigeschaltet)'}
-                </div>
-                {progress.progress < 50 && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    Mindestens 50% der Punkte erforderlich ({progress.points}/{progress.maxPoints})
+          {(() => {
+            // Badge-Anforderung: mindestens 3 Module abgeschlossen (60%)
+            const badgeUnlocked = progress.completed >= 3
+            return (
+              <button
+                onClick={onCertificateClick}
+                disabled={!badgeUnlocked}
+                className={`w-full flex items-center justify-between p-4 rounded-lg transition-all ${
+                  badgeUnlocked
+                    ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 hover:from-yellow-500 hover:to-yellow-600 shadow-lg'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Award className="h-6 w-6" />
+                  <div className="text-left">
+                    <div className="font-semibold">
+                      {badgeUnlocked ? 'Badge / Zertifikat anzeigen' : 'Badge (noch nicht freigeschaltet)'}
+                    </div>
+                    {!badgeUnlocked && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        Mindestens 3 Module abschliessen ({progress.completed}/3)
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
-            {progress.progress >= 50 && <ChevronRight className="h-5 w-5" />}
-          </button>
+                </div>
+                {badgeUnlocked && <ChevronRight className="h-5 w-5" />}
+              </button>
+            )
+          })()}
           
           {/* Badges - Lernbestätigungen für einzelne Module */}
           {userData.badges && Object.keys(userData.badges).length > 0 && (

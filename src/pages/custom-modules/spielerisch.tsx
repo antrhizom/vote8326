@@ -392,11 +392,12 @@ export default function SpielerischPage() {
                   <>
                     <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1">
                       <CheckCircle2 className="h-3 w-3" />
-                      {Math.round((learningAppScore || 0) / 100 * maxPointsLearningApp)}P
+                      {learningAppScore}% ({Math.round((learningAppScore || 0) / 100 * maxPointsLearningApp)}P)
                     </span>
                     <button
                       onClick={() => resetQuiz('learningapp')}
                       className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                      title="Quiz wiederholen"
                     >
                       <RefreshCw className="h-3 w-3" />
                     </button>
@@ -440,11 +441,12 @@ export default function SpielerischPage() {
                   <>
                     <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1">
                       <CheckCircle2 className="h-3 w-3" />
-                      {Math.round((h5pScore || 0) / 100 * maxPointsH5P)}P
+                      {h5pScore}% ({Math.round((h5pScore || 0) / 100 * maxPointsH5P)}P)
                     </span>
                     <button
                       onClick={() => resetQuiz('h5p')}
                       className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                      title="Quiz wiederholen"
                     >
                       <RefreshCw className="h-3 w-3" />
                     </button>

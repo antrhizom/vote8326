@@ -527,17 +527,64 @@ function LearningAreaCard({ area, progress, modules, userData, onModuleClick, on
           ))}
         </div>
 
-        {/* Badge/Zertifikat */}
+        {/* Modul-Badges - für Module mit ≥60% Lernerfolg */}
         <div className="mt-6 pt-6 border-t border-gray-200">
           {(() => {
-            // Badge-Anforderung: mindestens 3 Module abgeschlossen (60%)
-            const badgeUnlocked = progress.completed >= 3
+            // Berechne welche Module einen Badge verdient haben (≥60%)
+            const modulesWithBadge = modulesList.filter(m => {
+              const maxPts = moduleData[m.id]?.maxPoints || 100
+              const pct = maxPts > 0 ? Math.round((m.score / maxPts) * 100) : 0
+              return pct >= 60
+            })
+
+            if (modulesWithBadge.length > 0) {
+              return (
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">🏅 Meine Modul-Badges ({modulesWithBadge.length})</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {modulesWithBadge.map((m) => {
+                      const maxPts = moduleData[m.id]?.maxPoints || 100
+                      const pct = Math.round((m.score / maxPts) * 100)
+                      const level = pct >= 90 ? '🥇' : pct >= 75 ? '🥈' : '🥉'
+                      return (
+                        <button
+                          key={m.id}
+                          onClick={() => router.push(`/badges/${m.id}`)}
+                          className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 border border-yellow-200 transition-all text-left"
+                        >
+                          <span className="text-xl">{level}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-900 text-xs truncate">{moduleData[m.id]?.title.split('.')[1]?.trim() || m.id}</p>
+                            <p className="text-xs text-gray-500">{pct}%</p>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            }
+            return null
+          })()}
+
+          {/* Zertifikat-Button */}
+          {(() => {
+            // Zertifikat-Anforderung: mindestens 3 Module UND 60% Durchschnitt
+            const certificateUnlocked = progress.completed >= 3 && progress.progress >= 60
+            const hasFeedback = userData.overallFeedback?.abstimmung2026
+
             return (
               <button
-                onClick={onCertificateClick}
-                disabled={!badgeUnlocked}
+                onClick={() => {
+                  if (certificateUnlocked && !hasFeedback) {
+                    router.push('/feedback')
+                  } else if (certificateUnlocked) {
+                    router.push('/certificate')
+                  }
+                }}
+                disabled={!certificateUnlocked}
                 className={`w-full flex items-center justify-between p-4 rounded-lg transition-all ${
-                  badgeUnlocked
+                  certificateUnlocked
                     ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 hover:from-yellow-500 hover:to-yellow-600 shadow-lg'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 }`}
@@ -546,57 +593,26 @@ function LearningAreaCard({ area, progress, modules, userData, onModuleClick, on
                   <Award className="h-6 w-6" />
                   <div className="text-left">
                     <div className="font-semibold">
-                      {badgeUnlocked ? 'Badge / Zertifikat anzeigen' : 'Badge (noch nicht freigeschaltet)'}
+                      {certificateUnlocked
+                        ? (hasFeedback ? 'Zertifikat anzeigen' : 'Zertifikat abholen')
+                        : 'Zertifikat (noch nicht freigeschaltet)'}
                     </div>
-                    {!badgeUnlocked && (
+                    {!certificateUnlocked && (
                       <div className="text-xs text-gray-500 mt-1">
-                        Mindestens 3 Module abschliessen ({progress.completed}/3)
+                        Mind. 3 Module ({progress.completed}/3) und 60% Durchschnitt ({progress.progress}%)
+                      </div>
+                    )}
+                    {certificateUnlocked && !hasFeedback && (
+                      <div className="text-xs text-gray-700 mt-1">
+                        Kurze Umfrage ausfüllen
                       </div>
                     )}
                   </div>
                 </div>
-                {badgeUnlocked && <ChevronRight className="h-5 w-5" />}
+                {certificateUnlocked && <ChevronRight className="h-5 w-5" />}
               </button>
             )
           })()}
-          
-          {/* Badges - Lernbestätigungen für einzelne Module */}
-          {userData.badges && Object.keys(userData.badges).length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Meine Badges</h3>
-              <div className="space-y-2">
-                {Object.entries(userData.badges).map(([moduleId, badge]) => (
-                  <button
-                    key={moduleId}
-                    onClick={() => router.push(`/badges/${moduleId}`)}
-                    className="w-full flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-yellow-50 to-yellow-100 hover:from-yellow-100 hover:to-yellow-200 border border-yellow-200 transition-all"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Award className="h-5 w-5 text-yellow-600" />
-                      <span className="font-medium text-gray-900 text-sm">{badge.moduleName}</span>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-yellow-600" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Gesamtfeedback Button - nur sichtbar wenn alle Module abgeschlossen */}
-          {progress.completed === progress.total && (
-            <button
-              onClick={() => router.push(`/feedback/${area.id}`)}
-              className="w-full flex items-center justify-between p-4 rounded-lg transition-all mt-3 bg-gradient-to-r from-teal-400 to-cyan-500 text-white hover:from-teal-500 hover:to-cyan-600 shadow-lg"
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">💬</span>
-                <span className="font-semibold">
-                  Gesamtfeedback abgeben
-                </span>
-              </div>
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          )}
         </div>
       </div>
     </div>

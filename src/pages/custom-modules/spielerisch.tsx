@@ -1,23 +1,36 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
-import { ArrowLeft, Award, Gamepad2, CheckCircle2, Star, Trophy, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Award, Gamepad2, CheckCircle2, Trophy, RefreshCw, HelpCircle } from 'lucide-react'
 
 // LearningApps URL - Steuern Grundwissen (Kontext Individualbesteuerung)
-const LEARNING_APP_URL = 'https://LearningApps.org/watch?v=p8z71p6tc26'
 const LEARNING_APP_EMBED_URL = 'https://LearningApps.org/show?id=p8z71p6tc26&fullscreen=1'
+
+// H5P Quiz - Multiple Choice zum Eigenmietwert
+const H5P_QUIZ_URL = '/h5p-quiz/index.html'
 
 export default function SpielerischPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [totalScore, setTotalScore] = useState(0)
   const [completedSections, setCompletedSections] = useState<Set<string>>(new Set())
-  const [appScore, setAppScore] = useState<number | null>(null)
-  const [appCompleted, setAppCompleted] = useState(false)
-  const [showCelebration, setShowCelebration] = useState(false)
 
-  const maxPoints = 100
+  // LearningApp State
+  const [learningAppScore, setLearningAppScore] = useState<number | null>(null)
+  const [learningAppCompleted, setLearningAppCompleted] = useState(false)
+
+  // H5P State
+  const [h5pScore, setH5pScore] = useState<number | null>(null)
+  const [h5pCompleted, setH5pCompleted] = useState(false)
+
+  // UI State
+  const [showCelebration, setShowCelebration] = useState(false)
+  const [celebrationText, setCelebrationText] = useState('')
+
+  const maxPointsLearningApp = 70
+  const maxPointsH5P = 30
+  const maxPoints = maxPointsLearningApp + maxPointsH5P
 
   // Laden des Fortschritts
   useEffect(() => {
@@ -32,9 +45,14 @@ export default function SpielerischPage() {
           if (data) {
             setTotalScore(data.score || 0)
             setCompletedSections(new Set(data.completedSections || []))
+
             if (data.completedSections?.includes('learningapp')) {
-              setAppCompleted(true)
-              setAppScore(data.appScore || 100)
+              setLearningAppCompleted(true)
+              setLearningAppScore(data.learningAppScore || 100)
+            }
+            if (data.completedSections?.includes('h5p')) {
+              setH5pCompleted(true)
+              setH5pScore(data.h5pScore || 100)
             }
           }
         }
@@ -44,47 +62,56 @@ export default function SpielerischPage() {
     load()
   }, [router])
 
-  // PostMessage Listener für LearningApps Ergebnisse
+  // PostMessage Listener für beide Quiz-Typen
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
-      // Nur LearningApps Nachrichten verarbeiten
-      if (typeof event.data !== 'string') return
+      // LearningApps Nachrichten (String-Format)
+      if (typeof event.data === 'string' && !learningAppCompleted) {
+        const parts = event.data.split('|')
+        const messageType = parts[0]
 
-      const parts = event.data.split('|')
-      const messageType = parts[0]
-
-      // AppSolved oder AppChecked bedeutet, dass die App abgeschlossen wurde
-      if ((messageType === 'AppSolved' || messageType === 'AppChecked') && !appCompleted) {
-        let score = 100
-
-        // Score aus der Nachricht extrahieren falls vorhanden
-        if (parts.length >= 3) {
-          const parsedScore = parseInt(parts[2])
-          if (!isNaN(parsedScore) && parsedScore > 0 && parsedScore <= 100) {
-            score = parsedScore
+        if (messageType === 'AppSolved' || messageType === 'AppChecked') {
+          let score = 100
+          if (parts.length >= 3) {
+            const parsedScore = parseInt(parts[2])
+            if (!isNaN(parsedScore) && parsedScore > 0 && parsedScore <= 100) {
+              score = parsedScore
+            }
           }
-        }
 
-        setAppScore(score)
-        setAppCompleted(true)
+          setLearningAppScore(score)
+          setLearningAppCompleted(true)
+          setCelebrationText(`LearningApp Quiz mit ${score}% abgeschlossen!`)
+          setShowCelebration(true)
+
+          const earnedPoints = Math.round((score / 100) * maxPointsLearningApp)
+          await saveProgress('learningapp', earnedPoints, score)
+
+          setTimeout(() => setShowCelebration(false), 3000)
+        }
+      }
+
+      // H5P Nachrichten (Object-Format)
+      if (typeof event.data === 'object' && event.data?.type === 'H5P_COMPLETED' && !h5pCompleted) {
+        const score = event.data.score || 100
+
+        setH5pScore(score)
+        setH5pCompleted(true)
+        setCelebrationText(`H5P Quiz mit ${score}% abgeschlossen!`)
         setShowCelebration(true)
 
-        // Punkte berechnen (max 100 Punkte basierend auf Score)
-        const earnedPoints = Math.round((score / 100) * maxPoints)
+        const earnedPoints = Math.round((score / 100) * maxPointsH5P)
+        await saveProgress('h5p', earnedPoints, score)
 
-        // Fortschritt speichern
-        await saveProgress(earnedPoints, score)
-
-        // Celebration nach 3 Sekunden ausblenden
         setTimeout(() => setShowCelebration(false), 3000)
       }
     }
 
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
-  }, [appCompleted])
+  }, [learningAppCompleted, h5pCompleted])
 
-  const saveProgress = async (score: number, appScoreValue: number) => {
+  const saveProgress = async (quizType: 'learningapp' | 'h5p', earnedPoints: number, quizScore: number) => {
     const user = auth.currentUser
     if (!user) return
 
@@ -95,19 +122,38 @@ export default function SpielerischPage() {
       if (userDoc.exists()) {
         const userData = userDoc.data()
         const modules = userData.modules || {}
+        const existingData = modules.spielerisch || {}
+        const existingCompleted = existingData.completedSections || []
 
-        const newCompleted = ['learningapp']
+        // Neue completed sections
+        const newCompleted = [...new Set([...existingCompleted, quizType])]
+
+        // Scores berechnen
+        let newLearningAppScore = quizType === 'learningapp' ? quizScore : (existingData.learningAppScore || 0)
+        let newH5pScore = quizType === 'h5p' ? quizScore : (existingData.h5pScore || 0)
+
+        // Punkte berechnen
+        const learningAppPoints = newCompleted.includes('learningapp')
+          ? Math.round((newLearningAppScore / 100) * maxPointsLearningApp)
+          : 0
+        const h5pPoints = newCompleted.includes('h5p')
+          ? Math.round((newH5pScore / 100) * maxPointsH5P)
+          : 0
+        const newTotalScore = learningAppPoints + h5pPoints
+
+        const allQuizzesDone = newCompleted.includes('learningapp') && newCompleted.includes('h5p')
 
         modules.spielerisch = {
-          completed: true,
-          score,
-          appScore: appScoreValue,
-          progress: 100,
+          completed: allQuizzesDone,
+          score: newTotalScore,
+          learningAppScore: newLearningAppScore,
+          h5pScore: newH5pScore,
+          progress: allQuizzesDone ? 100 : 50,
           completedSections: newCompleted,
           lastUpdated: new Date().toISOString()
         }
 
-        setTotalScore(score)
+        setTotalScore(newTotalScore)
         setCompletedSections(new Set(newCompleted))
 
         // Gesamtpunkte berechnen
@@ -126,13 +172,7 @@ export default function SpielerischPage() {
     } catch (e) { console.error(e) }
   }
 
-  const resetApp = async () => {
-    setAppCompleted(false)
-    setAppScore(null)
-    setTotalScore(0)
-    setCompletedSections(new Set())
-
-    // Fortschritt zurücksetzen in Firebase
+  const resetQuiz = async (quizType: 'learningapp' | 'h5p' | 'all') => {
     const user = auth.currentUser
     if (!user) return
 
@@ -143,15 +183,47 @@ export default function SpielerischPage() {
       if (userDoc.exists()) {
         const userData = userDoc.data()
         const modules = userData.modules || {}
+        const existingData = modules.spielerisch || {}
+
+        let newCompleted = existingData.completedSections || []
+        let newLearningAppScore = existingData.learningAppScore || 0
+        let newH5pScore = existingData.h5pScore || 0
+
+        if (quizType === 'learningapp' || quizType === 'all') {
+          newCompleted = newCompleted.filter((s: string) => s !== 'learningapp')
+          newLearningAppScore = 0
+          setLearningAppCompleted(false)
+          setLearningAppScore(null)
+        }
+
+        if (quizType === 'h5p' || quizType === 'all') {
+          newCompleted = newCompleted.filter((s: string) => s !== 'h5p')
+          newH5pScore = 0
+          setH5pCompleted(false)
+          setH5pScore(null)
+        }
+
+        // Punkte neu berechnen
+        const learningAppPoints = newCompleted.includes('learningapp')
+          ? Math.round((newLearningAppScore / 100) * maxPointsLearningApp)
+          : 0
+        const h5pPoints = newCompleted.includes('h5p')
+          ? Math.round((newH5pScore / 100) * maxPointsH5P)
+          : 0
+        const newTotalScore = learningAppPoints + h5pPoints
 
         modules.spielerisch = {
-          completed: false,
-          score: 0,
-          appScore: null,
-          progress: 0,
-          completedSections: [],
+          completed: newCompleted.includes('learningapp') && newCompleted.includes('h5p'),
+          score: newTotalScore,
+          learningAppScore: newLearningAppScore,
+          h5pScore: newH5pScore,
+          progress: newCompleted.length === 2 ? 100 : (newCompleted.length === 1 ? 50 : 0),
+          completedSections: newCompleted,
           lastUpdated: new Date().toISOString()
         }
+
+        setTotalScore(newTotalScore)
+        setCompletedSections(new Set(newCompleted))
 
         // Gesamtpunkte neu berechnen
         let totalPoints = 0
@@ -177,6 +249,8 @@ export default function SpielerischPage() {
     )
   }
 
+  const allCompleted = learningAppCompleted && h5pCompleted
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-orange-50">
       {/* Celebration Overlay */}
@@ -185,12 +259,10 @@ export default function SpielerischPage() {
           <div className="bg-white rounded-2xl p-8 text-center shadow-2xl animate-bounce-in max-w-md mx-4">
             <div className="text-6xl mb-4">🎉</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Geschafft!</h2>
-            <p className="text-gray-600 mb-4">
-              Sie haben das Quiz mit <span className="font-bold text-pink-600">{appScore}%</span> abgeschlossen!
-            </p>
+            <p className="text-gray-600 mb-4">{celebrationText}</p>
             <div className="flex items-center justify-center gap-2 text-lg font-semibold text-green-600">
               <Trophy className="h-6 w-6" />
-              <span>+{Math.round((appScore || 0) / 100 * maxPoints)} Punkte</span>
+              <span>Punkte gesammelt!</span>
             </div>
           </div>
         </div>
@@ -208,16 +280,16 @@ export default function SpielerischPage() {
                 <Award className="h-4 w-4" />
                 <span className="font-semibold">{totalScore} / {maxPoints}</span>
               </div>
-              {appCompleted && (
+              {allCompleted && (
                 <div className="flex items-center gap-1 text-sm bg-green-400/30 px-2 py-1 rounded-full">
                   <CheckCircle2 className="h-3 w-3" />
-                  <span className="text-xs">Abgeschlossen</span>
+                  <span className="text-xs">Komplett</span>
                 </div>
               )}
             </div>
           </div>
           <h1 className="text-xl font-bold mt-2">5. Spielerisch lernen</h1>
-          <p className="text-pink-200 text-sm">Steuern - Grundwissen im Kontext der Individualbesteuerung</p>
+          <p className="text-pink-200 text-sm">Interaktive Quizze zur Individualbesteuerung</p>
         </div>
       </header>
 
@@ -229,43 +301,57 @@ export default function SpielerischPage() {
               <Gamepad2 className="h-6 w-6 text-pink-600" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900 mb-2">Interaktives Quiz</h3>
+              <h3 className="font-bold text-gray-900 mb-2">Zwei interaktive Quizze</h3>
               <p className="text-gray-700">
-                Testen Sie Ihr Wissen über Steuern und die Individualbesteuerung mit diesem
-                interaktiven Quiz. Lösen Sie alle Aufgaben, um <strong>bis zu {maxPoints} Punkte</strong> zu sammeln!
+                Testen Sie Ihr Wissen mit zwei verschiedenen Quiz-Formaten.
+                Sammeln Sie bis zu <strong>{maxPoints} Punkte</strong>!
               </p>
+              <div className="flex gap-4 mt-3 text-sm">
+                <span className="flex items-center gap-1 text-pink-600">
+                  <Gamepad2 className="h-4 w-4" /> Quiz 1: {maxPointsLearningApp}P
+                </span>
+                <span className="flex items-center gap-1 text-purple-600">
+                  <HelpCircle className="h-4 w-4" /> Quiz 2: {maxPointsH5P}P
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Status-Anzeige wenn abgeschlossen */}
-        {appCompleted && (
-          <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-6 text-white">
+        {/* Fortschrittsanzeige */}
+        {(learningAppCompleted || h5pCompleted) && (
+          <div className={`rounded-xl p-6 text-white ${allCompleted ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gradient-to-r from-amber-500 to-orange-500'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="bg-white/20 p-3 rounded-xl">
                   <Trophy className="h-8 w-8" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold">Quiz abgeschlossen!</h3>
-                  <p className="text-green-100">
-                    Ergebnis: <span className="font-bold">{appScore}%</span> •
-                    Punkte: <span className="font-bold">{totalScore}/{maxPoints}</span>
+                  <h3 className="text-xl font-bold">
+                    {allCompleted ? 'Alle Quizze abgeschlossen!' : 'Fortschritt'}
+                  </h3>
+                  <p className="text-white/80">
+                    {learningAppCompleted && <span>Quiz 1: {learningAppScore}% ✓</span>}
+                    {learningAppCompleted && h5pCompleted && <span> • </span>}
+                    {h5pCompleted && <span>Quiz 2: {h5pScore}% ✓</span>}
+                    {!learningAppCompleted && <span>Quiz 1: ausstehend</span>}
+                    {!h5pCompleted && learningAppCompleted && <span> • Quiz 2: ausstehend</span>}
                   </p>
+                  <p className="font-bold mt-1">Total: {totalScore}/{maxPoints} Punkte</p>
                 </div>
               </div>
               <button
-                onClick={resetApp}
+                onClick={() => resetQuiz('all')}
                 className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
               >
                 <RefreshCw className="h-4 w-4" />
-                <span>Nochmal</span>
+                <span>Zurücksetzen</span>
               </button>
             </div>
           </div>
         )}
 
-        {/* LearningApp Embed */}
+        {/* Quiz 1: LearningApp */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="bg-pink-50 p-4 border-b">
             <div className="flex items-center justify-between">
@@ -274,38 +360,95 @@ export default function SpielerischPage() {
                   <Gamepad2 className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900">Steuern - Grundwissen</h3>
-                  <p className="text-sm text-gray-500">Interaktives LearningApps-Quiz</p>
+                  <h3 className="font-bold text-gray-900">Quiz 1: Steuern - Grundwissen</h3>
+                  <p className="text-sm text-gray-500">LearningApps • max. {maxPointsLearningApp} Punkte</p>
                 </div>
               </div>
-              {appCompleted && (
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1">
-                  <CheckCircle2 className="h-3 w-3" />
-                  +{totalScore}P
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {learningAppCompleted && (
+                  <>
+                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3" />
+                      {Math.round((learningAppScore || 0) / 100 * maxPointsLearningApp)}P
+                    </span>
+                    <button
+                      onClick={() => resetQuiz('learningapp')}
+                      className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* iframe Container */}
           <div className="relative" style={{ paddingBottom: '75%', height: 0 }}>
             <iframe
               src={LEARNING_APP_EMBED_URL}
               className="absolute top-0 left-0 w-full h-full border-0"
               allow="fullscreen"
-              title="Steuern - Grundwissen (Kontext Individualbesteuerung)"
+              title="Steuern - Grundwissen (LearningApp)"
             />
           </div>
 
-          <div className="p-4 bg-gray-50 border-t">
-            <p className="text-sm text-gray-500 text-center">
-              💡 Lösen Sie alle Aufgaben im Quiz. Ihre Ergebnisse werden automatisch erfasst.
+          <div className="p-3 bg-gray-50 border-t">
+            <p className="text-xs text-gray-500 text-center">
+              💡 Lösen Sie alle Aufgaben. Ergebnisse werden automatisch erfasst.
+            </p>
+          </div>
+        </div>
+
+        {/* Quiz 2: H5P Multiple Choice */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-purple-50 p-4 border-b">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-purple-600 p-2 rounded-lg">
+                  <HelpCircle className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Quiz 2: Eigenmietwert</h3>
+                  <p className="text-sm text-gray-500">Multiple Choice • max. {maxPointsH5P} Punkte</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {h5pCompleted && (
+                  <>
+                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3" />
+                      {Math.round((h5pScore || 0) / 100 * maxPointsH5P)}P
+                    </span>
+                    <button
+                      onClick={() => resetQuiz('h5p')}
+                      className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="relative" style={{ paddingBottom: '400px', height: 0 }}>
+            <iframe
+              src={H5P_QUIZ_URL}
+              className="absolute top-0 left-0 w-full h-full border-0"
+              allow="fullscreen"
+              title="Eigenmietwert Multiple Choice (H5P)"
+            />
+          </div>
+
+          <div className="p-3 bg-gray-50 border-t">
+            <p className="text-xs text-gray-500 text-center">
+              💡 Wählen Sie die korrekten Antworten aus. Ergebnisse werden automatisch erfasst.
             </p>
           </div>
         </div>
 
         {/* Abschluss-Button */}
-        {appCompleted && (
+        {allCompleted && (
           <div className="bg-gradient-to-r from-pink-500 to-rose-600 rounded-xl p-6 text-white text-center">
             <div className="text-4xl mb-3">🎉</div>
             <h3 className="text-xl font-bold mb-2">Modul abgeschlossen!</h3>

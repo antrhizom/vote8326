@@ -3,9 +3,9 @@ import { useRouter } from 'next/router'
 import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
-import { ArrowLeft, Award, Gamepad2, CheckCircle2, Trophy, RefreshCw, BookOpen } from 'lucide-react'
+import { ArrowLeft, Award, Gamepad2, CheckCircle2, Trophy, RefreshCw, ClipboardCheck } from 'lucide-react'
 import MillionenSpiel from '@/components/MillionenSpiel'
-import QuizSlides from '@/components/QuizSlides'
+import Lernkontrolle from '@/components/Lernkontrolle'
 
 export default function SpielerischPage() {
   const router = useRouter()
@@ -18,9 +18,9 @@ export default function SpielerischPage() {
   const [millionenspielScore, setMillionenspielScore] = useState<number | null>(null)
   const [millionenspielCompleted, setMillionenspielCompleted] = useState(false)
 
-  // QuizSlides State
-  const [quizSlidesScore, setQuizSlidesScore] = useState<number | null>(null)
-  const [quizSlidesCompleted, setQuizSlidesCompleted] = useState(false)
+  // Lernkontrolle State
+  const [lernkontrolleScore, setLernkontrolleScore] = useState<number | null>(null)
+  const [lernkontrolleCompleted, setLernkontrolleCompleted] = useState(false)
 
   // UI State
   const [showCelebration, setShowCelebration] = useState(false)
@@ -30,8 +30,8 @@ export default function SpielerischPage() {
   const userIdRef = useRef<string | null>(null)
 
   const maxPointsMillionenspiel = 50
-  const maxPointsQuizSlides = 50
-  const maxPoints = maxPointsMillionenspiel + maxPointsQuizSlides
+  const maxPointsLernkontrolle = 50
+  const maxPoints = maxPointsMillionenspiel + maxPointsLernkontrolle
 
   // Auth State Listener - wartet auf Authentifizierung
   useEffect(() => {
@@ -57,8 +57,8 @@ export default function SpielerischPage() {
               setMillionenspielScore(data.millionenspielScore || 100)
             }
             if (data.completedSections?.includes('quizslides')) {
-              setQuizSlidesCompleted(true)
-              setQuizSlidesScore(data.quizSlidesScore || 100)
+              setLernkontrolleCompleted(true)
+              setLernkontrolleScore(data.lernkontrolleScore || 100)
             }
           }
         }
@@ -83,14 +83,14 @@ export default function SpielerischPage() {
     }
   }
 
-  const handleQuizSlidesComplete = async (score: number) => {
-    if (!quizSlidesCompleted || score !== quizSlidesScore) {
-      setQuizSlidesScore(score)
-      setQuizSlidesCompleted(true)
-      setCelebrationText(`Lernkarten mit ${score}% abgeschlossen!`)
+  const handleLernkontrolleComplete = async (score: number) => {
+    if (!lernkontrolleCompleted || score !== lernkontrolleScore) {
+      setLernkontrolleScore(score)
+      setLernkontrolleCompleted(true)
+      setCelebrationText(`Lernkontrolle mit ${score}% abgeschlossen!`)
       setShowCelebration(true)
 
-      const earnedPoints = Math.round((score / 100) * maxPointsQuizSlides)
+      const earnedPoints = Math.round((score / 100) * maxPointsLernkontrolle)
       await saveProgress('quizslides', earnedPoints, score)
 
       setTimeout(() => setShowCelebration(false), 3000)
@@ -121,16 +121,16 @@ export default function SpielerischPage() {
 
         // Scores berechnen
         let newMillionenspielScore = quizType === 'millionenspiel' ? quizScore : (existingData.millionenspielScore || 0)
-        let newQuizSlidesScore = quizType === 'quizslides' ? quizScore : (existingData.quizSlidesScore || 0)
+        let newLernkontrolleScore = quizType === 'quizslides' ? quizScore : (existingData.lernkontrolleScore || 0)
 
         // Punkte berechnen
         const millionenspielPoints = newCompleted.includes('millionenspiel')
           ? Math.round((newMillionenspielScore / 100) * maxPointsMillionenspiel)
           : 0
-        const quizSlidesPoints = newCompleted.includes('quizslides')
-          ? Math.round((newQuizSlidesScore / 100) * maxPointsQuizSlides)
+        const lernkontrollePoints = newCompleted.includes('quizslides')
+          ? Math.round((newLernkontrolleScore / 100) * maxPointsLernkontrolle)
           : 0
-        const newTotalScore = millionenspielPoints + quizSlidesPoints
+        const newTotalScore = millionenspielPoints + lernkontrollePoints
 
         const allQuizzesDone = newCompleted.includes('millionenspiel') && newCompleted.includes('quizslides')
 
@@ -138,7 +138,7 @@ export default function SpielerischPage() {
           completed: allQuizzesDone,
           score: newTotalScore,
           millionenspielScore: newMillionenspielScore,
-          quizSlidesScore: newQuizSlidesScore,
+          lernkontrolleScore: newLernkontrolleScore,
           progress: allQuizzesDone ? 100 : 50,
           completedSections: newCompleted,
           lastUpdated: new Date().toISOString()
@@ -181,7 +181,7 @@ export default function SpielerischPage() {
 
         let newCompleted = existingData.completedSections || []
         let newMillionenspielScore = existingData.millionenspielScore || 0
-        let newQuizSlidesScore = existingData.quizSlidesScore || 0
+        let newLernkontrolleScore = existingData.lernkontrolleScore || 0
 
         if (quizType === 'millionenspiel' || quizType === 'all') {
           newCompleted = newCompleted.filter((s: string) => s !== 'millionenspiel')
@@ -192,25 +192,25 @@ export default function SpielerischPage() {
 
         if (quizType === 'quizslides' || quizType === 'all') {
           newCompleted = newCompleted.filter((s: string) => s !== 'quizslides')
-          newQuizSlidesScore = 0
-          setQuizSlidesCompleted(false)
-          setQuizSlidesScore(null)
+          newLernkontrolleScore = 0
+          setLernkontrolleCompleted(false)
+          setLernkontrolleScore(null)
         }
 
         // Punkte neu berechnen
         const millionenspielPoints = newCompleted.includes('millionenspiel')
           ? Math.round((newMillionenspielScore / 100) * maxPointsMillionenspiel)
           : 0
-        const quizSlidesPoints = newCompleted.includes('quizslides')
-          ? Math.round((newQuizSlidesScore / 100) * maxPointsQuizSlides)
+        const lernkontrollePoints = newCompleted.includes('quizslides')
+          ? Math.round((newLernkontrolleScore / 100) * maxPointsLernkontrolle)
           : 0
-        const newTotalScore = millionenspielPoints + quizSlidesPoints
+        const newTotalScore = millionenspielPoints + lernkontrollePoints
 
         modules.spielerisch = {
           completed: newCompleted.includes('millionenspiel') && newCompleted.includes('quizslides'),
           score: newTotalScore,
           millionenspielScore: newMillionenspielScore,
-          quizSlidesScore: newQuizSlidesScore,
+          lernkontrolleScore: newLernkontrolleScore,
           progress: newCompleted.length === 2 ? 100 : (newCompleted.length === 1 ? 50 : 0),
           completedSections: newCompleted,
           lastUpdated: new Date().toISOString()
@@ -243,7 +243,7 @@ export default function SpielerischPage() {
     )
   }
 
-  const allCompleted = millionenspielCompleted && quizSlidesCompleted
+  const allCompleted = millionenspielCompleted && lernkontrolleCompleted
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-orange-50">
@@ -305,7 +305,7 @@ export default function SpielerischPage() {
                   <Gamepad2 className="h-4 w-4" /> Millionenspiel: {maxPointsMillionenspiel}P
                 </span>
                 <span className="flex items-center gap-1 text-teal-600">
-                  <BookOpen className="h-4 w-4" /> Lernkarten: {maxPointsQuizSlides}P
+                  <ClipboardCheck className="h-4 w-4" /> Lernkontrolle: {maxPointsLernkontrolle}P
                 </span>
               </div>
             </div>
@@ -313,7 +313,7 @@ export default function SpielerischPage() {
         </div>
 
         {/* Fortschrittsanzeige */}
-        {(millionenspielCompleted || quizSlidesCompleted) && (
+        {(millionenspielCompleted || lernkontrolleCompleted) && (
           <div className={`rounded-xl p-6 text-white ${allCompleted ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gradient-to-r from-amber-500 to-orange-500'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -326,10 +326,10 @@ export default function SpielerischPage() {
                   </h3>
                   <p className="text-white/80">
                     {millionenspielCompleted && <span>Millionenspiel: {millionenspielScore}% ✓</span>}
-                    {millionenspielCompleted && quizSlidesCompleted && <span> • </span>}
-                    {quizSlidesCompleted && <span>Lernkarten: {quizSlidesScore}% ✓</span>}
+                    {millionenspielCompleted && lernkontrolleCompleted && <span> • </span>}
+                    {lernkontrolleCompleted && <span>Lernkontrolle: {lernkontrolleScore}% ✓</span>}
                     {!millionenspielCompleted && <span>Millionenspiel: ausstehend</span>}
-                    {!quizSlidesCompleted && millionenspielCompleted && <span> • Lernkarten: ausstehend</span>}
+                    {!lernkontrolleCompleted && millionenspielCompleted && <span> • Lernkontrolle: ausstehend</span>}
                   </p>
                   <p className="font-bold mt-1">Total: {totalScore}/{maxPoints} Punkte</p>
                 </div>
@@ -386,25 +386,25 @@ export default function SpielerischPage() {
           </div>
         </div>
 
-        {/* Quiz 2: Lernkarten */}
+        {/* Quiz 2: Lernkontrolle */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="bg-teal-50 p-4 border-b">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="bg-teal-600 p-2 rounded-lg">
-                  <BookOpen className="h-5 w-5 text-white" />
+                  <ClipboardCheck className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900">Quiz 2: Lernkarten</h3>
-                  <p className="text-sm text-gray-500">15 Fragen mit ausführlichen Erklärungen • max. {maxPointsQuizSlides} Punkte</p>
+                  <h3 className="font-bold text-gray-900">Quiz 2: Lernkontrolle</h3>
+                  <p className="text-sm text-gray-500">15 Fragen mit ausführlichen Erklärungen • max. {maxPointsLernkontrolle} Punkte</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {quizSlidesCompleted && (
+                {lernkontrolleCompleted && (
                   <>
                     <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1">
                       <CheckCircle2 className="h-3 w-3" />
-                      {quizSlidesScore}% ({Math.round((quizSlidesScore || 0) / 100 * maxPointsQuizSlides)}P)
+                      {lernkontrolleScore}% ({Math.round((lernkontrolleScore || 0) / 100 * maxPointsLernkontrolle)}P)
                     </span>
                     <button
                       onClick={() => resetQuiz('quizslides')}
@@ -420,8 +420,8 @@ export default function SpielerischPage() {
           </div>
 
           <div className="p-4">
-            <QuizSlides
-              onComplete={handleQuizSlidesComplete}
+            <Lernkontrolle
+              onComplete={handleLernkontrolleComplete}
               onReset={() => resetQuiz('quizslides')}
             />
           </div>

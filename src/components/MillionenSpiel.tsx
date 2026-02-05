@@ -15,176 +15,111 @@ interface MillionenSpielProps {
   onReset?: () => void
 }
 
+// Fragen basierend auf LearningApps Steuern-Quiz (andere als Lernkontrolle)
 const questions: Question[] = [
   // Stufe 1 (einfach)
   {
-    question: "Was bezeichnet der Begriff Heiratsstrafe?",
+    question: "Was ist die Steuerprogression?",
     answers: [
-      { text: "Die steuerliche Benachteiligung bestimmter verheirateter Paare gegenüber unverheirateten Paaren", correct: true, feedback: "Das ist richtig! Bei vielen Ehepaaren werden die Einkommen zusammengerechnet. Dadurch können sie in eine höhere Steuerprogression geraten und zahlen mehr als vergleichbare unverheiratete Paare mit getrennten Steuererklärungen." },
-      { text: "Eine Strafabgabe bei Scheidungen", correct: false, feedback: "Das ist falsch! Korrekt ist, dass die Heiratsstrafe eine steuerliche Benachteiligung verheirateter Paare ist. Sie entsteht während der Ehe durch die gemeinsame Veranlagung und nicht erst bei einer Scheidung." },
-      { text: "Eine freiwillige Zusatzsteuer", correct: false, feedback: "Das ist falsch! Korrekt ist, dass die Heiratsstrafe eine systembedingte Mehrbelastung für gewisse Ehepaare ist. Sie ist keine freiwillige Zahlung, sondern ergibt sich aus Tarifen und Progression." },
-      { text: "Eine kirchliche Abgabe", correct: false, feedback: "Das ist falsch! Korrekt ist, dass die Heiratsstrafe im staatlichen Steuersystem entsteht. Sie betrifft die direkte Bundessteuer und nicht Kirchensteuern." }
+      { text: "Je höher das Einkommen, desto höher der Steuersatz", correct: true, feedback: "Richtig! Bei der Steuerprogression steigt der Steuersatz mit zunehmendem Einkommen. Wer mehr verdient, zahlt prozentual mehr Steuern." },
+      { text: "Alle zahlen den gleichen Steuersatz", correct: false, feedback: "Das wäre ein Flat-Tax-System. Bei der Progression steigt der Steuersatz mit dem Einkommen." },
+      { text: "Je höher das Einkommen, desto tiefer der Steuersatz", correct: false, feedback: "Das wäre eine degressive Besteuerung. Bei der Progression ist es umgekehrt: höheres Einkommen = höherer Steuersatz." },
+      { text: "Steuern werden nur auf Vermögen erhoben", correct: false, feedback: "Die Progression bezieht sich auf die Einkommenssteuer, nicht nur auf Vermögenssteuern." }
     ]
   },
   // Stufe 2
   {
-    question: "Wie werden Ehepaare heute bei der direkten Bundessteuer besteuert?",
+    question: "Was ist eine direkte Steuer?",
     answers: [
-      { text: "Mit einer gemeinsamen Steuererklärung, in der Einkommen und Vermögen zusammengezählt werden", correct: true, feedback: "Das ist richtig! Ehepaare reichen heute typischerweise eine gemeinsame Steuererklärung ein. Dadurch werden die wirtschaftlichen Verhältnisse als Einheit erfasst, was bei zwei Einkommen zu einer höheren Progression führen kann." },
-      { text: "Mit zwei getrennten Steuererklärungen", correct: false, feedback: "Das ist falsch! Korrekt ist, dass Ehepaare heute gemeinsam veranlagt werden. Zwei getrennte Steuererklärungen wären ein Kernelement der Individualbesteuerung und sind gerade das, was sich ändern würde." },
-      { text: "Nur das höhere Einkommen wird besteuert", correct: false, feedback: "Das ist falsch! Korrekt ist, dass Einkommen und Vermögen beider Ehepartner zusammengezählt werden. Es zählt nicht nur das höhere Einkommen, sondern die Summe der beiden Einkommen." },
-      { text: "Pauschal unabhängig vom Einkommen", correct: false, feedback: "Das ist falsch! Korrekt ist, dass Ehepaare gemeinsam veranlagt werden und die Steuer vom Einkommen abhängt. Das System ist einkommensabhängig und progressiv." }
+      { text: "Eine Steuer, die direkt vom Steuerpflichtigen erhoben wird (z.B. Einkommenssteuer)", correct: true, feedback: "Richtig! Direkte Steuern werden direkt beim Steuerpflichtigen erhoben, wie die Einkommens- oder Vermögenssteuer." },
+      { text: "Eine Steuer auf Konsumgüter", correct: false, feedback: "Das wäre eine indirekte Steuer wie die Mehrwertsteuer. Direkte Steuern werden direkt beim Steuerpflichtigen erhoben." },
+      { text: "Eine freiwillige Abgabe", correct: false, feedback: "Steuern sind grundsätzlich nicht freiwillig. Direkte Steuern werden direkt vom Steuerpflichtigen erhoben." },
+      { text: "Eine Steuer nur für Unternehmen", correct: false, feedback: "Auch natürliche Personen zahlen direkte Steuern wie die Einkommenssteuer." }
     ]
   },
   // Stufe 3
   {
-    question: "Wer hat das Referendum gegen die Individualbesteuerung ergriffen?",
+    question: "Was versteht man unter dem Heiratsbonus?",
     answers: [
-      { text: "Zehn Kantone und ein überparteiliches Komitee", correct: true, feedback: "Das ist richtig! Mindestens acht Kantone können ein Kantonsreferendum auslösen. Da dieses Quorum erreicht wurde, kommt die Vorlage vors Volk." },
-      { text: "Der Bundesrat", correct: false, feedback: "Das ist falsch! Korrekt ist, dass zehn Kantone und ein überparteiliches Komitee das Referendum ergriffen haben. Der Bundesrat steht hingegen hinter der Vorlage und empfiehlt sie zur Annahme." },
-      { text: "Das Bundesgericht", correct: false, feedback: "Das ist falsch! Korrekt ist, dass zehn Kantone und ein überparteiliches Komitee das Referendum ergriffen haben. Das Bundesgericht ist keine politische Akteurin im Referendumsprozess, sondern beurteilt Rechtsfragen." },
-      { text: "Ausschliesslich eine Partei", correct: false, feedback: "Das ist falsch! Korrekt ist, dass zehn Kantone und ein überparteiliches Komitee das Referendum ergriffen haben. Es handelt sich nicht um einen Schritt nur einer einzelnen Partei." }
+      { text: "Die steuerliche Begünstigung gewisser Ehepaare gegenüber Konkubinatspaaren", correct: true, feedback: "Richtig! Der Heiratsbonus ist das Gegenteil der Heiratsstrafe - bestimmte Ehepaare (oft Einverdiener) zahlen weniger Steuern als vergleichbare unverheiratete Paare." },
+      { text: "Ein Geschenk zur Hochzeit vom Staat", correct: false, feedback: "Der Heiratsbonus ist kein Geschenk, sondern eine steuerliche Begünstigung durch das Veranlagungssystem." },
+      { text: "Eine Zusatzsteuer bei Heirat", correct: false, feedback: "Das wäre die Heiratsstrafe. Der Heiratsbonus ist das Gegenteil - eine Begünstigung." },
+      { text: "Ein Rabatt auf die Hochzeitsfeier", correct: false, feedback: "Der Heiratsbonus bezieht sich auf Steuervorteile, nicht auf Hochzeitskosten." }
     ]
   },
   // Stufe 4
   {
-    question: "Was soll mit der Individualbesteuerung hauptsächlich erreicht werden?",
+    question: "Was ist das Ziel von Lenkungsabgaben?",
     answers: [
-      { text: "Die steuerliche Gleichbehandlung unabhängig vom Zivilstand und damit die Abschaffung der Heiratsstrafe", correct: true, feedback: "Das ist richtig! Die Vorlage will verhindern, dass Paare wegen Heirat steuerlich besser oder schlechter gestellt werden. Entscheidend soll stärker das individuelle Einkommen sein und nicht der Zivilstand." },
-      { text: "Die Abschaffung der Ehe als Institution", correct: false, feedback: "Das ist falsch! Korrekt ist, dass die steuerliche Gleichbehandlung unabhängig vom Zivilstand erreicht werden soll. Am Zivilrecht und an der Ehe als Institution ändert die Vorlage nichts." },
-      { text: "Die Abschaffung aller Steuerabzüge", correct: false, feedback: "Das ist falsch! Korrekt ist, dass die steuerliche Gleichbehandlung unabhängig vom Zivilstand erreicht werden soll. Abzüge bleiben grundsätzlich möglich, einzelne Elemente wie der Kinderabzug werden sogar angepasst." },
-      { text: "Die Abschaffung der Steuerprogression", correct: false, feedback: "Das ist falsch! Korrekt ist, dass die steuerliche Gleichbehandlung unabhängig vom Zivilstand erreicht werden soll. Die Progression als Grundprinzip der Besteuerung bleibt bestehen." }
+      { text: "Verhalten der Bevölkerung in eine gewünschte Richtung zu lenken", correct: true, feedback: "Richtig! Lenkungsabgaben wie die CO2-Abgabe sollen umweltschädliches Verhalten verteuern und so Anreize für klimafreundlichere Alternativen schaffen." },
+      { text: "Möglichst hohe Staatseinnahmen zu generieren", correct: false, feedback: "Bei Lenkungsabgaben steht die Verhaltenssteuerung im Vordergrund, nicht die Einnahmenmaximierung. Oft werden die Einnahmen rückverteilt." },
+      { text: "Alle Bürger gleich zu belasten", correct: false, feedback: "Lenkungsabgaben belasten bewusst bestimmte Verhaltensweisen stärker, um diese zu reduzieren." },
+      { text: "Die Wirtschaft zu bremsen", correct: false, feedback: "Ziel ist die Verhaltensänderung, nicht die Wirtschaftsbremsung. Es geht um Anreize für nachhaltigeres Verhalten." }
     ]
   },
   // Stufe 5
   {
-    question: "Welche Ehepaare profitieren tendenziell eher von der Individualbesteuerung?",
+    question: "Was bedeutet horizontale Steuergerechtigkeit?",
     answers: [
-      { text: "Doppelverdiener-Ehepaare mit ähnlich hohen Einkommen", correct: true, feedback: "Das ist richtig! Wenn zwei Einkommen ähnlich hoch sind, fällt der Effekt der gemeinsamen Progression weg. Dadurch sinkt die Steuerbelastung im Vergleich zum heutigen System häufig." },
-      { text: "Einverdiener-Ehepaare", correct: false, feedback: "Das ist falsch! Korrekt ist, dass Doppelverdiener-Ehepaare mit ähnlich hohen Einkommen tendenziell profitieren. Einverdiener-Ehepaare profitieren heute oft von der gemeinsamen Veranlagung und könnten nach der Umstellung eher stärker belastet werden." },
-      { text: "Alle Familien mit Kindern", correct: false, feedback: "Das ist falsch! Korrekt ist, dass Doppelverdiener-Ehepaare mit ähnlich hohen Einkommen tendenziell profitieren. Ob Familien mit Kindern profitieren, hängt stark von Einkommen, Aufteilung und Abzügen ab." },
-      { text: "Nur unverheiratete Paare", correct: false, feedback: "Das ist falsch! Korrekt ist, dass Doppelverdiener-Ehepaare mit ähnlich hohen Einkommen tendenziell profitieren. Unverheiratete Paare werden heute bereits getrennt besteuert, für sie ist der Systemwechsel weniger grundlegend." }
+      { text: "Personen in gleicher wirtschaftlicher Lage sollen gleich besteuert werden", correct: true, feedback: "Richtig! Horizontale Gerechtigkeit bedeutet Gleichbehandlung von Personen mit gleicher wirtschaftlicher Leistungsfähigkeit - unabhängig von Zivilstand oder anderen Faktoren." },
+      { text: "Reiche sollen mehr Steuern zahlen als Arme", correct: false, feedback: "Das beschreibt die vertikale Steuergerechtigkeit. Horizontale Gerechtigkeit betrifft die Gleichbehandlung bei gleicher Leistungsfähigkeit." },
+      { text: "Alle Kantone erheben die gleichen Steuern", correct: false, feedback: "Das betrifft den Steuerwettbewerb, nicht die horizontale Gerechtigkeit innerhalb eines Steuersystems." },
+      { text: "Steuern werden nur auf waagrechten Flächen erhoben", correct: false, feedback: "Horizontal bezieht sich hier auf die Gleichbehandlung von Personen auf gleicher wirtschaftlicher Ebene." }
     ]
   },
   // Stufe 6
   {
-    question: "Warum wird der Kinderabzug erhöht?",
+    question: "Welches Argument spricht für die Individualbesteuerung aus gleichstellungspolitischer Sicht?",
     answers: [
-      { text: "Um Familien zu entlasten und mögliche Mehrbelastungen bei gewissen Konstellationen abzufedern", correct: true, feedback: "Das ist richtig! Wenn bestimmte Haushalte durch die Umstellung mehr zahlen würden, soll der höhere Kinderabzug die Belastung reduzieren. Dadurch wird versucht, die Vorlage ausgewogener zu gestalten." },
-      { text: "Um die Steuereinnahmen zu erhöhen", correct: false, feedback: "Das ist falsch! Korrekt ist, dass der Kinderabzug erhöht wird, um Familien zu entlasten. Ein höherer Abzug senkt die Steuerlast und führt nicht zu höheren Einnahmen." },
-      { text: "Um Kantone zu bestrafen", correct: false, feedback: "Das ist falsch! Korrekt ist, dass der Kinderabzug erhöht wird, um Familien zu entlasten. Es geht um soziale Ausgleichsmassnahmen, nicht um Sanktionen gegenüber Kantonen." },
-      { text: "Um Heiraten attraktiver zu machen", correct: false, feedback: "Das ist falsch! Korrekt ist, dass der Kinderabzug erhöht wird, um Familien zu entlasten. Die Reform will gerade zivilstandsneutral sein und nicht Heirat steuerlich besonders fördern." }
+      { text: "Sie setzt Anreize für die Erwerbstätigkeit beider Partner", correct: true, feedback: "Richtig! Da der Zweitverdienst nicht mehr zum Einkommen des Partners addiert wird, lohnt sich Erwerbsarbeit für beide Partner stärker - das fördert die wirtschaftliche Unabhängigkeit." },
+      { text: "Sie bevorzugt traditionelle Familienmodelle", correct: false, feedback: "Im Gegenteil: Die Individualbesteuerung fördert eher die Erwerbstätigkeit beider Partner und ist damit zivilstandsneutral." },
+      { text: "Sie senkt die Steuern für alle", correct: false, feedback: "Die Individualbesteuerung verteilt die Steuerlast um. Manche zahlen mehr, manche weniger." },
+      { text: "Sie macht Heiraten attraktiver", correct: false, feedback: "Ziel ist die Zivilstandsneutralität - weder Heirat noch Konkubinat soll steuerlich bevorzugt werden." }
     ]
   },
   // Stufe 7
   {
-    question: "Welches zentrale Argument bringen Gegner der Individualbesteuerung vor?",
+    question: "Was ist ein Kantonsreferendum?",
     answers: [
-      { text: "Der administrative Aufwand für Bevölkerung und Steuerbehörden steige stark an", correct: true, feedback: "Das ist richtig! Wenn auch Ehepaare zwei Steuererklärungen einreichen, müssen deutlich mehr Dossiers bearbeitet werden. Gegner erwarten dadurch höhere Verwaltungskosten und mehr Bürokratie." },
-      { text: "Die Ehe werde verboten", correct: false, feedback: "Das ist falsch! Korrekt ist, dass Gegner vor allem den stark steigenden administrativen Aufwand kritisieren. Die Ehe bleibt rechtlich unangetastet, es geht um die Art der Besteuerung." },
-      { text: "Steuern würden abgeschafft", correct: false, feedback: "Das ist falsch! Korrekt ist, dass Gegner vor allem den stark steigenden administrativen Aufwand kritisieren. Steuern bleiben bestehen, nur die Veranlagungslogik ändert." },
-      { text: "Das Referendum sei ungültig", correct: false, feedback: "Das ist falsch! Korrekt ist, dass Gegner vor allem den stark steigenden administrativen Aufwand kritisieren. Das Referendum ist formell zustande gekommen, sonst gäbe es keine Abstimmung." }
+      { text: "Mindestens 8 Kantone können eine Volksabstimmung über ein Bundesgesetz verlangen", correct: true, feedback: "Richtig! Das Kantonsreferendum ermöglicht es 8 oder mehr Kantonen, eine Volksabstimmung über ein vom Parlament beschlossenes Gesetz zu erzwingen. Dies geschah bei der Individualbesteuerung." },
+      { text: "Eine Abstimmung nur innerhalb eines Kantons", correct: false, feedback: "Das wäre ein kantonales Referendum. Das Kantonsreferendum betrifft Bundesgesetze und erfordert 8 Kantone." },
+      { text: "Der Bundesrat kann Kantone zur Abstimmung zwingen", correct: false, feedback: "Das Kantonsreferendum geht von den Kantonen aus, nicht vom Bundesrat." },
+      { text: "Alle Kantone müssen zustimmen", correct: false, feedback: "Es braucht nur 8 von 26 Kantonen für ein Kantonsreferendum, nicht alle." }
     ]
   },
   // Stufe 8
   {
-    question: "Warum erwarten Befürworter mehr Erwerbsanreize durch Individualbesteuerung?",
+    question: "Was bedeutet vertikale Steuergerechtigkeit?",
     answers: [
-      { text: "Weil der Zweitverdienst weniger stark durch die Progression des gemeinsamen Einkommens belastet wird", correct: true, feedback: "Das ist richtig! Wenn Einkommen getrennt besteuert werden, fällt ein Teil des Progressionseffekts weg. Dadurch lohnt sich eine Pensumerhöhung für den tiefer verdienenden Partner tendenziell stärker." },
-      { text: "Weil weniger gearbeitet werden muss", correct: false, feedback: "Das ist falsch! Korrekt ist, dass der Zweitverdienst weniger stark belastet wird und dadurch Mehrarbeit attraktiver wird. Es geht um Anreize, nicht darum, dass weniger gearbeitet werden soll." },
-      { text: "Weil Unternehmen weniger Steuern zahlen", correct: false, feedback: "Das ist falsch! Korrekt ist, dass der Zweitverdienst weniger stark belastet wird. Die Vorlage betrifft natürliche Personen, nicht die Besteuerung von Unternehmen." },
-      { text: "Weil alle gleich viel verdienen", correct: false, feedback: "Das ist falsch! Korrekt ist, dass der Zweitverdienst weniger stark belastet wird. Einkommensunterschiede bleiben bestehen, geändert wird die steuerliche Behandlung." }
+      { text: "Personen mit höherer wirtschaftlicher Leistungsfähigkeit sollen mehr Steuern zahlen", correct: true, feedback: "Richtig! Vertikale Gerechtigkeit bedeutet, dass die Steuerlast entsprechend der wirtschaftlichen Leistungsfähigkeit verteilt wird - wer mehr hat, trägt mehr bei." },
+      { text: "Alle zahlen den gleichen Betrag", correct: false, feedback: "Das wäre eine Kopfsteuer. Vertikale Gerechtigkeit bedeutet höhere Belastung bei höherer Leistungsfähigkeit." },
+      { text: "Steuern werden nur von oben nach unten verteilt", correct: false, feedback: "Vertikal bezieht sich hier auf die unterschiedliche Belastung je nach wirtschaftlicher Stellung." },
+      { text: "Nur Hochhäuser werden besteuert", correct: false, feedback: "Vertikal bezieht sich auf die Einkommens-/Vermögenshierarchie, nicht auf Gebäudehöhe." }
     ]
   },
-  // Stufe 9
+  // Stufe 9 (schwierigste)
   {
-    question: "Welche Ebene ist direkt Gegenstand der Abstimmung?",
+    question: "Warum ist die Abstimmung von 2016 zur Heiratsstrafe historisch bedeutsam?",
     answers: [
-      { text: "Die direkte Bundessteuer und deren Regeln zur Veranlagung", correct: true, feedback: "Das ist richtig! Die Vorlage ist ein Bundesgesetz und betrifft unmittelbar die Bundessteuer. Auswirkungen auf Kantone hängen davon ab, wie sie ihre Systeme anpassen und umsetzen." },
-      { text: "Nur die Gemeindesteuern", correct: false, feedback: "Das ist falsch! Korrekt ist, dass die direkte Bundessteuer Gegenstand der Abstimmung ist. Gemeindesteuern wären höchstens indirekt betroffen, weil Kantone und Gemeinden eigene Regeln haben." },
-      { text: "Die AHV-Beiträge", correct: false, feedback: "Das ist falsch! Korrekt ist, dass die direkte Bundessteuer Gegenstand der Abstimmung ist. Sozialversicherungen wie die AHV gehören nicht zu dieser Steuervorlage." },
-      { text: "Die Kirchensteuer", correct: false, feedback: "Das ist falsch! Korrekt ist, dass die direkte Bundessteuer Gegenstand der Abstimmung ist. Kirchensteuern sind kantonal geregelt und nicht Teil des Bundesgesetzes." }
-    ]
-  },
-  // Stufe 10
-  {
-    question: "Warum wurde die Abstimmung zur Heiratsstrafe von 2016 aufgehoben?",
-    answers: [
-      { text: "Wegen schwerwiegender Fehlinformation der Stimmberechtigten und einer Annullierung durch das Bundesgericht im April 2019", correct: true, feedback: "Das ist richtig! Vor der Abstimmung vom Februar 2016 wurden falsche Angaben zur Anzahl betroffener Ehepaare verbreitet. Das Bundesgericht beurteilte dies als Verletzung der Abstimmungsfreiheit und hob die Volksabstimmung im April 2019 auf, was in der Schweiz ein historischer Schritt war." },
-      { text: "Wegen zu tiefer Stimmbeteiligung", correct: false, feedback: "Das ist falsch! Korrekt ist, dass das Bundesgericht im April 2019 die Abstimmung wegen Fehlinformation aufgehoben hat. Es ging nicht um die Beteiligung, sondern um falsche Informationen, die die freie Meinungsbildung beeinträchtigten." },
-      { text: "Wegen technischer Probleme beim Auszählen", correct: false, feedback: "Das ist falsch! Korrekt ist, dass das Bundesgericht im April 2019 die Abstimmung wegen Fehlinformation aufgehoben hat. Das Problem lag nicht beim Auszählen, sondern bei inhaltlich falschen Angaben im Abstimmungskampf." },
-      { text: "Weil Parteien verboten wurden", correct: false, feedback: "Das ist falsch! Korrekt ist, dass das Bundesgericht im April 2019 die Abstimmung wegen Fehlinformation aufgehoben hat. Parteien waren nicht verboten, entscheidend war die Verletzung der Abstimmungsfreiheit." }
-    ]
-  },
-  // Stufe 11
-  {
-    question: "Was bedeutet Zivilstandsneutralität im Steuersystem?",
-    answers: [
-      { text: "Der Zivilstand soll die Steuerbelastung nicht beeinflussen", correct: true, feedback: "Das ist richtig! Ob jemand verheiratet ist, im Konkubinat lebt oder allein ist, soll nicht darüber entscheiden, ob mehr oder weniger Steuern bezahlt werden. Massgeblich soll stärker die individuelle wirtschaftliche Leistungsfähigkeit sein." },
-      { text: "Verheiratete zahlen immer weniger", correct: false, feedback: "Das ist falsch! Korrekt ist, dass der Zivilstand die Steuerbelastung nicht beeinflussen soll. Es geht nicht um eine generelle Bevorzugung von Verheirateten, sondern um gleiche Regeln für alle." },
-      { text: "Unverheiratete zahlen mehr", correct: false, feedback: "Das ist falsch! Korrekt ist, dass der Zivilstand die Steuerbelastung nicht beeinflussen soll. Auch unverheiratete Personen sollen nicht schlechter gestellt werden." },
-      { text: "Nur Familien profitieren", correct: false, feedback: "Das ist falsch! Korrekt ist, dass der Zivilstand die Steuerbelastung nicht beeinflussen soll. Das Prinzip gilt für alle Steuerpflichtigen, nicht nur für Familien." }
-    ]
-  },
-  // Stufe 12
-  {
-    question: "Warum kritisieren Kantone die Individualbesteuerung häufig?",
-    answers: [
-      { text: "Weil sie mehr administrative Arbeit und höhere Kosten bei der Veranlagung erwarten", correct: true, feedback: "Das ist richtig! Kantone führen die Veranlagung praktisch durch und müssten Prozesse, IT und Personal anpassen. Zudem steigt die Zahl der zu bearbeitenden Steuerfälle, wenn Ehepaare getrennt veranlagt werden." },
-      { text: "Weil sie ihre Steuerhoheit verlieren", correct: false, feedback: "Das ist falsch! Korrekt ist, dass Kantone vor allem den administrativen Mehraufwand kritisieren. Ihre Steuerhoheit bleibt bestehen, sie müssen jedoch die Umsetzung organisatorisch bewältigen." },
-      { text: "Weil die Mehrwertsteuer sinkt", correct: false, feedback: "Das ist falsch! Korrekt ist, dass Kantone vor allem den administrativen Mehraufwand kritisieren. Die Mehrwertsteuer ist nicht Teil der Vorlage." },
-      { text: "Weil sie nicht mitbestimmen dürfen", correct: false, feedback: "Das ist falsch! Korrekt ist, dass Kantone vor allem den administrativen Mehraufwand kritisieren. Tatsächlich haben Kantone aktiv mitbestimmt, indem sie das Referendum ergriffen haben." }
-    ]
-  },
-  // Stufe 13
-  {
-    question: "Welche Rolle spielte das Bundesgericht in der Debatte um die Heiratsstrafe?",
-    answers: [
-      { text: "Es stellte 2019 eine Verletzung der Abstimmungsfreiheit fest und annullierte die Volksabstimmung von 2016", correct: true, feedback: "Das ist richtig! Das Gericht hielt fest, dass die Stimmberechtigten wegen falscher Informationen nicht frei entscheiden konnten. Darum wurde die Abstimmung aufgehoben, ein aussergewöhnlicher Eingriff in den demokratischen Prozess." },
-      { text: "Es empfahl ein Ja zur Individualbesteuerung", correct: false, feedback: "Das ist falsch! Korrekt ist, dass das Bundesgericht 2019 die Abstimmung von 2016 annullierte. Gerichte geben keine Abstimmungsempfehlungen, sie prüfen die Einhaltung von Grundrechten und Verfahren." },
-      { text: "Es schrieb das Steuergesetz zur Individualbesteuerung", correct: false, feedback: "Das ist falsch! Korrekt ist, dass das Bundesgericht 2019 die Abstimmung von 2016 annullierte. Gesetze werden von Parlament und Bundesrat erarbeitet, nicht vom Gericht geschrieben." },
-      { text: "Es ergriff das Referendum", correct: false, feedback: "Das ist falsch! Korrekt ist, dass das Bundesgericht 2019 die Abstimmung von 2016 annullierte. Referenden werden von Stimmberechtigten oder Kantonen ergriffen, nicht von Gerichten." }
-    ]
-  },
-  // Stufe 14
-  {
-    question: "Warum ist die Abstimmung zur Individualbesteuerung politisch besonders bedeutsam?",
-    answers: [
-      { text: "Weil sie einen grundlegenden Systemwechsel im Steuersystem darstellt", correct: true, feedback: "Das ist richtig! Erstmals würde bei der direkten Bundessteuer konsequent auf individuelle Besteuerung umgestellt. Das kann Gewinner und Verlierer je nach Einkommensaufteilung erzeugen und hat Folgen für Steuergerechtigkeit, Verwaltung und Erwerbsanreize." },
-      { text: "Weil nur Ehepaare betroffen sind", correct: false, feedback: "Das ist falsch! Korrekt ist, dass es ein grundlegender Systemwechsel ist. Betroffen sind nicht nur Ehepaare, sondern das gesamte System der Veranlagung und damit viele Steuerpflichtige, auch weil Tarife und Abzüge angepasst werden." },
-      { text: "Weil sie rein symbolisch ist", correct: false, feedback: "Das ist falsch! Korrekt ist, dass es ein grundlegender Systemwechsel ist. Die Folgen wären konkret, etwa bei der Anzahl Steuererklärungen, bei der Steuerbelastung je nach Haushaltsmodell und beim Verwaltungsaufwand." },
-      { text: "Weil sie das letzte Referendum der Schweiz ist", correct: false, feedback: "Das ist falsch! Korrekt ist, dass es ein grundlegender Systemwechsel ist. Die direkte Demokratie bleibt bestehen, Referenden und Abstimmungen werden weiterhin möglich sein." }
-    ]
-  },
-  // Stufe 15 (schwierigste)
-  {
-    question: "Was ist der Hauptunterschied zwischen dem heutigen System und der Individualbesteuerung bezüglich der Steuerprogression?",
-    answers: [
-      { text: "Im heutigen System werden Einkommen zusammengezählt, was zu höherer Progression führen kann; bei Individualbesteuerung wird jede Person separat besteuert", correct: true, feedback: "Das ist richtig! Bei der gemeinsamen Veranlagung steigt durch die Zusammenrechnung der Einkommen oft der Steuersatz. Bei der Individualbesteuerung würde jeder Partner nur auf sein eigenes Einkommen besteuert, was den Progressionseffekt bei Doppelverdienern reduziert." },
-      { text: "Die Progression wird komplett abgeschafft", correct: false, feedback: "Das ist falsch! Die Steuerprogression als Prinzip bleibt bestehen - höhere Einkommen zahlen prozentual mehr. Nur der Effekt der Zusammenrechnung von Ehegatten-Einkommen würde wegfallen." },
-      { text: "Alle zahlen denselben Steuersatz", correct: false, feedback: "Das ist falsch! Auch bei der Individualbesteuerung bleibt die Progression erhalten. Je nach Höhe des individuellen Einkommens variiert der Steuersatz weiterhin." },
-      { text: "Nur Unverheiratete profitieren von der Progression", correct: false, feedback: "Das ist falsch! Die Progression gilt für alle Steuerpflichtigen. Der Unterschied liegt darin, ob bei Ehepaaren die Einkommen zusammengezählt werden oder nicht." }
+      { text: "Es war die erste Volksabstimmung in der Schweiz, die vom Bundesgericht annulliert wurde", correct: true, feedback: "Richtig! Im April 2019 annullierte das Bundesgericht erstmals in der Geschichte eine eidgenössische Volksabstimmung wegen Verletzung der Abstimmungsfreiheit durch Fehlinformationen - ein historischer Präzedenzfall." },
+      { text: "Es war die erste Abstimmung über Steuern", correct: false, feedback: "Über Steuern wurde in der Schweiz schon oft abgestimmt. Historisch bedeutsam ist die erstmalige Annullierung einer Volksabstimmung." },
+      { text: "Es war die letzte Abstimmung vor einer Verfassungsänderung", correct: false, feedback: "Die historische Bedeutung liegt in der erstmaligen Annullierung durch das Bundesgericht, nicht in einer Verfassungsänderung." },
+      { text: "Alle Kantone stimmten gleich ab", correct: false, feedback: "Die historische Bedeutung liegt in der Annullierung wegen Fehlinformation, nicht im Abstimmungsverhalten der Kantone." }
     ]
   }
 ]
 
-// Gewinnstufen (klassisches Millionenspiel-Format)
+// Gewinnstufen für 9 Fragen
 const prizeLevels = [
-  { level: 1, prize: "CHF 50", safe: false },
-  { level: 2, prize: "CHF 100", safe: false },
-  { level: 3, prize: "CHF 200", safe: false },
-  { level: 4, prize: "CHF 300", safe: false },
-  { level: 5, prize: "CHF 500", safe: true },
-  { level: 6, prize: "CHF 1'000", safe: false },
-  { level: 7, prize: "CHF 2'000", safe: false },
-  { level: 8, prize: "CHF 4'000", safe: false },
-  { level: 9, prize: "CHF 8'000", safe: false },
-  { level: 10, prize: "CHF 16'000", safe: true },
-  { level: 11, prize: "CHF 32'000", safe: false },
-  { level: 12, prize: "CHF 64'000", safe: false },
-  { level: 13, prize: "CHF 125'000", safe: false },
-  { level: 14, prize: "CHF 500'000", safe: false },
-  { level: 15, prize: "CHF 1 Million", safe: true }
+  { level: 1, prize: "CHF 100", safe: false },
+  { level: 2, prize: "CHF 200", safe: false },
+  { level: 3, prize: "CHF 500", safe: true },
+  { level: 4, prize: "CHF 1'000", safe: false },
+  { level: 5, prize: "CHF 2'000", safe: false },
+  { level: 6, prize: "CHF 5'000", safe: true },
+  { level: 7, prize: "CHF 10'000", safe: false },
+  { level: 8, prize: "CHF 25'000", safe: false },
+  { level: 9, prize: "CHF 50'000", safe: true }
 ]
 
 export default function MillionenSpiel({ onComplete, onReset }: MillionenSpielProps) {
@@ -331,7 +266,7 @@ export default function MillionenSpiel({ onComplete, onReset }: MillionenSpielPr
         </h2>
         <p className="text-xl mb-2">
           {gameWon
-            ? "Sie haben alle 15 Fragen richtig beantwortet!"
+            ? "Sie haben alle 9 Fragen richtig beantwortet!"
             : `Sie haben bei Frage ${currentQuestion + 1} eine falsche Antwort gegeben.`
           }
         </p>

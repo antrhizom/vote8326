@@ -3,13 +3,15 @@ import { useRouter } from 'next/router'
 import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
-import { ArrowLeft, Award, Gamepad2, CheckCircle2, Trophy, RefreshCw, HelpCircle, Download } from 'lucide-react'
+import { ArrowLeft, Award, Gamepad2, CheckCircle2, Trophy, RefreshCw, HelpCircle } from 'lucide-react'
 
-// LearningApps URL - Steuern Grundwissen (Kontext Individualbesteuerung)
-const LEARNING_APP_EMBED_URL = 'https://LearningApps.org/show?id=p8z71p6tc26&fullscreen=1'
+// LearningApps URL - Steuern Lernkontrolle (Kontext Individualbesteuerung)
+// App-ID: pu2m8owy326 - Änderungen in LearningApps werden live übernommen
+const LEARNING_APP_EMBED_URL = 'https://LearningApps.org/show?id=pu2m8owy326&fullscreen=1'
 
-// H5P Quiz - Multiple Choice zum Eigenmietwert
-const H5P_QUIZ_URL = '/h5p-quiz/index.html'
+// H5P Quiz via Lumi.education - Änderungen in Lumi werden live übernommen
+// Lumi-ID: UNu7_T
+const H5P_LUMI_URL = 'https://app.lumi.education/api/v1/run/UNu7_T/embed'
 
 export default function SpielerischPage() {
   const router = useRouter()
@@ -76,8 +78,8 @@ export default function SpielerischPage() {
   // PostMessage Listener für beide Quiz-Typen
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
-      // LearningApps Nachrichten (String-Format)
-      if (typeof event.data === 'string' && !learningAppCompleted) {
+      // LearningApps Nachrichten (String-Format) - auch bei Wiederholung aktualisieren
+      if (typeof event.data === 'string') {
         const parts = event.data.split('|')
         const messageType = parts[0]
 
@@ -90,24 +92,50 @@ export default function SpielerischPage() {
             }
           }
 
-          setLearningAppScore(score)
-          setLearningAppCompleted(true)
-          setCelebrationText(`LearningApp Quiz mit ${score}% abgeschlossen!`)
-          setShowCelebration(true)
+          // Nur aktualisieren wenn Score sich geändert hat oder noch nicht abgeschlossen
+          if (!learningAppCompleted || score !== learningAppScore) {
+            setLearningAppScore(score)
+            setLearningAppCompleted(true)
+            setCelebrationText(`LearningApp Quiz mit ${score}% abgeschlossen!`)
+            setShowCelebration(true)
 
-          const earnedPoints = Math.round((score / 100) * maxPointsLearningApp)
-          await saveProgress('learningapp', earnedPoints, score)
+            const earnedPoints = Math.round((score / 100) * maxPointsLearningApp)
+            await saveProgress('learningapp', earnedPoints, score)
 
-          setTimeout(() => setShowCelebration(false), 3000)
+            setTimeout(() => setShowCelebration(false), 3000)
+          }
         }
       }
 
-      // H5P Nachrichten (Object-Format) - immer aktualisieren, auch bei Wiederholung
-      if (typeof event.data === 'object' && event.data?.type === 'H5P_COMPLETED') {
-        const score = event.data.score ?? 0
+      // H5P Nachrichten - unterstützt lokales Format UND Lumi.education xAPI
+      if (typeof event.data === 'object') {
+        let score: number | null = null
+
+        // Format 1: Unser lokales H5P-Adaptor Format
+        if (event.data?.type === 'H5P_COMPLETED') {
+          score = event.data.score ?? 0
+        }
+
+        // Format 2: Lumi.education xAPI Format
+        // Lumi sendet: { context: "h5p", type: "xAPI", data: { statement: { verb: {...}, result: {...} } } }
+        if (event.data?.context === 'h5p' && event.data?.type === 'xAPI') {
+          const statement = event.data.data?.statement
+          const verb = statement?.verb?.id || ''
+
+          // Prüfe ob es ein "answered" oder "completed" Event ist
+          if ((verb.includes('answered') || verb.includes('completed')) && statement?.result) {
+            const result = statement.result
+            if (typeof result.score?.scaled === 'number') {
+              score = Math.round(result.score.scaled * 100)
+            } else if (typeof result.score?.raw === 'number' && typeof result.score?.max === 'number' && result.score.max > 0) {
+              score = Math.round((result.score.raw / result.score.max) * 100)
+            }
+            console.log('Lumi H5P xAPI Event empfangen:', verb, 'Score:', score)
+          }
+        }
 
         // Nur aktualisieren wenn Score sich geändert hat oder noch nicht abgeschlossen
-        if (!h5pCompleted || score !== h5pScore) {
+        if (score !== null && (!h5pCompleted || score !== h5pScore)) {
           setH5pScore(score)
           setH5pCompleted(true)
           setCelebrationText(`H5P Quiz mit ${score}% abgeschlossen!`)
@@ -123,7 +151,7 @@ export default function SpielerischPage() {
 
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
-  }, [learningAppCompleted, h5pCompleted, h5pScore])
+  }, [learningAppCompleted, learningAppScore, h5pCompleted, h5pScore])
 
   const saveProgress = async (quizType: 'learningapp' | 'h5p', earnedPoints: number, quizScore: number) => {
     // Verwende userIdRef um sicherzustellen, dass wir die userId haben
@@ -383,8 +411,8 @@ export default function SpielerischPage() {
                   <Gamepad2 className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900">Quiz 1: Steuern - Grundwissen</h3>
-                  <p className="text-sm text-gray-500">LearningApps • max. {maxPointsLearningApp} Punkte</p>
+                  <h3 className="font-bold text-gray-900">Quiz 1: Steuern - Lernkontrolle</h3>
+                  <p className="text-sm text-gray-500">LearningApps Millionenspiel • max. {maxPointsLearningApp} Punkte</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -412,7 +440,7 @@ export default function SpielerischPage() {
               src={LEARNING_APP_EMBED_URL}
               className="absolute top-0 left-0 w-full h-full border-0"
               allow="fullscreen"
-              title="Steuern - Grundwissen (LearningApp)"
+              title="Steuern - Lernkontrolle Millionenspiel (LearningApp)"
             />
           </div>
 
@@ -456,29 +484,27 @@ export default function SpielerischPage() {
             </div>
           </div>
 
-          {/* H5P Content - eingebettet */}
-          <div className="relative" style={{ paddingBottom: '320px', height: 0 }}>
+          {/* H5P Content via Lumi.education - eingebettet */}
+          <div className="relative" style={{ paddingBottom: '66%', height: 0, minHeight: '400px' }}>
             <iframe
-              src={H5P_QUIZ_URL}
+              src={H5P_LUMI_URL}
               className="absolute top-0 left-0 w-full h-full border-0"
-              allow="fullscreen"
-              title="Eigenmietwert Multiple Choice (H5P)"
+              allow="fullscreen; geolocation *; microphone *; camera *; midi *; encrypted-media *"
+              title="Eigenmietwert Multiple Choice (H5P via Lumi)"
             />
           </div>
 
-          {/* Footer mit Hinweis und Download */}
+          {/* Footer mit Hinweis */}
           <div className="p-4 bg-gray-50 border-t">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
               <p className="text-xs text-gray-500">
                 💡 Wählen Sie die korrekten Antworten aus. Ergebnisse werden automatisch erfasst.
               </p>
               <a
-                href="/h5p-quiz-download/eigenmietwert-quiz.h5p"
-                download="eigenmietwert-quiz.h5p"
+                href="https://app.lumi.education/run/UNu7_T"
                 className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
               >
-                <Download className="h-3 w-3" />
-                <span>H5P herunterladen</span>
+                <span>↗ In Lumi öffnen</span>
               </a>
             </div>
           </div>

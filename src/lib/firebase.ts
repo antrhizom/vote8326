@@ -1,7 +1,7 @@
 // Firebase Configuration
 
 import { initializeApp, getApps } from 'firebase/app'
-import { getAuth } from 'firebase/auth'
+import { getAuth, browserLocalPersistence, setPersistence } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 
 const firebaseConfig = {
@@ -17,4 +17,12 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
 
 export const auth = getAuth(app)
+
+// Persistenz auf LOCAL setzen (bleibt auch nach Browserschliessung erhalten)
+if (typeof window !== 'undefined') {
+  setPersistence(auth, browserLocalPersistence).catch((error) => {
+    console.error('Firebase Persistenz-Fehler:', error)
+  })
+}
+
 export const db = getFirestore(app)

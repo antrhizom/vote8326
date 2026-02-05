@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle, RotateCcw, ClipboardCheck } from 'lucide-react'
 
 interface QuizQuestion {
@@ -164,14 +164,88 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 const QUESTION_COUNT = 10
+const STORAGE_KEY = 'lernkontrolle_state'
 
 export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProps) {
-  // Wähle 10 zufällige Fragen beim ersten Render
-  const [questions] = useState(() => shuffleArray(allQuestions).slice(0, QUESTION_COUNT))
-  const [currentSlide, setCurrentSlide] = useState(0)
-  const [selectedAnswers, setSelectedAnswers] = useState<(number | null)[]>(new Array(QUESTION_COUNT).fill(null))
-  const [showAnswers, setShowAnswers] = useState<boolean[]>(new Array(QUESTION_COUNT).fill(false))
-  const [quizCompleted, setQuizCompleted] = useState(false)
+  // Wähle 10 zufällige Fragen beim ersten Render oder lade aus Storage
+  const [questions] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        try {
+          const state = JSON.parse(saved)
+          if (state.questions) return state.questions
+        } catch (e) {}
+      }
+    }
+    return shuffleArray(allQuestions).slice(0, QUESTION_COUNT)
+  })
+
+  const [currentSlide, setCurrentSlide] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        try {
+          const state = JSON.parse(saved)
+          return state.currentSlide || 0
+        } catch (e) {}
+      }
+    }
+    return 0
+  })
+
+  const [selectedAnswers, setSelectedAnswers] = useState<(number | null)[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        try {
+          const state = JSON.parse(saved)
+          if (state.selectedAnswers) return state.selectedAnswers
+        } catch (e) {}
+      }
+    }
+    return new Array(QUESTION_COUNT).fill(null)
+  })
+
+  const [showAnswers, setShowAnswers] = useState<boolean[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        try {
+          const state = JSON.parse(saved)
+          if (state.showAnswers) return state.showAnswers
+        } catch (e) {}
+      }
+    }
+    return new Array(QUESTION_COUNT).fill(false)
+  })
+
+  const [quizCompleted, setQuizCompleted] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        try {
+          const state = JSON.parse(saved)
+          return state.quizCompleted || false
+        } catch (e) {}
+      }
+    }
+    return false
+  })
+
+  // Spielstand in localStorage speichern
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const state = {
+        questions,
+        currentSlide,
+        selectedAnswers,
+        showAnswers,
+        quizCompleted
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    }
+  }, [questions, currentSlide, selectedAnswers, showAnswers, quizCompleted])
 
   const handleAnswerSelect = (answerIndex: number) => {
     if (showAnswers[currentSlide]) return
@@ -207,6 +281,10 @@ export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProp
   }
 
   const resetQuiz = () => {
+    // localStorage löschen
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEY)
+    }
     // Neue zufällige Fragen werden durch Komponenten-Remount gewählt
     setCurrentSlide(0)
     setSelectedAnswers(new Array(QUESTION_COUNT).fill(null))
@@ -228,24 +306,24 @@ export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProp
   if (quizCompleted) {
     const score = Math.round((correctCount / questions.length) * 100)
     return (
-      <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl p-8 text-white text-center">
-        <div className="text-6xl mb-4">{score >= 80 ? "🎉" : score >= 50 ? "👍" : "📚"}</div>
-        <h2 className="text-3xl font-bold mb-4">Lernkontrolle abgeschlossen!</h2>
-        <div className="bg-white/20 rounded-xl p-6 mb-6 inline-block">
-          <p className="text-lg mb-2">Ihr Ergebnis:</p>
-          <p className="text-5xl font-bold">{correctCount} / {questions.length}</p>
-          <p className="text-teal-100 mt-2">{score}% richtig</p>
+      <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl p-4 sm:p-8 text-white text-center">
+        <div className="text-4xl sm:text-6xl mb-3 sm:mb-4">{score >= 80 ? "🎉" : score >= 50 ? "👍" : "📚"}</div>
+        <h2 className="text-xl sm:text-3xl font-bold mb-3 sm:mb-4">Lernkontrolle abgeschlossen!</h2>
+        <div className="bg-white/20 rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 inline-block">
+          <p className="text-sm sm:text-lg mb-2">Ihr Ergebnis:</p>
+          <p className="text-3xl sm:text-5xl font-bold">{correctCount} / {questions.length}</p>
+          <p className="text-teal-100 mt-2 text-sm sm:text-base">{score}% richtig</p>
         </div>
-        <div className="space-y-2 mb-6">
-          {score >= 80 && <p className="text-lg">Hervorragend! Sie kennen sich sehr gut mit der Individualbesteuerung aus.</p>}
-          {score >= 50 && score < 80 && <p className="text-lg">Gut gemacht! Sie haben ein solides Grundwissen.</p>}
-          {score < 50 && <p className="text-lg">Schauen Sie sich die Lernmodule nochmals an, um Ihr Wissen zu vertiefen.</p>}
+        <div className="space-y-2 mb-4 sm:mb-6">
+          {score >= 80 && <p className="text-sm sm:text-lg">Hervorragend! Sie kennen sich sehr gut mit der Individualbesteuerung aus.</p>}
+          {score >= 50 && score < 80 && <p className="text-sm sm:text-lg">Gut gemacht! Sie haben ein solides Grundwissen.</p>}
+          {score < 50 && <p className="text-sm sm:text-lg">Schauen Sie sich die Lernmodule nochmals an, um Ihr Wissen zu vertiefen.</p>}
         </div>
         <button
           onClick={resetQuiz}
-          className="flex items-center gap-2 mx-auto px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg font-semibold transition-colors"
+          className="flex items-center gap-2 mx-auto px-4 sm:px-6 py-2 sm:py-3 bg-white/20 hover:bg-white/30 rounded-lg font-semibold transition-colors text-sm sm:text-base"
         >
-          <RotateCcw className="h-5 w-5" />
+          <RotateCcw className="h-4 w-4 sm:h-5 sm:w-5" />
           Nochmals versuchen
         </button>
       </div>
@@ -255,17 +333,17 @@ export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProp
   return (
     <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="bg-black/20 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <ClipboardCheck className="h-5 w-5 text-teal-100" />
-          <span className="text-white font-semibold">Lernkontrolle</span>
+      <div className="bg-black/20 px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <ClipboardCheck className="h-4 w-4 sm:h-5 sm:w-5 text-teal-100" />
+          <span className="text-white font-semibold text-sm sm:text-base">Lernkontrolle</span>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="text-teal-100 text-sm">
-            {answeredCount} / {questions.length} beantwortet
+        <div className="flex items-center gap-2 sm:gap-4">
+          <span className="text-teal-100 text-xs sm:text-sm">
+            {answeredCount}/{questions.length}
           </span>
-          <span className="text-emerald-200 text-sm font-semibold">
-            {correctCount} richtig
+          <span className="text-emerald-200 text-xs sm:text-sm font-semibold">
+            {correctCount} ✓
           </span>
         </div>
       </div>
@@ -279,12 +357,12 @@ export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProp
       </div>
 
       {/* Question Card */}
-      <div className="p-6">
-        <div className="bg-white/10 rounded-xl p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-teal-100 text-sm">Frage {currentSlide + 1} von {questions.length}</span>
+      <div className="p-3 sm:p-6">
+        <div className="bg-white/10 rounded-xl p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <span className="text-teal-100 text-xs sm:text-sm">Frage {currentSlide + 1} von {questions.length}</span>
             {showAnswer && (
-              <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
+              <span className={`text-xs sm:text-sm font-semibold px-2 sm:px-3 py-1 rounded-full ${
                 selectedAnswer !== null && currentQuestion.answers[selectedAnswer].correct
                   ? 'bg-green-500 text-white'
                   : 'bg-red-500 text-white'
@@ -293,13 +371,13 @@ export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProp
               </span>
             )}
           </div>
-          <h3 className="text-xl text-white font-semibold leading-relaxed">
+          <h3 className="text-base sm:text-xl text-white font-semibold leading-relaxed">
             {currentQuestion.question}
           </h3>
         </div>
 
         {/* Answer Options */}
-        <div className="space-y-3 mb-6">
+        <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
           {currentQuestion.answers.map((answer, index) => {
             const isSelected = selectedAnswer === index
             const isCorrect = answer.correct
@@ -325,17 +403,17 @@ export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProp
                 key={index}
                 onClick={() => handleAnswerSelect(index)}
                 disabled={showAnswer}
-                className={`w-full ${bgColor} border-2 ${borderColor} text-white p-4 rounded-xl text-left transition-all flex items-start gap-3`}
+                className={`w-full ${bgColor} border-2 ${borderColor} text-white p-3 sm:p-4 rounded-xl text-left transition-all flex items-start gap-2 sm:gap-3`}
               >
-                <span className="bg-white/20 px-3 py-1 rounded-lg font-bold text-sm shrink-0">
+                <span className="bg-white/20 px-2 sm:px-3 py-1 rounded-lg font-bold text-xs sm:text-sm shrink-0">
                   {['A', 'B', 'C', 'D'][index]}
                 </span>
-                <span className="flex-1">{answer.text}</span>
+                <span className="flex-1 text-sm sm:text-base">{answer.text}</span>
                 {showAnswer && isCorrect && (
-                  <CheckCircle className="h-6 w-6 text-green-300 shrink-0" />
+                  <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-green-300 shrink-0" />
                 )}
                 {showAnswer && isSelected && !isCorrect && (
-                  <XCircle className="h-6 w-6 text-red-300 shrink-0" />
+                  <XCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-300 shrink-0" />
                 )}
               </button>
             )
@@ -344,26 +422,26 @@ export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProp
 
         {/* Feedback */}
         {showAnswer && selectedAnswer !== null && (
-          <div className={`rounded-xl p-5 mb-6 ${
+          <div className={`rounded-xl p-3 sm:p-5 mb-4 sm:mb-6 ${
             currentQuestion.answers[selectedAnswer].correct
               ? 'bg-green-500/20 border border-green-400/50'
               : 'bg-orange-500/20 border border-orange-400/50'
           }`}>
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-2 sm:gap-3">
               {currentQuestion.answers[selectedAnswer].correct ? (
-                <CheckCircle className="h-6 w-6 text-green-300 shrink-0 mt-0.5" />
+                <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-green-300 shrink-0 mt-0.5" />
               ) : (
-                <XCircle className="h-6 w-6 text-orange-300 shrink-0 mt-0.5" />
+                <XCircle className="h-5 w-5 sm:h-6 sm:w-6 text-orange-300 shrink-0 mt-0.5" />
               )}
               <div>
-                <p className="text-white font-semibold mb-1">
+                <p className="text-white font-semibold mb-1 text-sm sm:text-base">
                   {currentQuestion.answers[selectedAnswer].correct ? 'Richtig!' : 'Leider falsch'}
                 </p>
-                <p className="text-white/90 text-sm leading-relaxed">
+                <p className="text-white/90 text-xs sm:text-sm leading-relaxed">
                   {currentQuestion.answers[selectedAnswer].feedback}
                 </p>
                 {!currentQuestion.answers[selectedAnswer].correct && (
-                  <p className="text-green-300 text-sm mt-3">
+                  <p className="text-green-300 text-xs sm:text-sm mt-2 sm:mt-3">
                     <strong>Korrekte Antwort:</strong> {currentQuestion.answers.find(a => a.correct)?.text}
                   </p>
                 )}
@@ -377,18 +455,18 @@ export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProp
           <button
             onClick={goToPrevSlide}
             disabled={currentSlide === 0}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors ${
+            className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg font-semibold transition-colors text-xs sm:text-base ${
               currentSlide === 0
                 ? 'bg-white/10 text-white/50 cursor-not-allowed'
                 : 'bg-white/20 hover:bg-white/30 text-white'
             }`}
           >
-            <ChevronLeft className="h-5 w-5" />
-            Zurück
+            <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="hidden sm:inline">Zurück</span>
           </button>
 
           {/* Slide Indicators */}
-          <div className="flex gap-1.5">
+          <div className="flex gap-1 sm:gap-1.5 flex-wrap justify-center max-w-[140px] sm:max-w-none">
             {questions.map((_, index) => {
               const isAnswered = selectedAnswers[index] !== null
               const isCorrect = isAnswered && questions[index].answers[selectedAnswers[index]!].correct
@@ -397,7 +475,7 @@ export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProp
                 <button
                   key={index}
                   onClick={() => setCurrentSlide(index)}
-                  className={`w-3 h-3 rounded-full transition-all ${
+                  className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full transition-all ${
                     index === currentSlide
                       ? 'bg-yellow-400 scale-125'
                       : isAnswered
@@ -414,14 +492,15 @@ export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProp
           <button
             onClick={goToNextSlide}
             disabled={!showAnswer}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors ${
+            className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg font-semibold transition-colors text-xs sm:text-base ${
               !showAnswer
                 ? 'bg-white/10 text-white/50 cursor-not-allowed'
                 : 'bg-yellow-500 hover:bg-yellow-600 text-black'
             }`}
           >
-            {currentSlide === questions.length - 1 ? 'Abschliessen' : 'Weiter'}
-            <ChevronRight className="h-5 w-5" />
+            <span className="hidden sm:inline">{currentSlide === questions.length - 1 ? 'Abschliessen' : 'Weiter'}</span>
+            <span className="sm:hidden">{currentSlide === questions.length - 1 ? 'Ende' : 'Vor'}</span>
+            <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
         </div>
       </div>

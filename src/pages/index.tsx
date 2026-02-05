@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth'
 import { doc, setDoc, getDoc, query, collection, where, getDocs } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
 import { BookOpen, LogIn, UserPlus, AlertCircle, ArrowRight, Award, FileText, Key } from 'lucide-react'
@@ -9,14 +9,29 @@ export default function LoginPage() {
   const router = useRouter()
   const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
+  const [checkingAuth, setCheckingAuth] = useState(true) // Prüft ob bereits eingeloggt
   const [error, setError] = useState('')
   const [registrationStep, setRegistrationStep] = useState(1) // 1 = Code wird angezeigt, 2 = Name eingeben
   const [assignedCode, setAssignedCode] = useState('')
-  
+
   const [formData, setFormData] = useState({
     lernname: '',
     code: ''
   })
+
+  // Prüfe ob bereits angemeldet - wenn ja, zum Dashboard weiterleiten
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // Benutzer ist bereits angemeldet, weiterleiten zum Dashboard
+        router.push('/dashboard')
+      } else {
+        // Nicht angemeldet, Login-Seite anzeigen
+        setCheckingAuth(false)
+      }
+    })
+    return () => unsubscribe()
+  }, [router])
 
   // Generate unique 6-digit code on component mount
   useEffect(() => {
@@ -125,6 +140,18 @@ export default function LoginPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Ladebildschirm während Auth-Check
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Wird geladen...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

@@ -355,7 +355,7 @@ export default function SpielerischPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900">Quiz 1: Millionenspiel</h3>
-                  <p className="text-sm text-gray-500">15 Fragen mit steigendem Schwierigkeitsgrad • Joker ab Stufe 3 • max. {maxPointsMillionenspiel} Punkte</p>
+                  <p className="text-sm text-gray-500">7 Fragen mit steigendem Schwierigkeitsgrad • Joker ab Stufe 3 • max. {maxPointsMillionenspiel} Punkte</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">

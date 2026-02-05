@@ -109,17 +109,17 @@ const questions: Question[] = [
   }
 ]
 
-// Gewinnstufen für 9 Fragen
+// Gewinnstufen für 9 Fragen (bis 1 Million)
 const prizeLevels = [
-  { level: 1, prize: "CHF 100", safe: false },
-  { level: 2, prize: "CHF 200", safe: false },
-  { level: 3, prize: "CHF 500", safe: true },
-  { level: 4, prize: "CHF 1'000", safe: false },
-  { level: 5, prize: "CHF 2'000", safe: false },
-  { level: 6, prize: "CHF 5'000", safe: true },
-  { level: 7, prize: "CHF 10'000", safe: false },
-  { level: 8, prize: "CHF 25'000", safe: false },
-  { level: 9, prize: "CHF 50'000", safe: true }
+  { level: 1, prize: "CHF 1'000", safe: false },
+  { level: 2, prize: "CHF 2'000", safe: false },
+  { level: 3, prize: "CHF 5'000", safe: true },
+  { level: 4, prize: "CHF 10'000", safe: false },
+  { level: 5, prize: "CHF 25'000", safe: false },
+  { level: 6, prize: "CHF 50'000", safe: true },
+  { level: 7, prize: "CHF 125'000", safe: false },
+  { level: 8, prize: "CHF 500'000", safe: false },
+  { level: 9, prize: "CHF 1 Million", safe: true }
 ]
 
 export default function MillionenSpiel({ onComplete, onReset }: MillionenSpielProps) {

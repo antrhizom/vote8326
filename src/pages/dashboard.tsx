@@ -73,7 +73,7 @@ export default function AbstimmungDashboard() {
             grundlagen: { completed: false, score: 0, progress: 0 },
             procontra: { completed: false, score: 0, progress: 0 },
             vertiefung: { completed: false, score: 0, progress: 0 },
-            spielerisch+: { completed: false, score: 0, progress: 0 }
+            spielerisch: { completed: false, score: 0, progress: 0 }
           }
         }
         

@@ -3,15 +3,9 @@ import { useRouter } from 'next/router'
 import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
-import { ArrowLeft, Award, Gamepad2, CheckCircle2, Trophy, RefreshCw, HelpCircle } from 'lucide-react'
-
-// LearningApps URL - Steuern Lernkontrolle (Kontext Individualbesteuerung)
-// App-ID: pu2m8owy326 - Änderungen in LearningApps werden live übernommen
-const LEARNING_APP_EMBED_URL = 'https://LearningApps.org/show?id=pu2m8owy326&fullscreen=1'
-
-// H5P Quiz via Lumi.education - Änderungen in Lumi werden live übernommen
-// Lumi-ID: UNu7_T
-const H5P_LUMI_URL = 'https://app.lumi.education/api/v1/run/UNu7_T/embed'
+import { ArrowLeft, Award, Gamepad2, CheckCircle2, Trophy, RefreshCw, BookOpen } from 'lucide-react'
+import MillionenSpiel from '@/components/MillionenSpiel'
+import QuizSlides from '@/components/QuizSlides'
 
 export default function SpielerischPage() {
   const router = useRouter()
@@ -20,24 +14,24 @@ export default function SpielerischPage() {
   const [completedSections, setCompletedSections] = useState<Set<string>>(new Set())
   const [userId, setUserId] = useState<string | null>(null)
 
-  // LearningApp State
-  const [learningAppScore, setLearningAppScore] = useState<number | null>(null)
-  const [learningAppCompleted, setLearningAppCompleted] = useState(false)
+  // Millionenspiel State
+  const [millionenspielScore, setMillionenspielScore] = useState<number | null>(null)
+  const [millionenspielCompleted, setMillionenspielCompleted] = useState(false)
 
-  // H5P State
-  const [h5pScore, setH5pScore] = useState<number | null>(null)
-  const [h5pCompleted, setH5pCompleted] = useState(false)
+  // QuizSlides State
+  const [quizSlidesScore, setQuizSlidesScore] = useState<number | null>(null)
+  const [quizSlidesCompleted, setQuizSlidesCompleted] = useState(false)
 
   // UI State
   const [showCelebration, setShowCelebration] = useState(false)
   const [celebrationText, setCelebrationText] = useState('')
 
-  // Ref um userId in PostMessage-Handler zu verwenden
+  // Ref um userId in Callbacks zu verwenden
   const userIdRef = useRef<string | null>(null)
 
-  const maxPointsLearningApp = 70
-  const maxPointsH5P = 30
-  const maxPoints = maxPointsLearningApp + maxPointsH5P
+  const maxPointsMillionenspiel = 50
+  const maxPointsQuizSlides = 50
+  const maxPoints = maxPointsMillionenspiel + maxPointsQuizSlides
 
   // Auth State Listener - wartet auf Authentifizierung
   useEffect(() => {
@@ -58,13 +52,13 @@ export default function SpielerischPage() {
             setTotalScore(data.score || 0)
             setCompletedSections(new Set(data.completedSections || []))
 
-            if (data.completedSections?.includes('learningapp')) {
-              setLearningAppCompleted(true)
-              setLearningAppScore(data.learningAppScore || 100)
+            if (data.completedSections?.includes('millionenspiel')) {
+              setMillionenspielCompleted(true)
+              setMillionenspielScore(data.millionenspielScore || 100)
             }
-            if (data.completedSections?.includes('h5p')) {
-              setH5pCompleted(true)
-              setH5pScore(data.h5pScore || 100)
+            if (data.completedSections?.includes('quizslides')) {
+              setQuizSlidesCompleted(true)
+              setQuizSlidesScore(data.quizSlidesScore || 100)
             }
           }
         }
@@ -75,86 +69,35 @@ export default function SpielerischPage() {
     return () => unsubscribe()
   }, [router])
 
-  // PostMessage Listener für beide Quiz-Typen
-  useEffect(() => {
-    const handleMessage = async (event: MessageEvent) => {
-      // LearningApps Nachrichten (String-Format) - auch bei Wiederholung aktualisieren
-      if (typeof event.data === 'string') {
-        const parts = event.data.split('|')
-        const messageType = parts[0]
+  const handleMillionenspielComplete = async (score: number) => {
+    if (!millionenspielCompleted || score !== millionenspielScore) {
+      setMillionenspielScore(score)
+      setMillionenspielCompleted(true)
+      setCelebrationText(`Millionenspiel mit ${score}% abgeschlossen!`)
+      setShowCelebration(true)
 
-        if (messageType === 'AppSolved' || messageType === 'AppChecked') {
-          let score = 100
-          if (parts.length >= 3) {
-            const parsedScore = parseInt(parts[2])
-            if (!isNaN(parsedScore) && parsedScore > 0 && parsedScore <= 100) {
-              score = parsedScore
-            }
-          }
+      const earnedPoints = Math.round((score / 100) * maxPointsMillionenspiel)
+      await saveProgress('millionenspiel', earnedPoints, score)
 
-          // Nur aktualisieren wenn Score sich geändert hat oder noch nicht abgeschlossen
-          if (!learningAppCompleted || score !== learningAppScore) {
-            setLearningAppScore(score)
-            setLearningAppCompleted(true)
-            setCelebrationText(`LearningApp Quiz mit ${score}% abgeschlossen!`)
-            setShowCelebration(true)
-
-            const earnedPoints = Math.round((score / 100) * maxPointsLearningApp)
-            await saveProgress('learningapp', earnedPoints, score)
-
-            setTimeout(() => setShowCelebration(false), 3000)
-          }
-        }
-      }
-
-      // H5P Nachrichten - unterstützt lokales Format UND Lumi.education xAPI
-      if (typeof event.data === 'object') {
-        let score: number | null = null
-
-        // Format 1: Unser lokales H5P-Adaptor Format
-        if (event.data?.type === 'H5P_COMPLETED') {
-          score = event.data.score ?? 0
-        }
-
-        // Format 2: Lumi.education xAPI Format
-        // Lumi sendet: { context: "h5p", type: "xAPI", data: { statement: { verb: {...}, result: {...} } } }
-        if (event.data?.context === 'h5p' && event.data?.type === 'xAPI') {
-          const statement = event.data.data?.statement
-          const verb = statement?.verb?.id || ''
-
-          // Prüfe ob es ein "answered" oder "completed" Event ist
-          if ((verb.includes('answered') || verb.includes('completed')) && statement?.result) {
-            const result = statement.result
-            if (typeof result.score?.scaled === 'number') {
-              score = Math.round(result.score.scaled * 100)
-            } else if (typeof result.score?.raw === 'number' && typeof result.score?.max === 'number' && result.score.max > 0) {
-              score = Math.round((result.score.raw / result.score.max) * 100)
-            }
-            console.log('Lumi H5P xAPI Event empfangen:', verb, 'Score:', score)
-          }
-        }
-
-        // Nur aktualisieren wenn Score sich geändert hat oder noch nicht abgeschlossen
-        if (score !== null && (!h5pCompleted || score !== h5pScore)) {
-          setH5pScore(score)
-          setH5pCompleted(true)
-          setCelebrationText(`H5P Quiz mit ${score}% abgeschlossen!`)
-          setShowCelebration(true)
-
-          const earnedPoints = Math.round((score / 100) * maxPointsH5P)
-          await saveProgress('h5p', earnedPoints, score)
-
-          setTimeout(() => setShowCelebration(false), 3000)
-        }
-      }
+      setTimeout(() => setShowCelebration(false), 3000)
     }
+  }
 
-    window.addEventListener('message', handleMessage)
-    return () => window.removeEventListener('message', handleMessage)
-  }, [learningAppCompleted, learningAppScore, h5pCompleted, h5pScore])
+  const handleQuizSlidesComplete = async (score: number) => {
+    if (!quizSlidesCompleted || score !== quizSlidesScore) {
+      setQuizSlidesScore(score)
+      setQuizSlidesCompleted(true)
+      setCelebrationText(`Lernkarten mit ${score}% abgeschlossen!`)
+      setShowCelebration(true)
 
-  const saveProgress = async (quizType: 'learningapp' | 'h5p', earnedPoints: number, quizScore: number) => {
-    // Verwende userIdRef um sicherzustellen, dass wir die userId haben
+      const earnedPoints = Math.round((score / 100) * maxPointsQuizSlides)
+      await saveProgress('quizslides', earnedPoints, score)
+
+      setTimeout(() => setShowCelebration(false), 3000)
+    }
+  }
+
+  const saveProgress = async (quizType: 'millionenspiel' | 'quizslides', earnedPoints: number, quizScore: number) => {
     const currentUserId = userIdRef.current || auth.currentUser?.uid
     if (!currentUserId) {
       console.error('Kein Benutzer angemeldet - kann Fortschritt nicht speichern')
@@ -177,25 +120,25 @@ export default function SpielerischPage() {
         const newCompleted = Array.from(new Set([...existingCompleted, quizType]))
 
         // Scores berechnen
-        let newLearningAppScore = quizType === 'learningapp' ? quizScore : (existingData.learningAppScore || 0)
-        let newH5pScore = quizType === 'h5p' ? quizScore : (existingData.h5pScore || 0)
+        let newMillionenspielScore = quizType === 'millionenspiel' ? quizScore : (existingData.millionenspielScore || 0)
+        let newQuizSlidesScore = quizType === 'quizslides' ? quizScore : (existingData.quizSlidesScore || 0)
 
         // Punkte berechnen
-        const learningAppPoints = newCompleted.includes('learningapp')
-          ? Math.round((newLearningAppScore / 100) * maxPointsLearningApp)
+        const millionenspielPoints = newCompleted.includes('millionenspiel')
+          ? Math.round((newMillionenspielScore / 100) * maxPointsMillionenspiel)
           : 0
-        const h5pPoints = newCompleted.includes('h5p')
-          ? Math.round((newH5pScore / 100) * maxPointsH5P)
+        const quizSlidesPoints = newCompleted.includes('quizslides')
+          ? Math.round((newQuizSlidesScore / 100) * maxPointsQuizSlides)
           : 0
-        const newTotalScore = learningAppPoints + h5pPoints
+        const newTotalScore = millionenspielPoints + quizSlidesPoints
 
-        const allQuizzesDone = newCompleted.includes('learningapp') && newCompleted.includes('h5p')
+        const allQuizzesDone = newCompleted.includes('millionenspiel') && newCompleted.includes('quizslides')
 
         modules.spielerisch = {
           completed: allQuizzesDone,
           score: newTotalScore,
-          learningAppScore: newLearningAppScore,
-          h5pScore: newH5pScore,
+          millionenspielScore: newMillionenspielScore,
+          quizSlidesScore: newQuizSlidesScore,
           progress: allQuizzesDone ? 100 : 50,
           completedSections: newCompleted,
           lastUpdated: new Date().toISOString()
@@ -223,7 +166,7 @@ export default function SpielerischPage() {
     }
   }
 
-  const resetQuiz = async (quizType: 'learningapp' | 'h5p' | 'all') => {
+  const resetQuiz = async (quizType: 'millionenspiel' | 'quizslides' | 'all') => {
     const currentUserId = userIdRef.current || auth.currentUser?.uid
     if (!currentUserId) return
 
@@ -237,37 +180,37 @@ export default function SpielerischPage() {
         const existingData = modules.spielerisch || {}
 
         let newCompleted = existingData.completedSections || []
-        let newLearningAppScore = existingData.learningAppScore || 0
-        let newH5pScore = existingData.h5pScore || 0
+        let newMillionenspielScore = existingData.millionenspielScore || 0
+        let newQuizSlidesScore = existingData.quizSlidesScore || 0
 
-        if (quizType === 'learningapp' || quizType === 'all') {
-          newCompleted = newCompleted.filter((s: string) => s !== 'learningapp')
-          newLearningAppScore = 0
-          setLearningAppCompleted(false)
-          setLearningAppScore(null)
+        if (quizType === 'millionenspiel' || quizType === 'all') {
+          newCompleted = newCompleted.filter((s: string) => s !== 'millionenspiel')
+          newMillionenspielScore = 0
+          setMillionenspielCompleted(false)
+          setMillionenspielScore(null)
         }
 
-        if (quizType === 'h5p' || quizType === 'all') {
-          newCompleted = newCompleted.filter((s: string) => s !== 'h5p')
-          newH5pScore = 0
-          setH5pCompleted(false)
-          setH5pScore(null)
+        if (quizType === 'quizslides' || quizType === 'all') {
+          newCompleted = newCompleted.filter((s: string) => s !== 'quizslides')
+          newQuizSlidesScore = 0
+          setQuizSlidesCompleted(false)
+          setQuizSlidesScore(null)
         }
 
         // Punkte neu berechnen
-        const learningAppPoints = newCompleted.includes('learningapp')
-          ? Math.round((newLearningAppScore / 100) * maxPointsLearningApp)
+        const millionenspielPoints = newCompleted.includes('millionenspiel')
+          ? Math.round((newMillionenspielScore / 100) * maxPointsMillionenspiel)
           : 0
-        const h5pPoints = newCompleted.includes('h5p')
-          ? Math.round((newH5pScore / 100) * maxPointsH5P)
+        const quizSlidesPoints = newCompleted.includes('quizslides')
+          ? Math.round((newQuizSlidesScore / 100) * maxPointsQuizSlides)
           : 0
-        const newTotalScore = learningAppPoints + h5pPoints
+        const newTotalScore = millionenspielPoints + quizSlidesPoints
 
         modules.spielerisch = {
-          completed: newCompleted.includes('learningapp') && newCompleted.includes('h5p'),
+          completed: newCompleted.includes('millionenspiel') && newCompleted.includes('quizslides'),
           score: newTotalScore,
-          learningAppScore: newLearningAppScore,
-          h5pScore: newH5pScore,
+          millionenspielScore: newMillionenspielScore,
+          quizSlidesScore: newQuizSlidesScore,
           progress: newCompleted.length === 2 ? 100 : (newCompleted.length === 1 ? 50 : 0),
           completedSections: newCompleted,
           lastUpdated: new Date().toISOString()
@@ -300,7 +243,7 @@ export default function SpielerischPage() {
     )
   }
 
-  const allCompleted = learningAppCompleted && h5pCompleted
+  const allCompleted = millionenspielCompleted && quizSlidesCompleted
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-orange-50">
@@ -358,11 +301,11 @@ export default function SpielerischPage() {
                 Sammeln Sie bis zu <strong>{maxPoints} Punkte</strong>!
               </p>
               <div className="flex gap-4 mt-3 text-sm">
-                <span className="flex items-center gap-1 text-pink-600">
-                  <Gamepad2 className="h-4 w-4" /> Quiz 1: {maxPointsLearningApp}P
-                </span>
                 <span className="flex items-center gap-1 text-purple-600">
-                  <HelpCircle className="h-4 w-4" /> Quiz 2: {maxPointsH5P}P
+                  <Gamepad2 className="h-4 w-4" /> Millionenspiel: {maxPointsMillionenspiel}P
+                </span>
+                <span className="flex items-center gap-1 text-teal-600">
+                  <BookOpen className="h-4 w-4" /> Lernkarten: {maxPointsQuizSlides}P
                 </span>
               </div>
             </div>
@@ -370,7 +313,7 @@ export default function SpielerischPage() {
         </div>
 
         {/* Fortschrittsanzeige */}
-        {(learningAppCompleted || h5pCompleted) && (
+        {(millionenspielCompleted || quizSlidesCompleted) && (
           <div className={`rounded-xl p-6 text-white ${allCompleted ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gradient-to-r from-amber-500 to-orange-500'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -382,11 +325,11 @@ export default function SpielerischPage() {
                     {allCompleted ? 'Alle Quizze abgeschlossen!' : 'Fortschritt'}
                   </h3>
                   <p className="text-white/80">
-                    {learningAppCompleted && <span>Quiz 1: {learningAppScore}% ✓</span>}
-                    {learningAppCompleted && h5pCompleted && <span> • </span>}
-                    {h5pCompleted && <span>Quiz 2: {h5pScore}% ✓</span>}
-                    {!learningAppCompleted && <span>Quiz 1: ausstehend</span>}
-                    {!h5pCompleted && learningAppCompleted && <span> • Quiz 2: ausstehend</span>}
+                    {millionenspielCompleted && <span>Millionenspiel: {millionenspielScore}% ✓</span>}
+                    {millionenspielCompleted && quizSlidesCompleted && <span> • </span>}
+                    {quizSlidesCompleted && <span>Lernkarten: {quizSlidesScore}% ✓</span>}
+                    {!millionenspielCompleted && <span>Millionenspiel: ausstehend</span>}
+                    {!quizSlidesCompleted && millionenspielCompleted && <span> • Lernkarten: ausstehend</span>}
                   </p>
                   <p className="font-bold mt-1">Total: {totalScore}/{maxPoints} Punkte</p>
                 </div>
@@ -402,77 +345,28 @@ export default function SpielerischPage() {
           </div>
         )}
 
-        {/* Quiz 1: LearningApp */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="bg-pink-50 p-4 border-b">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="bg-pink-600 p-2 rounded-lg">
-                  <Gamepad2 className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900">Quiz 1: Steuern - Lernkontrolle</h3>
-                  <p className="text-sm text-gray-500">LearningApps Millionenspiel • max. {maxPointsLearningApp} Punkte</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {learningAppCompleted && (
-                  <>
-                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3" />
-                      {learningAppScore}% ({Math.round((learningAppScore || 0) / 100 * maxPointsLearningApp)}P)
-                    </span>
-                    <button
-                      onClick={() => resetQuiz('learningapp')}
-                      className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
-                      title="Quiz wiederholen"
-                    >
-                      <RefreshCw className="h-3 w-3" />
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="relative" style={{ paddingBottom: '75%', height: 0 }}>
-            <iframe
-              src={LEARNING_APP_EMBED_URL}
-              className="absolute top-0 left-0 w-full h-full border-0"
-              allow="fullscreen"
-              title="Steuern - Lernkontrolle Millionenspiel (LearningApp)"
-            />
-          </div>
-
-          <div className="p-3 bg-gray-50 border-t">
-            <p className="text-xs text-gray-500 text-center">
-              💡 Lösen Sie alle Aufgaben. Ergebnisse werden automatisch erfasst.
-            </p>
-          </div>
-        </div>
-
-        {/* Quiz 2: H5P Multiple Choice */}
+        {/* Quiz 1: Millionenspiel */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="bg-purple-50 p-4 border-b">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="bg-purple-600 p-2 rounded-lg">
-                  <HelpCircle className="h-5 w-5 text-white" />
+                  <Gamepad2 className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900">Quiz 2: Eigenmietwert</h3>
-                  <p className="text-sm text-gray-500">Multiple Choice • max. {maxPointsH5P} Punkte</p>
+                  <h3 className="font-bold text-gray-900">Quiz 1: Millionenspiel</h3>
+                  <p className="text-sm text-gray-500">15 Fragen mit steigendem Schwierigkeitsgrad • Joker ab Stufe 3 • max. {maxPointsMillionenspiel} Punkte</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {h5pCompleted && (
+                {millionenspielCompleted && (
                   <>
                     <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1">
                       <CheckCircle2 className="h-3 w-3" />
-                      {h5pScore}% ({Math.round((h5pScore || 0) / 100 * maxPointsH5P)}P)
+                      {millionenspielScore}% ({Math.round((millionenspielScore || 0) / 100 * maxPointsMillionenspiel)}P)
                     </span>
                     <button
-                      onClick={() => resetQuiz('h5p')}
+                      onClick={() => resetQuiz('millionenspiel')}
                       className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
                       title="Quiz wiederholen"
                     >
@@ -484,29 +378,52 @@ export default function SpielerischPage() {
             </div>
           </div>
 
-          {/* H5P Content via Lumi.education - eingebettet */}
-          <div className="relative" style={{ paddingBottom: '66%', height: 0, minHeight: '400px' }}>
-            <iframe
-              src={H5P_LUMI_URL}
-              className="absolute top-0 left-0 w-full h-full border-0"
-              allow="fullscreen; geolocation *; microphone *; camera *; midi *; encrypted-media *"
-              title="Eigenmietwert Multiple Choice (H5P via Lumi)"
+          <div className="p-4">
+            <MillionenSpiel
+              onComplete={handleMillionenspielComplete}
+              onReset={() => resetQuiz('millionenspiel')}
             />
           </div>
+        </div>
 
-          {/* Footer mit Hinweis */}
-          <div className="p-4 bg-gray-50 border-t">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-              <p className="text-xs text-gray-500">
-                💡 Wählen Sie die korrekten Antworten aus. Ergebnisse werden automatisch erfasst.
-              </p>
-              <a
-                href="https://app.lumi.education/run/UNu7_T"
-                className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
-              >
-                <span>↗ In Lumi öffnen</span>
-              </a>
+        {/* Quiz 2: Lernkarten */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-teal-50 p-4 border-b">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-teal-600 p-2 rounded-lg">
+                  <BookOpen className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Quiz 2: Lernkarten</h3>
+                  <p className="text-sm text-gray-500">15 Fragen mit ausführlichen Erklärungen • max. {maxPointsQuizSlides} Punkte</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {quizSlidesCompleted && (
+                  <>
+                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3" />
+                      {quizSlidesScore}% ({Math.round((quizSlidesScore || 0) / 100 * maxPointsQuizSlides)}P)
+                    </span>
+                    <button
+                      onClick={() => resetQuiz('quizslides')}
+                      className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                      title="Quiz wiederholen"
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
+          </div>
+
+          <div className="p-4">
+            <QuizSlides
+              onComplete={handleQuizSlidesComplete}
+              onReset={() => resetQuiz('quizslides')}
+            />
           </div>
         </div>
 

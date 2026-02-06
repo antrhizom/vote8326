@@ -300,7 +300,7 @@ export default function MillionenSpiel({ onComplete, onReset }: MillionenSpielPr
   // Antworten mischen wenn Frage wechselt
   useEffect(() => {
     if (!currentQuestion) return
-    const answers = currentQuestion.answers.map((a, i) => ({ ...a, originalIndex: i }))
+    const answers = currentQuestion.answers.map((a: { text: string; correct: boolean; feedback: string }, i: number) => ({ ...a, originalIndex: i }))
     // Fisher-Yates Shuffle
     for (let i = answers.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));

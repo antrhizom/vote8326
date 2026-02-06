@@ -7,46 +7,46 @@ import { BookOpen, Trophy, LogOut, Award, ChevronRight, CheckCircle2, TrendingUp
 import { learningAreas, getAreaProgress, moduleData } from '@/lib/abstimmungModuleContent'
 
 // Tutorial Steps Definition
-const TUTORIAL_STEPS = [
+const TUTORIAL_STEPS: { id: string; title: string; description: string; highlight: string | null; position: string }[] = [
   {
     id: 'welcome',
     title: 'Willkommen zur Lernumgebung! 👋',
-    description: 'Diese kurze Einführung zeigt Ihnen, wie Sie die Plattform optimal nutzen können.',
+    description: 'Diese kurze Einführung zeigt Ihnen, wie Sie die Plattform optimal nutzen können. Sie können jederzeit über den Hilfe-Button unten rechts hierher zurückkehren.',
     highlight: null,
     position: 'center'
   },
   {
     id: 'progress',
-    title: 'Ihr Fortschritt',
+    title: '📊 Ihr Fortschritt',
     description: 'Hier sehen Sie Ihren aktuellen Lernfortschritt in Prozent und die gesammelten Punkte. Bearbeiten Sie alle Module, um 100% zu erreichen!',
     highlight: 'progress-card',
-    position: 'right'
-  },
-  {
-    id: 'modules',
-    title: 'Lernsets',
-    description: 'Hier sehen Sie die fünf Lernmodule. Klicken Sie auf ein Modul, um es zu starten. Grüne Haken zeigen abgeschlossene Module an.',
-    highlight: 'modules-card',
-    position: 'right'
-  },
-  {
-    id: 'badges',
-    title: 'Badges & Zertifikate',
-    description: 'Für jedes abgeschlossene Modul mit mindestens 60% erhalten Sie ein Badge. Nach Abschluss aller Module können Sie ein Zertifikat herunterladen!',
-    highlight: 'badges-section',
-    position: 'left'
+    position: 'bottom-right'
   },
   {
     id: 'community',
-    title: 'Gemeinschaft',
+    title: '👥 Gemeinschaft',
     description: 'Sehen Sie, wie viele andere Lernende ebenfalls teilnehmen und wie viele Badges insgesamt vergeben wurden.',
     highlight: 'community-card',
-    position: 'left'
+    position: 'bottom-left'
+  },
+  {
+    id: 'modules',
+    title: '📚 Lernsets',
+    description: 'Hier sehen Sie die fünf Lernmodule. Klicken Sie auf ein Modul, um es zu starten. Grüne Haken zeigen abgeschlossene Module an.',
+    highlight: 'modules-card',
+    position: 'top'
+  },
+  {
+    id: 'badges',
+    title: '🏅 Badges & Zertifikate',
+    description: 'Für jedes abgeschlossene Modul mit mindestens 60% erhalten Sie ein Badge. Bei 3 Modulen mit 60% Durchschnitt erhalten Sie ein Zertifikat!',
+    highlight: 'badges-section',
+    position: 'top'
   },
   {
     id: 'done',
     title: 'Bereit zum Lernen! 🎉',
-    description: 'Klicken Sie auf das erste Modul «Ausgangslage», um zu beginnen. Viel Erfolg!',
+    description: 'Klicken Sie auf das erste Modul «1. Ausgangslage», um zu beginnen. Viel Erfolg bei Ihrer Vorbereitung auf die Abstimmung!',
     highlight: null,
     position: 'center'
   }
@@ -338,25 +338,59 @@ export default function AbstimmungDashboard() {
 
   const currentTutorialStep = TUTORIAL_STEPS[tutorialStep]
 
+  // Scroll to highlighted element when tutorial step changes
+  useEffect(() => {
+    if (showTutorial && currentTutorialStep.highlight) {
+      const element = document.getElementById(currentTutorialStep.highlight)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+  }, [showTutorial, tutorialStep, currentTutorialStep.highlight])
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+      {/* Tutorial Styles */}
+      {showTutorial && (
+        <style dangerouslySetInnerHTML={{ __html: `
+          .tutorial-highlight {
+            position: relative;
+            z-index: 45;
+            box-shadow: 0 0 0 4px #14b8a6, 0 0 0 8px rgba(20, 184, 166, 0.3), 0 0 30px rgba(20, 184, 166, 0.4);
+            border-radius: 12px;
+            animation: pulse-highlight 2s ease-in-out infinite;
+          }
+          @keyframes pulse-highlight {
+            0%, 100% { box-shadow: 0 0 0 4px #14b8a6, 0 0 0 8px rgba(20, 184, 166, 0.3), 0 0 30px rgba(20, 184, 166, 0.4); }
+            50% { box-shadow: 0 0 0 4px #14b8a6, 0 0 0 12px rgba(20, 184, 166, 0.2), 0 0 40px rgba(20, 184, 166, 0.5); }
+          }
+        `}} />
+      )}
+
       {/* Tutorial Overlay */}
       {showTutorial && (
-        <div className="fixed inset-0 z-50">
-          {/* Dark overlay */}
-          <div className="absolute inset-0 bg-black/60" onClick={closeTutorial} />
+        <div className="fixed inset-0 z-40 pointer-events-none">
+          {/* Semi-transparent overlay - allows clicking through except on the card */}
+          <div
+            className="absolute inset-0 bg-black/50 pointer-events-auto"
+            onClick={closeTutorial}
+          />
 
-          {/* Tutorial Card */}
-          <div className={`absolute ${
-            currentTutorialStep.position === 'center'
-              ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
-              : currentTutorialStep.position === 'right'
-              ? 'top-1/3 left-1/2 -translate-x-1/4'
-              : 'top-1/3 right-1/2 translate-x-1/4'
-          } max-w-md w-full mx-4`}>
-            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden animate-bounce-in">
+          {/* Tutorial Card - positioned based on highlighted element */}
+          <div
+            className={`fixed z-50 max-w-md w-full pointer-events-auto transition-all duration-300 ${
+              currentTutorialStep.position === 'bottom-right'
+                ? 'top-[45%] right-4 md:right-8'
+                : currentTutorialStep.position === 'bottom-left'
+                ? 'top-[45%] left-4 md:left-8'
+                : currentTutorialStep.position === 'top'
+                ? 'top-32 left-1/2 -translate-x-1/2 px-4'
+                : 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4'
+            }`}
+          >
+            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
               {/* Progress bar */}
-              <div className="h-1 bg-gray-200">
+              <div className="h-1.5 bg-gray-200">
                 <div
                   className="h-full bg-gradient-to-r from-teal-500 to-cyan-500 transition-all duration-300"
                   style={{ width: `${((tutorialStep + 1) / TUTORIAL_STEPS.length) * 100}%` }}
@@ -367,13 +401,18 @@ export default function AbstimmungDashboard() {
                 {/* Close button */}
                 <button
                   onClick={closeTutorial}
-                  className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600"
+                  className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600 z-10"
                 >
                   <X className="h-5 w-5" />
                 </button>
 
+                {/* Step number badge */}
+                <div className="absolute top-4 left-4 bg-teal-100 text-teal-700 text-xs font-bold px-2 py-1 rounded-full">
+                  {tutorialStep + 1} / {TUTORIAL_STEPS.length}
+                </div>
+
                 {/* Icon */}
-                <div className="flex justify-center mb-4">
+                <div className="flex justify-center mb-4 mt-2">
                   <div className="bg-gradient-to-br from-teal-100 to-cyan-100 p-4 rounded-full">
                     <Lightbulb className="h-8 w-8 text-teal-600" />
                   </div>
@@ -387,17 +426,28 @@ export default function AbstimmungDashboard() {
                   {currentTutorialStep.description}
                 </p>
 
-                {/* Step indicator */}
+                {/* Arrow indicator for highlighted elements */}
+                {currentTutorialStep.highlight && (
+                  <div className="flex justify-center mb-4">
+                    <div className="bg-teal-50 border border-teal-200 rounded-lg px-3 py-2 text-sm text-teal-700 flex items-center gap-2">
+                      <span>👆</span>
+                      <span>Schauen Sie auf den markierten Bereich</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step indicator dots */}
                 <div className="flex justify-center gap-2 mb-6">
                   {TUTORIAL_STEPS.map((_, index) => (
-                    <div
+                    <button
                       key={index}
-                      className={`w-2 h-2 rounded-full transition-all ${
+                      onClick={() => setTutorialStep(index)}
+                      className={`h-2 rounded-full transition-all ${
                         index === tutorialStep
                           ? 'bg-teal-500 w-6'
                           : index < tutorialStep
-                          ? 'bg-teal-300'
-                          : 'bg-gray-300'
+                          ? 'bg-teal-300 w-2'
+                          : 'bg-gray-300 w-2'
                       }`}
                     />
                   ))}
@@ -513,7 +563,12 @@ export default function AbstimmungDashboard() {
         {/* Statistik-Karten */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {/* Fortschritt */}
-          <div className="bg-white rounded-xl shadow-md p-6">
+          <div
+            id="progress-card"
+            className={`bg-white rounded-xl shadow-md p-6 transition-all ${
+              showTutorial && currentTutorialStep.highlight === 'progress-card' ? 'tutorial-highlight' : ''
+            }`}
+          >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Ihr Fortschritt</h3>
               <TrendingUp className="h-6 w-6 text-teal-600" />
@@ -542,7 +597,12 @@ export default function AbstimmungDashboard() {
 
           {/* Teilnehmer (wenn Statistiken verfügbar) */}
           {registrationStats && (
-            <div className="bg-white rounded-xl shadow-md p-6">
+            <div
+              id="community-card"
+              className={`bg-white rounded-xl shadow-md p-6 transition-all ${
+                showTutorial && currentTutorialStep.highlight === 'community-card' ? 'tutorial-highlight' : ''
+              }`}
+            >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Gemeinschaft</h3>
                 <Users className="h-6 w-6 text-teal-600" />
@@ -666,7 +726,12 @@ export default function AbstimmungDashboard() {
         )}
 
         {/* Lernbereich: Abstimmung 2026 */}
-        <div className="max-w-4xl mx-auto">
+        <div
+          id="modules-card"
+          className={`max-w-4xl mx-auto transition-all ${
+            showTutorial && currentTutorialStep.highlight === 'modules-card' ? 'tutorial-highlight' : ''
+          }`}
+        >
           <LearningAreaCard
             area={learningAreas.abstimmung2026}
             progress={areaProgress}
@@ -678,6 +743,8 @@ export default function AbstimmungDashboard() {
             }}
             onCertificateClick={() => router.push('/certificate')}
             router={router}
+            showTutorial={showTutorial}
+            tutorialHighlight={currentTutorialStep.highlight}
           />
         </div>
       </main>
@@ -694,9 +761,11 @@ interface LearningAreaCardProps {
   onModuleClick: (moduleId: string) => void
   onCertificateClick: () => void
   router: ReturnType<typeof useRouter>
+  showTutorial?: boolean
+  tutorialHighlight?: string | null
 }
 
-function LearningAreaCard({ area, progress, modules, userData, onModuleClick, onCertificateClick, router }: LearningAreaCardProps) {
+function LearningAreaCard({ area, progress, modules, userData, onModuleClick, onCertificateClick, router, showTutorial, tutorialHighlight }: LearningAreaCardProps) {
   const modulesList = area.modules.map(moduleId => {
     const moduleData = modules[moduleId as keyof typeof modules]
     return {
@@ -755,7 +824,12 @@ function LearningAreaCard({ area, progress, modules, userData, onModuleClick, on
         </div>
 
         {/* Modul-Badges - für Module mit ≥60% Lernerfolg */}
-        <div className="mt-6 pt-6 border-t border-gray-200">
+        <div
+          id="badges-section"
+          className={`mt-6 pt-6 border-t border-gray-200 transition-all rounded-lg ${
+            showTutorial && tutorialHighlight === 'badges-section' ? 'tutorial-highlight p-4 -m-4' : ''
+          }`}
+        >
           {(() => {
             // Berechne welche Module einen Badge verdient haben (≥60%)
             const modulesWithBadge = modulesList.filter(m => {

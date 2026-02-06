@@ -467,7 +467,7 @@ export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProp
 
           {/* Slide Indicators */}
           <div className="flex gap-1 sm:gap-1.5 flex-wrap justify-center max-w-[140px] sm:max-w-none">
-            {questions.map((_, index) => {
+            {questions.map((_: QuizQuestion, index: number) => {
               const isAnswered = selectedAnswers[index] !== null
               const isCorrect = isAnswered && questions[index].answers[selectedAnswers[index]!].correct
 

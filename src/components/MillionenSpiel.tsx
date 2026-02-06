@@ -361,7 +361,7 @@ export default function MillionenSpiel({ onComplete, onReset }: MillionenSpielPr
           setFinalPrize(prizeLevels[currentLevel].prize)
           onComplete(100)
         } else {
-          setCurrentLevel(prev => prev + 1)
+          setCurrentLevel((prev: number) => prev + 1)
           setSelectedAnswer(null)
           setShowResult(false)
         }

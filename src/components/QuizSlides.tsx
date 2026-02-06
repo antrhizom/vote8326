@@ -10,7 +10,7 @@ interface QuizQuestion {
   }[]
 }
 
-interface LernkontrolleProps {
+interface QuizSlidesProps {
   onComplete: (score: number) => void
   onReset?: () => void
 }
@@ -154,6 +154,7 @@ const allQuestions: QuizQuestion[] = [
 ]
 
 export default function QuizSlides({ onComplete, onReset }: QuizSlidesProps) {
+  const questions = allQuestions
   const [currentSlide, setCurrentSlide] = useState(0)
   const [selectedAnswers, setSelectedAnswers] = useState<(number | null)[]>(new Array(questions.length).fill(null))
   const [showAnswers, setShowAnswers] = useState<boolean[]>(new Array(questions.length).fill(false))

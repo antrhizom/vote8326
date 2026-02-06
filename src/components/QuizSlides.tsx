@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { ChevronLeft, ChevronRight, CheckCircle, XCircle, RotateCcw, ClipboardCheck } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CheckCircle, XCircle, RotateCcw, ClipboardCheck, BookOpen } from 'lucide-react'
 
 interface QuizQuestion {
   question: string

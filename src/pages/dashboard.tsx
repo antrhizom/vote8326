@@ -293,6 +293,24 @@ export default function AbstimmungDashboard() {
     }
   }
 
+  // Scroll to highlighted element when tutorial step changes
+  // This useEffect MUST be before any conditional returns!
+  useEffect(() => {
+    if (showTutorial) {
+      const step = TUTORIAL_STEPS[tutorialStep]
+      if (step?.highlight) {
+        // Delay to ensure DOM elements are rendered
+        const timeoutId = setTimeout(() => {
+          const element = document.getElementById(step.highlight as string)
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+        }, 100)
+        return () => clearTimeout(timeoutId)
+      }
+    }
+  }, [showTutorial, tutorialStep])
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 flex items-center justify-center">
@@ -336,17 +354,7 @@ export default function AbstimmungDashboard() {
     }
   }
 
-  const currentTutorialStep = TUTORIAL_STEPS[tutorialStep]
-
-  // Scroll to highlighted element when tutorial step changes
-  useEffect(() => {
-    if (showTutorial && currentTutorialStep.highlight) {
-      const element = document.getElementById(currentTutorialStep.highlight)
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }
-    }
-  }, [showTutorial, tutorialStep, currentTutorialStep.highlight])
+  const currentTutorialStep = TUTORIAL_STEPS[tutorialStep] || TUTORIAL_STEPS[0]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">

@@ -378,7 +378,7 @@ export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProp
 
         {/* Answer Options */}
         <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
-          {currentQuestion.answers.map((answer, index) => {
+          {currentQuestion.answers.map((answer: { text: string; correct: boolean; feedback: string }, index: number) => {
             const isSelected = selectedAnswer === index
             const isCorrect = answer.correct
 

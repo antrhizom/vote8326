@@ -382,6 +382,8 @@ export default function SpielerischPage() {
             <MillionenSpiel
               onComplete={handleMillionenspielComplete}
               onReset={() => resetQuiz('millionenspiel')}
+              initialCompleted={millionenspielCompleted}
+              initialScore={millionenspielScore || undefined}
             />
           </div>
         </div>
@@ -396,7 +398,7 @@ export default function SpielerischPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900">Quiz 2: Lernkontrolle</h3>
-                  <p className="text-sm text-gray-500">15 Fragen mit ausführlichen Erklärungen • max. {maxPointsLernkontrolle} Punkte</p>
+                  <p className="text-sm text-gray-500">10 Fragen mit ausführlichen Erklärungen • max. {maxPointsLernkontrolle} Punkte</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -423,6 +425,8 @@ export default function SpielerischPage() {
             <Lernkontrolle
               onComplete={handleLernkontrolleComplete}
               onReset={() => resetQuiz('quizslides')}
+              initialCompleted={lernkontrolleCompleted}
+              initialScore={lernkontrolleScore || undefined}
             />
           </div>
         </div>

@@ -106,19 +106,48 @@ export default function AbstimmungDashboard() {
     try {
       const usersSnapshot = await getDocs(collection(db, 'users'))
       const totalRegistered = usersSnapshot.size
-      
+
       const allUsers = usersSnapshot.docs.map(doc => doc.data() as UserData)
-      const totalCertificates = allUsers.filter(
-        user => (user.overallProgress || 0) >= 50
-      ).length
-      
+
+      // Zertifikate: User mit mindestens 3 Modulen und 60% Durchschnitt
+      const totalCertificates = allUsers.filter(user => {
+        if (!user.modules) return false
+        const mainModules = ['ausgangslage', 'grundlagen', 'procontra', 'vertiefung', 'spielerisch']
+        let totalScore = 0
+        let completedCount = 0
+        mainModules.forEach(moduleId => {
+          if (user.modules[moduleId]?.completed) {
+            completedCount++
+            totalScore += user.modules[moduleId].score || 0
+          }
+        })
+        const avgProgress = Math.round((totalScore / 500) * 100)
+        return completedCount >= 3 && avgProgress >= 60
+      }).length
+
+      // Badges: Zähle Module mit ≥60% Score pro User
       let totalBadges = 0
+      const moduleMaxPoints: { [key: string]: number } = {
+        ausgangslage: 100,
+        grundlagen: 100,
+        procontra: 100,
+        vertiefung: 100,
+        spielerisch: 100
+      }
+
       allUsers.forEach(user => {
-        if (user.badges) {
-          totalBadges += Object.keys(user.badges).length
+        if (user.modules) {
+          Object.keys(user.modules).forEach(moduleId => {
+            const moduleScore = user.modules[moduleId]?.score || 0
+            const maxPts = moduleMaxPoints[moduleId] || 100
+            const pct = maxPts > 0 ? Math.round((moduleScore / maxPts) * 100) : 0
+            if (pct >= 60) {
+              totalBadges++
+            }
+          })
         }
       })
-      
+
       setRegistrationStats({
         totalRegistered,
         totalBadges,

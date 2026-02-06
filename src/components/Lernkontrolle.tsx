@@ -13,6 +13,8 @@ interface QuizQuestion {
 interface LernkontrolleProps {
   onComplete: (score: number) => void
   onReset?: () => void
+  initialCompleted?: boolean
+  initialScore?: number
 }
 
 const allQuestions: QuizQuestion[] = [
@@ -174,11 +176,15 @@ function shuffleQuestionsWithAnswers(questions: QuizQuestion[]): QuizQuestion[] 
 const QUESTION_COUNT = 10
 const STORAGE_KEY = 'lernkontrolle_state'
 
-export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProps) {
-  // Wähle 10 zufällige Fragen beim ersten Render oder lade aus Storage
-  // Antworten werden ebenfalls gemischt
-  const [questions] = useState(() => {
-    if (typeof window !== 'undefined') {
+export default function Lernkontrolle({ onComplete, onReset, initialCompleted, initialScore }: LernkontrolleProps) {
+  // Wenn bereits abgeschlossen (von Firebase), localStorage ignorieren und neu starten bei Bedarf
+  const [questions, setQuestions] = useState<QuizQuestion[]>(() => {
+    // Wenn von Firebase als abgeschlossen markiert, localStorage löschen
+    if (initialCompleted && typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEY)
+    }
+
+    if (typeof window !== 'undefined' && !initialCompleted) {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         try {
@@ -191,7 +197,7 @@ export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProp
   })
 
   const [currentSlide, setCurrentSlide] = useState(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !initialCompleted) {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         try {
@@ -204,7 +210,7 @@ export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProp
   })
 
   const [selectedAnswers, setSelectedAnswers] = useState<(number | null)[]>(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !initialCompleted) {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         try {
@@ -217,7 +223,7 @@ export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProp
   })
 
   const [showAnswers, setShowAnswers] = useState<boolean[]>(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !initialCompleted) {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         try {
@@ -230,6 +236,10 @@ export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProp
   })
 
   const [quizCompleted, setQuizCompleted] = useState(() => {
+    // Wenn von Firebase als abgeschlossen, zeige abgeschlossenen Zustand
+    if (initialCompleted) {
+      return true
+    }
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
@@ -294,7 +304,9 @@ export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProp
     if (typeof window !== 'undefined') {
       localStorage.removeItem(STORAGE_KEY)
     }
-    // Neue zufällige Fragen werden durch Komponenten-Remount gewählt
+    // Neue zufällige Fragen mit gemischten Antworten
+    const newQuestions = shuffleQuestionsWithAnswers(allQuestions).slice(0, QUESTION_COUNT)
+    setQuestions(newQuestions)
     setCurrentSlide(0)
     setSelectedAnswers(new Array(QUESTION_COUNT).fill(null))
     setShowAnswers(new Array(QUESTION_COUNT).fill(false))
@@ -313,14 +325,20 @@ export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProp
   const showAnswer = showAnswers[currentSlide]
 
   if (quizCompleted) {
-    const score = Math.round((correctCount / questions.length) * 100)
+    // Verwende initialScore von Firebase wenn vorhanden, sonst berechne aus Antworten
+    const score = initialCompleted && initialScore !== undefined
+      ? initialScore
+      : Math.round((correctCount / questions.length) * 100)
+    const displayCorrectCount = initialCompleted && initialScore !== undefined
+      ? Math.round((initialScore / 100) * QUESTION_COUNT)
+      : correctCount
     return (
       <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl p-4 sm:p-8 text-white text-center">
         <div className="text-4xl sm:text-6xl mb-3 sm:mb-4">{score >= 80 ? "🎉" : score >= 50 ? "👍" : "📚"}</div>
         <h2 className="text-xl sm:text-3xl font-bold mb-3 sm:mb-4">Lernkontrolle abgeschlossen!</h2>
         <div className="bg-white/20 rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 inline-block">
           <p className="text-sm sm:text-lg mb-2">Ihr Ergebnis:</p>
-          <p className="text-3xl sm:text-5xl font-bold">{correctCount} / {questions.length}</p>
+          <p className="text-3xl sm:text-5xl font-bold">{displayCorrectCount} / {QUESTION_COUNT}</p>
           <p className="text-teal-100 mt-2 text-sm sm:text-base">{score}% richtig</p>
         </div>
         <div className="space-y-2 mb-4 sm:mb-6">

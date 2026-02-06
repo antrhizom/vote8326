@@ -13,6 +13,8 @@ interface Question {
 interface MillionenSpielProps {
   onComplete: (score: number) => void
   onReset?: () => void
+  initialCompleted?: boolean
+  initialScore?: number
 }
 
 // Fragen aus LearningApps - 7 Stufen mit je 2 Fragen pro Stufe
@@ -179,10 +181,15 @@ const prizeLevels = [
 
 const STORAGE_KEY = 'millionenspiel_state'
 
-export default function MillionenSpiel({ onComplete, onReset }: MillionenSpielProps) {
-  // Wähle zufällig eine Frage pro Stufe beim Start oder lade aus Storage
+export default function MillionenSpiel({ onComplete, onReset, initialCompleted, initialScore }: MillionenSpielProps) {
+  // Wenn bereits abgeschlossen (von Firebase), localStorage ignorieren
   const [selectedQuestions] = useState(() => {
-    if (typeof window !== 'undefined') {
+    // Wenn von Firebase als abgeschlossen markiert, localStorage löschen
+    if (initialCompleted && typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEY)
+    }
+
+    if (typeof window !== 'undefined' && !initialCompleted) {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         try {
@@ -197,7 +204,7 @@ export default function MillionenSpiel({ onComplete, onReset }: MillionenSpielPr
   })
 
   const [currentLevel, setCurrentLevel] = useState(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !initialCompleted) {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         try {
@@ -211,6 +218,7 @@ export default function MillionenSpiel({ onComplete, onReset }: MillionenSpielPr
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [showResult, setShowResult] = useState(false)
   const [gameOver, setGameOver] = useState(() => {
+    if (initialCompleted) return true
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
@@ -223,6 +231,7 @@ export default function MillionenSpiel({ onComplete, onReset }: MillionenSpielPr
     return false
   })
   const [gameWon, setGameWon] = useState(() => {
+    if (initialCompleted) return true
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
@@ -235,7 +244,7 @@ export default function MillionenSpiel({ onComplete, onReset }: MillionenSpielPr
     return false
   })
   const [finalPrize, setFinalPrize] = useState(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !initialCompleted) {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         try {
@@ -250,7 +259,7 @@ export default function MillionenSpiel({ onComplete, onReset }: MillionenSpielPr
 
   // Joker States - ab Stufe 3 verfügbar
   const [fiftyFiftyUsed, setFiftyFiftyUsed] = useState(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !initialCompleted) {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         try {
@@ -262,7 +271,7 @@ export default function MillionenSpiel({ onComplete, onReset }: MillionenSpielPr
     return false
   })
   const [audienceUsed, setAudienceUsed] = useState(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !initialCompleted) {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         try {
@@ -401,24 +410,28 @@ export default function MillionenSpiel({ onComplete, onReset }: MillionenSpielPr
   }
 
   if (gameOver) {
+    // Wenn von Firebase geladen, zeige gespeicherten Score
+    const displayScore = initialCompleted && initialScore !== undefined ? initialScore : null
+    const displayPrize = finalPrize || (displayScore !== null ? `${displayScore}% erreicht` : "CHF 0")
+
     return (
       <div className="bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 rounded-xl p-6 sm:p-8 text-white text-center">
         <div className="text-5xl sm:text-6xl mb-4">{gameWon ? "🎉" : "😔"}</div>
         <h2 className="text-2xl sm:text-3xl font-bold mb-4">
-          {gameWon ? "Herzlichen Glückwunsch!" : "Leider verloren!"}
+          {gameWon ? "Herzlichen Glückwunsch!" : (initialCompleted ? "Quiz abgeschlossen!" : "Leider verloren!")}
         </h2>
         <p className="text-lg sm:text-xl mb-2">
           {gameWon
             ? "Sie haben alle 7 Fragen richtig beantwortet!"
-            : `Falsche Antwort bei Frage ${currentLevel + 1}.`
+            : (initialCompleted ? "Ihr letztes Ergebnis:" : `Falsche Antwort bei Frage ${currentLevel + 1}.`)
           }
         </p>
         <div className="bg-white/20 rounded-xl p-4 sm:p-6 my-6 inline-block">
-          <p className="text-sm text-purple-200">Ihr Gewinn:</p>
-          <p className="text-3xl sm:text-4xl font-bold text-yellow-300">{finalPrize}</p>
+          <p className="text-sm text-purple-200">{initialCompleted && !gameWon ? "Ihr Ergebnis:" : "Ihr Gewinn:"}</p>
+          <p className="text-3xl sm:text-4xl font-bold text-yellow-300">{displayPrize}</p>
         </div>
 
-        {!gameWon && showResult && (
+        {!gameWon && showResult && !initialCompleted && (
           <div className="bg-red-500/30 rounded-lg p-4 mb-6 text-left max-w-xl mx-auto">
             <p className="font-semibold mb-2 text-sm">Richtige Antwort:</p>
             <p className="text-sm">{shuffledAnswers.find(a => a.correct)?.text}</p>

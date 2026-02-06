@@ -3,8 +3,54 @@ import { useRouter } from 'next/router'
 import { signOut } from 'firebase/auth'
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
-import { BookOpen, Trophy, LogOut, Award, ChevronRight, CheckCircle2, TrendingUp, Users, Star, Info } from 'lucide-react'
+import { BookOpen, Trophy, LogOut, Award, ChevronRight, CheckCircle2, TrendingUp, Users, Star, Info, HelpCircle, X, ArrowRight, Lightbulb } from 'lucide-react'
 import { learningAreas, getAreaProgress, moduleData } from '@/lib/abstimmungModuleContent'
+
+// Tutorial Steps Definition
+const TUTORIAL_STEPS = [
+  {
+    id: 'welcome',
+    title: 'Willkommen zur Lernumgebung! 👋',
+    description: 'Diese kurze Einführung zeigt Ihnen, wie Sie die Plattform optimal nutzen können.',
+    highlight: null,
+    position: 'center'
+  },
+  {
+    id: 'progress',
+    title: 'Ihr Fortschritt',
+    description: 'Hier sehen Sie Ihren aktuellen Lernfortschritt in Prozent und die gesammelten Punkte. Bearbeiten Sie alle Module, um 100% zu erreichen!',
+    highlight: 'progress-card',
+    position: 'right'
+  },
+  {
+    id: 'modules',
+    title: 'Lernsets',
+    description: 'Hier sehen Sie die fünf Lernmodule. Klicken Sie auf ein Modul, um es zu starten. Grüne Haken zeigen abgeschlossene Module an.',
+    highlight: 'modules-card',
+    position: 'right'
+  },
+  {
+    id: 'badges',
+    title: 'Badges & Zertifikate',
+    description: 'Für jedes abgeschlossene Modul mit mindestens 60% erhalten Sie ein Badge. Nach Abschluss aller Module können Sie ein Zertifikat herunterladen!',
+    highlight: 'badges-section',
+    position: 'left'
+  },
+  {
+    id: 'community',
+    title: 'Gemeinschaft',
+    description: 'Sehen Sie, wie viele andere Lernende ebenfalls teilnehmen und wie viele Badges insgesamt vergeben wurden.',
+    highlight: 'community-card',
+    position: 'left'
+  },
+  {
+    id: 'done',
+    title: 'Bereit zum Lernen! 🎉',
+    description: 'Klicken Sie auf das erste Modul «Ausgangslage», um zu beginnen. Viel Erfolg!',
+    highlight: null,
+    position: 'center'
+  }
+]
 
 interface UserData {
   lernname: string
@@ -52,6 +98,8 @@ export default function AbstimmungDashboard() {
   const [statistics, setStatistics] = useState<Statistics | null>(null)
   const [registrationStats, setRegistrationStats] = useState<RegistrationStats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showTutorial, setShowTutorial] = useState(false)
+  const [tutorialStep, setTutorialStep] = useState(0)
 
   useEffect(() => {
     const loadData = async () => {
@@ -65,7 +113,19 @@ export default function AbstimmungDashboard() {
       const userDoc = await getDoc(doc(db, 'users', user.uid))
       if (userDoc.exists()) {
         const data = userDoc.data() as UserData
-        
+
+        // Check if user is new (no progress yet) - show tutorial
+        const isNewUser = !data.modules || Object.values(data.modules).every(
+          m => !m.completed && m.score === 0 && m.progress === 0
+        )
+        if (isNewUser) {
+          // Check localStorage to not show tutorial again
+          const tutorialSeen = localStorage.getItem('dashboard_tutorial_seen')
+          if (!tutorialSeen) {
+            setShowTutorial(true)
+          }
+        }
+
         // Initialize modules if they don't exist
         if (!data.modules) {
           data.modules = {
@@ -256,8 +316,146 @@ export default function AbstimmungDashboard() {
 
   const areaProgress = getAreaProgress(userData.modules, 'abstimmung2026')
 
+  const closeTutorial = () => {
+    setShowTutorial(false)
+    setTutorialStep(0)
+    localStorage.setItem('dashboard_tutorial_seen', 'true')
+  }
+
+  const nextTutorialStep = () => {
+    if (tutorialStep < TUTORIAL_STEPS.length - 1) {
+      setTutorialStep(tutorialStep + 1)
+    } else {
+      closeTutorial()
+    }
+  }
+
+  const prevTutorialStep = () => {
+    if (tutorialStep > 0) {
+      setTutorialStep(tutorialStep - 1)
+    }
+  }
+
+  const currentTutorialStep = TUTORIAL_STEPS[tutorialStep]
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+      {/* Tutorial Overlay */}
+      {showTutorial && (
+        <div className="fixed inset-0 z-50">
+          {/* Dark overlay */}
+          <div className="absolute inset-0 bg-black/60" onClick={closeTutorial} />
+
+          {/* Tutorial Card */}
+          <div className={`absolute ${
+            currentTutorialStep.position === 'center'
+              ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
+              : currentTutorialStep.position === 'right'
+              ? 'top-1/3 left-1/2 -translate-x-1/4'
+              : 'top-1/3 right-1/2 translate-x-1/4'
+          } max-w-md w-full mx-4`}>
+            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden animate-bounce-in">
+              {/* Progress bar */}
+              <div className="h-1 bg-gray-200">
+                <div
+                  className="h-full bg-gradient-to-r from-teal-500 to-cyan-500 transition-all duration-300"
+                  style={{ width: `${((tutorialStep + 1) / TUTORIAL_STEPS.length) * 100}%` }}
+                />
+              </div>
+
+              <div className="p-6">
+                {/* Close button */}
+                <button
+                  onClick={closeTutorial}
+                  className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+
+                {/* Icon */}
+                <div className="flex justify-center mb-4">
+                  <div className="bg-gradient-to-br from-teal-100 to-cyan-100 p-4 rounded-full">
+                    <Lightbulb className="h-8 w-8 text-teal-600" />
+                  </div>
+                </div>
+
+                {/* Content */}
+                <h3 className="text-xl font-bold text-gray-900 text-center mb-3">
+                  {currentTutorialStep.title}
+                </h3>
+                <p className="text-gray-600 text-center mb-6">
+                  {currentTutorialStep.description}
+                </p>
+
+                {/* Step indicator */}
+                <div className="flex justify-center gap-2 mb-6">
+                  {TUTORIAL_STEPS.map((_, index) => (
+                    <div
+                      key={index}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        index === tutorialStep
+                          ? 'bg-teal-500 w-6'
+                          : index < tutorialStep
+                          ? 'bg-teal-300'
+                          : 'bg-gray-300'
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                {/* Navigation buttons */}
+                <div className="flex gap-3">
+                  {tutorialStep > 0 && (
+                    <button
+                      onClick={prevTutorialStep}
+                      className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors"
+                    >
+                      Zurück
+                    </button>
+                  )}
+                  <button
+                    onClick={nextTutorialStep}
+                    className="flex-1 py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2"
+                  >
+                    {tutorialStep === TUTORIAL_STEPS.length - 1 ? (
+                      <>Los geht's!</>
+                    ) : (
+                      <>
+                        Weiter
+                        <ArrowRight className="h-4 w-4" />
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Skip button */}
+                <button
+                  onClick={closeTutorial}
+                  className="w-full mt-3 py-2 text-sm text-gray-500 hover:text-gray-700"
+                >
+                  Tutorial überspringen
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Help Button (always visible) */}
+      <button
+        onClick={() => {
+          setTutorialStep(0)
+          setShowTutorial(true)
+        }}
+        className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all group"
+        title="Hilfe & Tutorial"
+      >
+        <HelpCircle className="h-6 w-6" />
+        <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+          Hilfe anzeigen
+        </span>
+      </button>
+
       {/* Header */}
       <header className="bg-white shadow-md sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

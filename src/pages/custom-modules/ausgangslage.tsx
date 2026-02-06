@@ -632,7 +632,7 @@ export default function AusgangslagePage() {
                 
                 {[
                   { year: '1984', event: 'Bundesgerichtsurteil', detail: 'Das Bundesgericht erklärt die Heiratsstrafe für verfassungswidrig.' },
-                  { year: '2016', event: 'CVP-Initiative abgelehnt', detail: 'Volk lehnt Initiative ab – später wird ein Zählfehler entdeckt!' },
+                  { year: '2016', event: 'CVP-Initiative abgelehnt', detail: 'Volk lehnt Initiative ab – später stellt sich heraus, dass der Bundesrat mit falschen Zahlen informiert hatte!' },
                   { year: '2024', event: 'Parlament beschliesst Reform', detail: 'National- und Ständerat stimmen der Individualbesteuerung zu.' },
                   { year: '2025', event: 'Kantonsreferendum', detail: '10 Kantone ergreifen das Referendum – erst das 2. Mal in der Geschichte.' },
                   { year: '8.3.2026', event: 'Volksabstimmung', detail: 'Das Schweizer Volk entscheidet an der Urne.' }
@@ -819,8 +819,21 @@ export default function AusgangslagePage() {
             </div>
             
             <div className="p-6">
+              <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-4">
+                <p className="text-amber-800 text-sm mb-2">
+                  <strong>📖 Worum geht es?</strong> Dieses Video erklärt die bewegte Geschichte der Heiratsstrafe in der Schweiz.
+                </p>
+                <p className="text-amber-800 text-sm mb-2">
+                  Seit <strong>1984</strong> ist das heutige Steuersystem laut Bundesgericht verfassungswidrig – trotzdem hat es über
+                  <strong> 40 Jahre</strong> gedauert, bis eine Lösung zur Abstimmung kommt. Warum?
+                </p>
+                <p className="text-amber-800 text-sm">
+                  Das Video zeigt die wichtigsten Meilensteine: Von der CVP-Initiative 2016 (bei der der Bundesrat mit
+                  <strong> falschen Zahlen</strong> informierte) bis zur aktuellen Vorlage.
+                </p>
+              </div>
               <div className="bg-gray-900 rounded-lg overflow-hidden">
-                <iframe 
+                <iframe
                   className="w-full aspect-video"
                   src="https://www.youtube.com/embed/wP8DA6YHkJo"
                   title="Geschichte der Heiratsstrafe"
@@ -945,12 +958,12 @@ export default function AusgangslagePage() {
                 <div className="space-y-2">
                   {[
                     'Sie wurde angenommen',
-                    'Sie wurde abgelehnt, aber ein Zählfehler wurde entdeckt',
+                    'Sie wurde abgelehnt, aber der Bundesrat hatte mit falschen Zahlen informiert',
                     'Sie kam gar nicht zur Abstimmung',
                     'Das Bundesgericht erklärte sie für ungültig'
                   ].map(opt => {
                     const isSelected = videoQuizAnswers.vq2 === opt
-                    const correct = 'Sie wurde abgelehnt, aber ein Zählfehler wurde entdeckt'
+                    const correct = 'Sie wurde abgelehnt, aber der Bundesrat hatte mit falschen Zahlen informiert'
                     const isCorrect = videoQuizSubmitted && opt === correct
                     const isWrong = videoQuizSubmitted && isSelected && opt !== correct
                     return (
@@ -1025,8 +1038,10 @@ export default function AusgangslagePage() {
                 <div className="p-4 bg-green-100 rounded-lg text-green-800">
                   <strong>✓ Verständnisfragen abgeschlossen!</strong>
                   <p className="text-sm mt-1">
-                    Das Bundesgericht entschied 1984. Die CVP-Initiative 2016 wurde abgelehnt (mit Zählfehler). 
-                    Der Streit über den Lösungsweg verzögerte die Lösung über 40 Jahre.
+                    Das Bundesgericht erklärte 1984 die Heiratsstrafe für verfassungswidrig. Die CVP-Initiative 2016 wurde
+                    knapp abgelehnt – später stellte sich heraus, dass der Bundesrat mit falschen Zahlen informiert hatte
+                    (80'000 statt 454'000 betroffene Ehepaare). 2019 annullierte das Bundesgericht deshalb die Abstimmung.
+                    Der jahrzehntelange Streit über den besten Lösungsweg verzögerte eine Reform über 40 Jahre.
                   </p>
                 </div>
               )}

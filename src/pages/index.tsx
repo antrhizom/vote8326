@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth'
 import { doc, setDoc, getDoc, query, collection, where, getDocs } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
-import { BookOpen, LogIn, UserPlus, AlertCircle, ArrowRight, Award, FileText, Key } from 'lucide-react'
+import { BookOpen, LogIn, UserPlus, AlertCircle, ArrowRight, Award, FileText, Key, Copy, CheckCircle, X } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -13,6 +13,8 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [registrationStep, setRegistrationStep] = useState(1) // 1 = Code wird angezeigt, 2 = Name eingeben
   const [assignedCode, setAssignedCode] = useState('')
+  const [codeCopied, setCodeCopied] = useState(false)
+  const [showNamePopup, setShowNamePopup] = useState(true) // Popup für Namen-Hinweis
 
   const [formData, setFormData] = useState({
     lernname: '',
@@ -63,10 +65,23 @@ export default function LoginPage() {
     }
   }
 
+  const copyCodeToClipboard = async () => {
+    if (assignedCode) {
+      try {
+        await navigator.clipboard.writeText(assignedCode)
+        setCodeCopied(true)
+        setTimeout(() => setCodeCopied(false), 3000)
+      } catch (err) {
+        console.error('Failed to copy code:', err)
+      }
+    }
+  }
+
   const handleNextStep = () => {
-    if (registrationStep === 1 && assignedCode) {
+    if (registrationStep === 1 && assignedCode && codeCopied) {
       setFormData({ ...formData, code: assignedCode })
       setRegistrationStep(2)
+      setShowNamePopup(true) // Reset popup for step 2
     }
   }
 
@@ -277,26 +292,65 @@ export default function LoginPage() {
                   <div className="text-5xl font-bold text-teal-600 mb-3 tracking-widest">
                     {assignedCode || '------'}
                   </div>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Dieser Code wurde automatisch für Sie generiert.
-                  </p>
-                  <div className="bg-white rounded-lg p-4 border-2 border-teal-300">
-                    <p className="text-sm font-semibold text-gray-900 mb-2">
-                      ⚠️ Wichtig: Notieren Sie sich diesen Code!
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      Sie benötigen diesen Code zum Anmelden. Bewahren Sie ihn sicher auf.<br />
-                      <strong>Kein Passwort erforderlich!</strong>
-                    </p>
-                  </div>
+
+                  {/* Copy Button */}
+                  <button
+                    onClick={copyCodeToClipboard}
+                    disabled={!assignedCode}
+                    className={`mb-4 px-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 mx-auto ${
+                      codeCopied
+                        ? 'bg-green-500 text-white'
+                        : 'bg-teal-600 hover:bg-teal-700 text-white'
+                    }`}
+                  >
+                    {codeCopied ? (
+                      <>
+                        <CheckCircle className="h-5 w-5" />
+                        <span>Code kopiert!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-5 w-5" />
+                        <span>Code in Zwischenablage kopieren</span>
+                      </>
+                    )}
+                  </button>
+
+                  {codeCopied && (
+                    <div className="bg-green-100 border-2 border-green-300 rounded-lg p-4 mb-4 animate-pulse">
+                      <p className="text-sm font-semibold text-green-800">
+                        ✅ Ihr Code wurde in die Zwischenablage kopiert!
+                      </p>
+                      <p className="text-xs text-green-700 mt-1">
+                        Speichern Sie ihn jetzt an einem sicheren Ort (z.B. Notizen, E-Mail an sich selbst).
+                      </p>
+                    </div>
+                  )}
+
+                  {!codeCopied && (
+                    <div className="bg-amber-50 border-2 border-amber-300 rounded-lg p-4">
+                      <p className="text-sm font-semibold text-amber-900 mb-2">
+                        ⚠️ Wichtig: Speichern Sie diesen Code!
+                      </p>
+                      <p className="text-xs text-amber-800">
+                        Sie benötigen diesen Code zum Anmelden. Klicken Sie auf «Code kopieren» und
+                        speichern Sie ihn an einem sicheren Ort.<br />
+                        <strong>Kein Passwort erforderlich – nur dieser Code!</strong>
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <button
                   onClick={handleNextStep}
-                  disabled={!assignedCode}
-                  className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  disabled={!assignedCode || !codeCopied}
+                  className={`w-full py-3 font-semibold rounded-lg transition-all shadow-lg flex items-center justify-center gap-2 ${
+                    codeCopied
+                      ? 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white hover:shadow-xl'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
                 >
-                  <span>Weiter</span>
+                  <span>{codeCopied ? 'Weiter' : 'Bitte zuerst Code kopieren'}</span>
                   <ArrowRight className="h-5 w-5" />
                 </button>
               </div>
@@ -304,70 +358,118 @@ export default function LoginPage() {
 
             {/* REGISTRATION FORM - STEP 2: NAME ONLY */}
             {!isLogin && registrationStep === 2 && (
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 mb-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Ihr Lerncode:</span>
-                    <span className="text-lg font-bold text-teal-600 tracking-wider">{formData.code}</span>
-                  </div>
-                </div>
+              <>
+                {/* Popup Modal für Namen-Hinweis */}
+                {showNamePopup && (
+                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-bounce-in">
+                      <div className="text-center mb-4">
+                        <div className="inline-block bg-amber-100 p-4 rounded-full mb-3">
+                          <Award className="h-10 w-10 text-amber-600" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                          Wichtig: Ihr Name auf Zertifikaten
+                        </h3>
+                      </div>
 
-                <div>
-                  <label htmlFor="lernname" className="block text-sm font-medium text-gray-700 mb-2">
-                    Lernname *
-                  </label>
-                  <input
-                    type="text"
-                    id="lernname"
-                    required
-                    value={formData.lernname}
-                    onChange={(e) => setFormData({ ...formData, lernname: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition-colors"
-                    placeholder="Ihr Name oder Nickname"
-                  />
-                  <div className="mt-2 bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
-                    <div className="flex items-start gap-2">
-                      <FileText className="h-4 w-4 text-yellow-700 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-xs font-semibold text-yellow-900 mb-1">
-                          Wichtiger Hinweis:
+                      <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 mb-4">
+                        <p className="text-sm text-amber-900 mb-3">
+                          Der Name, den Sie im nächsten Schritt eingeben, wird auf Ihren
+                          <strong> Badges und Zertifikaten</strong> erscheinen.
                         </p>
-                        <p className="text-xs text-yellow-800">
-                          Ihr Lernname wird auf <strong>Badges und Zertifikaten</strong> angezeigt. 
-                          Wählen Sie einen Namen, der für offizielle Dokumente geeignet ist.
-                        </p>
+                        <div className="flex items-center gap-3 bg-white rounded-lg p-3 border border-amber-200">
+                          <FileText className="h-8 w-8 text-amber-600 flex-shrink-0" />
+                          <div className="text-xs text-gray-700">
+                            <p className="font-semibold mb-1">Beispiel:</p>
+                            <p className="italic">«Zertifikat für <span className="font-bold text-teal-600">Max Muster</span>»</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <p className="text-sm text-gray-600 text-center mb-4">
+                        Wählen Sie einen Namen, der für offizielle Dokumente geeignet ist.
+                      </p>
+
+                      <button
+                        onClick={() => setShowNamePopup(false)}
+                        className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                      >
+                        <CheckCircle className="h-5 w-5" />
+                        <span>Verstanden, weiter zur Eingabe</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <form onSubmit={handleRegister} className="space-y-4">
+                  <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 mb-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Ihr Lerncode:</span>
+                      <span className="text-lg font-bold text-teal-600 tracking-wider">{formData.code}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="lernname" className="block text-sm font-medium text-gray-700 mb-2">
+                      Lernname *
+                    </label>
+                    <input
+                      type="text"
+                      id="lernname"
+                      required
+                      value={formData.lernname}
+                      onChange={(e) => setFormData({ ...formData, lernname: e.target.value })}
+                      disabled={showNamePopup}
+                      className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition-colors ${
+                        showNamePopup
+                          ? 'border-gray-200 bg-gray-100 cursor-not-allowed'
+                          : 'border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200'
+                      }`}
+                      placeholder="Ihr Name oder Nickname"
+                    />
+                    <div className="mt-2 bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
+                      <div className="flex items-start gap-2">
+                        <FileText className="h-4 w-4 text-yellow-700 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-xs font-semibold text-yellow-900 mb-1">
+                            Erinnerung:
+                          </p>
+                          <p className="text-xs text-yellow-800">
+                            Ihr Lernname wird auf <strong>Badges und Zertifikaten</strong> angezeigt.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={handleBackToStep1}
-                    className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors"
-                  >
-                    Zurück
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {loading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        <span>Wird erstellt...</span>
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus className="h-5 w-5" />
-                        <span>Registrieren</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={handleBackToStep1}
+                      className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors"
+                    >
+                      Zurück
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading || showNamePopup}
+                      className="flex-1 py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                          <span>Wird erstellt...</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="h-5 w-5" />
+                          <span>Registrieren</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </>
             )}
           </div>
         </div>

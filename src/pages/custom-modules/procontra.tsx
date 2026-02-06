@@ -199,7 +199,7 @@ const SECTIONS: Section[] = [
         instruction: 'Entdecken Sie die wichtigsten Meilensteine:',
         events: [
           { year: '1984', event: 'Gleichstellungsartikel', detail: 'Gleichstellung von Mann und Frau wird in der Verfassung verankert.' },
-          { year: '2016', event: 'CVP-Initiative abgelehnt', detail: 'Volk lehnt Initiative gegen Heiratsstrafe ab (Zählfehler).' },
+          { year: '2016', event: 'CVP-Initiative abgelehnt', detail: 'Volk lehnt Initiative ab – Bundesrat hatte mit falschen Zahlen informiert.' },
           { year: '2024', event: 'Parlament beschliesst Reform', detail: 'National- und Ständerat stimmen der Individualbesteuerung zu.' },
           { year: '2026', event: 'Volksabstimmung', detail: 'Am 8. März 2026 entscheidet das Volk.' }
         ],

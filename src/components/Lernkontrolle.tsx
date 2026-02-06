@@ -442,7 +442,7 @@ export default function Lernkontrolle({ onComplete, onReset }: LernkontrolleProp
                 </p>
                 {!currentQuestion.answers[selectedAnswer].correct && (
                   <p className="text-green-300 text-xs sm:text-sm mt-2 sm:mt-3">
-                    <strong>Korrekte Antwort:</strong> {currentQuestion.answers.find(a => a.correct)?.text}
+                    <strong>Korrekte Antwort:</strong> {currentQuestion.answers.find((a: { text: string; correct: boolean; feedback: string }) => a.correct)?.text}
                   </p>
                 )}
               </div>

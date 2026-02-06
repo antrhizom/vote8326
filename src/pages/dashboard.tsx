@@ -34,14 +34,14 @@ const TUTORIAL_STEPS: { id: string; title: string; description: string; highligh
     title: '📚 Lernsets',
     description: 'Hier sehen Sie die fünf Lernmodule. Klicken Sie auf ein Modul, um es zu starten. Grüne Haken zeigen abgeschlossene Module an.',
     highlight: 'modules-card',
-    position: 'top'
+    position: 'bottom-left'
   },
   {
     id: 'badges',
     title: '🏅 Badges & Zertifikate',
     description: 'Für jedes abgeschlossene Modul mit mindestens 60% erhalten Sie ein Badge. Bei 3 Modulen mit 60% Durchschnitt erhalten Sie ein Zertifikat!',
     highlight: 'badges-section',
-    position: 'top'
+    position: 'bottom-left'
   },
   {
     id: 'done',
@@ -391,8 +391,6 @@ export default function AbstimmungDashboard() {
                 ? 'top-[45%] right-4 md:right-8'
                 : currentTutorialStep.position === 'bottom-left'
                 ? 'top-[45%] left-4 md:left-8'
-                : currentTutorialStep.position === 'top'
-                ? 'bottom-8 left-1/2 -translate-x-1/2 px-4'
                 : 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4'
             }`}
           >

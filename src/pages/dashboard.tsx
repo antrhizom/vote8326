@@ -392,7 +392,7 @@ export default function AbstimmungDashboard() {
                 : currentTutorialStep.position === 'bottom-left'
                 ? 'top-[45%] left-4 md:left-8'
                 : currentTutorialStep.position === 'top'
-                ? 'top-32 left-1/2 -translate-x-1/2 px-4'
+                ? 'bottom-8 left-1/2 -translate-x-1/2 px-4'
                 : 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4'
             }`}
           >

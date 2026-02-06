@@ -392,9 +392,18 @@ export default function VertiefungPage() {
 
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
           <div className="bg-white rounded-xl p-6 shadow-sm">
+            <p className="text-gray-700 mb-3">
+              Tauchen Sie tiefer ein in die Hintergründe der Abstimmung. Im ersten Kapitel erfahren Sie, welche
+              <strong> politischen Ereignisse</strong> zur heutigen Abstimmung geführt haben.
+            </p>
+            <p className="text-gray-700 mb-3">
+              Ein Beispiel: 2016 wurde die CVP-Initiative gegen die Heiratsstrafe abgelehnt – doch später wurde entdeckt,
+              dass der Bundesrat <strong>falsche Zahlen</strong> kommuniziert hatte. 2019 wurde die Abstimmung deshalb
+              erstmals in der Schweizer Geschichte vom Bundesgericht annulliert!
+            </p>
             <p className="text-gray-700">
-              Tauchen Sie tiefer ein: Erfahren Sie, welche <strong>politischen Ereignisse</strong> zur heutigen
-              Abstimmung geführt haben und verstehen Sie die <strong>grundlegenden Ziele des Steuersystems</strong>.
+              Im zweiten Kapitel verstehen Sie die <strong>grundlegenden Ziele des Steuersystems</strong>: Warum gibt es
+              Steuern? Wie sorgen sie für Fairness? Und was hat die Vermögenssteuer – das «Schweizer As» – damit zu tun?
             </p>
           </div>
 

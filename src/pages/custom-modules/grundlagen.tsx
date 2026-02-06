@@ -232,10 +232,19 @@ export default function GrundlagenPage() {
 
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
           <div className="bg-white rounded-xl p-6 shadow-sm">
+            <p className="text-gray-700 mb-3">
+              In diesem Modul lernen Sie die <strong>offiziellen Informationen des Bundes</strong> und die
+              <strong> Medienberichterstattung</strong> zur Individualbesteuerung kennen.
+            </p>
+            <p className="text-gray-700 mb-3">
+              Im <strong>Erklärfilm des Bundes</strong> erfahren Sie, wie die Reform funktioniert: Wer würde
+              mehr zahlen, wer weniger? Wie hoch sind die geschätzten Steuerausfälle? Wie viele zusätzliche
+              Steuererklärungen müssten verarbeitet werden?
+            </p>
             <p className="text-gray-700">
-              Lernen Sie die <strong>offiziellen Informationen des Bundes</strong> und die
-              <strong> Medienberichterstattung</strong> kennen. Verstehen Sie, wer von der Reform profitiert
-              und welche Auswirkungen sie hat.
+              Die <strong>SRF Radio-Beiträge</strong> zeigen unterschiedliche Perspektiven: Ein Beitrag erklärt,
+              wer von der Reform profitiert und wer verliert. Der andere analysiert die Auswirkungen auf den
+              Arbeitsmarkt – beispielsweise, wie viele Frauen durch die Individualbesteuerung mehr arbeiten würden.
             </p>
           </div>
 

@@ -296,9 +296,18 @@ export default function SpielerischPage() {
             </div>
             <div>
               <h3 className="font-bold text-gray-900 mb-2">Zwei interaktive Quizze</h3>
-              <p className="text-gray-700">
-                Testen Sie Ihr Wissen mit zwei verschiedenen Quiz-Formaten.
+              <p className="text-gray-700 mb-2">
+                Testen Sie Ihr Wissen zur Individualbesteuerung mit zwei verschiedenen Quiz-Formaten.
                 Sammeln Sie bis zu <strong>{maxPoints} Punkte</strong>!
+              </p>
+              <p className="text-gray-700 mb-3">
+                Das <strong>Millionenspiel</strong> fordert Sie mit 7 Fragen mit steigendem Schwierigkeitsgrad heraus –
+                nutzen Sie die Joker ab Stufe 3! Die <strong>Lernkontrolle</strong> testet Ihr Wissen mit 10 Fragen
+                und ausführlichen Erklärungen zu jeder Antwort.
+              </p>
+              <p className="text-gray-700 text-sm italic">
+                <strong>Beispiel-Frage:</strong> Wie viele zusätzliche Steuererklärungen würde es bei einer Annahme geben?
+                A) 500'000 B) 1,7 Millionen C) 3 Millionen D) 140'000
               </p>
               <div className="flex gap-4 mt-3 text-sm">
                 <span className="flex items-center gap-1 text-purple-600">

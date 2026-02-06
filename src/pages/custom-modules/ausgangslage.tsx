@@ -231,10 +231,19 @@ export default function AusgangslagePage() {
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
           {/* Intro Text */}
           <div className="bg-white rounded-xl p-6 shadow-sm">
+            <p className="text-gray-700 mb-3">
+              Bevor Sie in die Details der Abstimmung eintauchen, erkunden Sie Ihre <strong>persönliche Ausgangslage</strong>.
+              In einer kurzen Umfrage reflektieren Sie Ihre eigene Situation – zum Beispiel: Wie werden Sie heute besteuert?
+              Würde sich für Sie etwas ändern?
+            </p>
+            <p className="text-gray-700 mb-3">
+              Anschliessend lernen Sie das <strong>Referendum und die Gesetzgebung</strong> als wichtige Instrumente der
+              direkten Demokratie kennen. Sie erfahren, wie aus einer Idee ein Gesetz wird – und wie die Bevölkerung
+              das letzte Wort haben kann.
+            </p>
             <p className="text-gray-700">
-              Bevor Sie in die Details der Abstimmung eintauchen, erkunden Sie Ihre <strong>persönliche Ausgangslage</strong>, 
-              lernen Sie das <strong>Referendum</strong> als politisches Instrument kennen und verstehen Sie die 
-              <strong> Geschichte der Heiratsstrafe</strong>.
+              Schliesslich entdecken Sie die <strong>Geschichte der Heiratsstrafe</strong>: Seit 1984 ist das
+              heutige System verfassungswidrig – warum hat es über 40 Jahre gedauert, bis eine Lösung zur Abstimmung kommt?
             </p>
           </div>
 
@@ -279,7 +288,7 @@ export default function AusgangslagePage() {
                     <Vote className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900">Kapitel 2: Das Referendum</h3>
+                    <h3 className="font-bold text-gray-900">Kapitel 2: Referendum und Gesetzgebung</h3>
                     <p className="text-sm text-gray-500">Politisches Instrument verstehen</p>
                   </div>
                 </div>
@@ -495,16 +504,25 @@ export default function AusgangslagePage() {
                 <span className="font-semibold">{totalScore} / {maxPoints}</span>
               </div>
             </div>
-            <h1 className="text-xl font-bold mt-2">Kapitel 2: Das Referendum</h1>
+            <h1 className="text-xl font-bold mt-2">Kapitel 2: Referendum und Gesetzgebung</h1>
           </div>
         </header>
 
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
           {/* Einführung */}
           <div className="bg-white rounded-xl p-6 shadow-sm">
-            <p className="text-gray-700">
-              Das Referendum ist ein zentrales Instrument der <strong>direkten Demokratie</strong> in der Schweiz. 
+            <p className="text-gray-700 mb-3">
+              Das Referendum ist ein zentrales Instrument der <strong>direkten Demokratie</strong> in der Schweiz.
               Es ermöglicht den Stimmberechtigten, über Entscheide des Parlaments das letzte Wort zu haben.
+            </p>
+            <p className="text-gray-700 mb-3">
+              Im interaktiven <strong>Zeitstrahl</strong> unten sehen Sie, wie sich die Diskussion um die Individualbesteuerung
+              über die Jahre entwickelt hat. Von der ersten Idee über parlamentarische Debatten bis zur Volksabstimmung
+              dauert es oft <strong>Jahrzehnte</strong> – diese Darstellung zeigt Ihnen, wie lange der Weg zur Gesetzesänderung sein kann.
+            </p>
+            <p className="text-gray-700">
+              Klicken Sie auf die Ereignisse, um zu verstehen, welche Hürden genommen werden mussten und welche
+              politischen Kräfte die Entwicklung beeinflusst haben.
             </p>
           </div>
 

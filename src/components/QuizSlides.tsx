@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { ChevronLeft, ChevronRight, CheckCircle, XCircle, RotateCcw, BookOpen } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { ChevronLeft, ChevronRight, CheckCircle, XCircle, RotateCcw, ClipboardCheck } from 'lucide-react'
 
 interface QuizQuestion {
   question: string
@@ -10,12 +10,12 @@ interface QuizQuestion {
   }[]
 }
 
-interface QuizSlidesProps {
+interface LernkontrolleProps {
   onComplete: (score: number) => void
   onReset?: () => void
 }
 
-const questions: QuizQuestion[] = [
+const allQuestions: QuizQuestion[] = [
   {
     question: "Was bezeichnet der Begriff Heiratsstrafe?",
     answers: [

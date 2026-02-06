@@ -1215,9 +1215,17 @@ export default function ProContraPage() {
         </div>
 
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-6">
+          <p className="text-amber-800 mb-2">
+            <strong>📣 Bei Abstimmungen gehen die Meinungen auseinander.</strong>
+          </p>
+          <p className="text-amber-800 mb-2">
+            In diesem Modul lernen Sie die verschiedenen Akteur:innen und ihre Argumente kennen.
+            Sie sehen Video-Statements von Befürworter:innen und Gegner:innen und lösen interaktive Aufgaben.
+          </p>
           <p className="text-amber-800">
-            <strong>📣 Bei Abstimmungen gehen die Meinungen auseinander.</strong><br />
-            Lernen Sie die verschiedenen Akteure und ihre Argumente kennen.
+            <strong>Beispiel:</strong> Der Bundesrat argumentiert, dass bis zu 44'000 neue Vollzeitstellen entstehen könnten.
+            Die Gegner:innen warnen vor 630 Millionen Franken Steuerausfällen pro Jahr. Wer hat recht?
+            Bilden Sie sich Ihre eigene Meinung!
           </p>
         </div>
 

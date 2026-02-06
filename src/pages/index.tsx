@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [registrationStep, setRegistrationStep] = useState(1) // 1 = Code wird angezeigt, 2 = Name eingeben
   const [assignedCode, setAssignedCode] = useState('')
   const [codeCopied, setCodeCopied] = useState(false)
+  const [codeWasCopied, setCodeWasCopied] = useState(false) // Bleibt true, nachdem Code einmal kopiert wurde
   const [showNamePopup, setShowNamePopup] = useState(true) // Popup für Namen-Hinweis
 
   const [formData, setFormData] = useState({
@@ -70,7 +71,8 @@ export default function LoginPage() {
       try {
         await navigator.clipboard.writeText(assignedCode)
         setCodeCopied(true)
-        setTimeout(() => setCodeCopied(false), 3000)
+        setCodeWasCopied(true) // Bleibt dauerhaft true
+        setTimeout(() => setCodeCopied(false), 3000) // Nur die Animation verschwindet
       } catch (err) {
         console.error('Failed to copy code:', err)
       }
@@ -78,7 +80,7 @@ export default function LoginPage() {
   }
 
   const handleNextStep = () => {
-    if (registrationStep === 1 && assignedCode && codeCopied) {
+    if (registrationStep === 1 && assignedCode && codeWasCopied) {
       setFormData({ ...formData, code: assignedCode })
       setRegistrationStep(2)
       setShowNamePopup(true) // Reset popup for step 2
@@ -343,14 +345,14 @@ export default function LoginPage() {
 
                 <button
                   onClick={handleNextStep}
-                  disabled={!assignedCode || !codeCopied}
+                  disabled={!assignedCode || !codeWasCopied}
                   className={`w-full py-3 font-semibold rounded-lg transition-all shadow-lg flex items-center justify-center gap-2 ${
-                    codeCopied
+                    codeWasCopied
                       ? 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white hover:shadow-xl'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  <span>{codeCopied ? 'Weiter' : 'Bitte zuerst Code kopieren'}</span>
+                  <span>{codeWasCopied ? 'Weiter' : 'Bitte zuerst Code kopieren'}</span>
                   <ArrowRight className="h-5 w-5" />
                 </button>
               </div>

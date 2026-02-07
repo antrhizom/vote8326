@@ -234,16 +234,19 @@ export default function AusgangslagePage() {
             <p className="text-gray-700 mb-3">
               Bevor Sie in die Details der Abstimmung eintauchen, erkunden Sie Ihre <strong>persönliche Ausgangslage</strong>.
               In einer kurzen Umfrage reflektieren Sie Ihre eigene Situation – zum Beispiel: Wie werden Sie heute besteuert?
-              Würde sich für Sie etwas ändern?
+              Würde sich für Sie etwas ändern? Diese Selbstreflexion hilft Ihnen, die Abstimmungsvorlage aus Ihrer
+              persönlichen Perspektive zu betrachten.
             </p>
             <p className="text-gray-700 mb-3">
               Anschliessend lernen Sie das <strong>Referendum und die Gesetzgebung</strong> als wichtige Instrumente der
-              direkten Demokratie kennen. Sie erfahren, wie aus einer Idee ein Gesetz wird – und wie die Bevölkerung
-              das letzte Wort haben kann.
+              direkten Demokratie kennen. Sie erfahren, wie aus einer Idee ein Gesetz wird – und wie die Stimmberechtigten
+              das letzte Wort haben können. Der interaktive <strong>Zeitstrahl</strong> zeigt Ihnen, wie lange der politische
+              Prozess von der ersten Idee bis zur Volksabstimmung dauern kann – oft sind es Jahrzehnte!
             </p>
             <p className="text-gray-700">
               Schliesslich entdecken Sie die <strong>Geschichte der Heiratsstrafe</strong>: Seit 1984 ist das
-              heutige System verfassungswidrig – warum hat es über 40 Jahre gedauert, bis eine Lösung zur Abstimmung kommt?
+              heutige System laut Bundesgericht verfassungswidrig – warum hat es über 40 Jahre gedauert, bis eine Lösung
+              zur Abstimmung kommt? Ein Erklärvideo zeigt die wichtigsten Meilensteine dieser bewegten Geschichte.
             </p>
           </div>
 

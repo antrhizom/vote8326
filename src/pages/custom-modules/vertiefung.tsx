@@ -393,17 +393,21 @@ export default function VertiefungPage() {
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
           <div className="bg-white rounded-xl p-6 shadow-sm">
             <p className="text-gray-700 mb-3">
-              Tauchen Sie tiefer ein in die Hintergründe der Abstimmung. Im ersten Kapitel erfahren Sie, welche
-              <strong> politischen Ereignisse</strong> zur heutigen Abstimmung geführt haben.
+              Tauchen Sie tiefer ein in die <strong>Hintergründe der Abstimmung</strong>. Im ersten Kapitel erfahren Sie,
+              welche politischen Ereignisse zur heutigen Abstimmung geführt haben. Eine interaktive Zeitachse zeigt die
+              wichtigsten Meilensteine von 2016 bis 2026 – klicken Sie auf die Ereignisse, um mehr zu erfahren.
             </p>
             <p className="text-gray-700 mb-3">
-              Ein Beispiel: 2016 wurde die CVP-Initiative gegen die Heiratsstrafe abgelehnt – doch später wurde entdeckt,
-              dass der Bundesrat <strong>falsche Zahlen</strong> kommuniziert hatte. 2019 wurde die Abstimmung deshalb
-              erstmals in der Schweizer Geschichte vom Bundesgericht annulliert!
+              Ein Beispiel: 2016 wurde die CVP-Initiative gegen die Heiratsstrafe knapp abgelehnt – doch später wurde entdeckt,
+              dass der Bundesrat die Stimmberechtigten <strong>falsch informiert</strong> hatte: Statt 80'000 waren über
+              450'000 Ehepaare von der Heiratsstrafe betroffen! 2019 wurde die Abstimmung deshalb <strong>erstmals in der
+              Schweizer Geschichte</strong> vom Bundesgericht annulliert.
             </p>
             <p className="text-gray-700">
               Im zweiten Kapitel verstehen Sie die <strong>grundlegenden Ziele des Steuersystems</strong>: Warum gibt es
-              Steuern? Wie sorgen sie für Fairness? Und was hat die Vermögenssteuer – das «Schweizer As» – damit zu tun?
+              Steuern? Wie sorgen sie für Fairness? Und was hat die Vermögenssteuer – das «Schweizer As», das es fast
+              nirgendwo sonst gibt – damit zu tun? Ein Erklärvideo des Bundes führt Sie durch den «Steuer-Werkzeugkasten»
+              der Schweiz.
             </p>
           </div>
 

@@ -1219,13 +1219,18 @@ export default function ProContraPage() {
             <strong>📣 Bei Abstimmungen gehen die Meinungen auseinander.</strong>
           </p>
           <p className="text-amber-800 mb-2">
-            In diesem Modul lernen Sie die verschiedenen Akteur:innen und ihre Argumente kennen.
-            Sie sehen Video-Statements von Befürworter:innen und Gegner:innen und lösen interaktive Aufgaben.
+            In diesem Modul lernen Sie die verschiedenen <strong>Akteur:innen</strong> und ihre Argumente kennen.
+            Sie sehen Video-Statements von Befürworter:innen und Gegner:innen und lösen interaktive Aufgaben wie
+            Flipcards, Swipe-Karten und Zuordnungsübungen. Vier Perspektiven stehen im Fokus: Der Bundesrat, das
+            Komitee der Befürworter:innen, das Komitee der Gegner:innen und die Kantone.
+          </p>
+          <p className="text-amber-800 mb-2">
+            <strong>Beispiel:</strong> Der Bundesrat argumentiert, dass bis zu 44'000 neue Vollzeitstellen entstehen könnten,
+            weil sich Mehrarbeit für verheiratete Personen mehr lohnen würde. Die Gegner:innen warnen hingegen vor
+            630 Millionen Franken Steuerausfällen pro Jahr und kritisieren, dass vor allem Gutverdienende profitieren würden.
           </p>
           <p className="text-amber-800">
-            <strong>Beispiel:</strong> Der Bundesrat argumentiert, dass bis zu 44'000 neue Vollzeitstellen entstehen könnten.
-            Die Gegner:innen warnen vor 630 Millionen Franken Steuerausfällen pro Jahr. Wer hat recht?
-            Bilden Sie sich Ihre eigene Meinung!
+            Wer hat recht? Bilden Sie sich Ihre eigene Meinung, indem Sie alle Perspektiven kennenlernen!
           </p>
         </div>
 

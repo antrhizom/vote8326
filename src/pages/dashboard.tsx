@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import { signOut } from 'firebase/auth'
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
-import { BookOpen, Trophy, LogOut, Award, ChevronRight, CheckCircle2, TrendingUp, Users, Star, Info, HelpCircle, X, ArrowRight, Lightbulb } from 'lucide-react'
+import { BookOpen, Trophy, LogOut, Award, ChevronRight, CheckCircle2, TrendingUp, Users, Star, Info, X, ArrowRight, Lightbulb, Clock } from 'lucide-react'
 import { learningAreas, getAreaProgress, moduleData } from '@/lib/abstimmungModuleContent'
 
 // Tutorial Steps Definition
@@ -39,7 +39,7 @@ const TUTORIAL_STEPS: { id: string; title: string; description: string; highligh
   {
     id: 'badges',
     title: '🏅 Badges & Zertifikate',
-    description: 'Für jedes abgeschlossene Modul mit mindestens 60% erhalten Sie ein Badge. Bei 3 Modulen mit 60% Durchschnitt erhalten Sie ein Zertifikat!',
+    description: 'Für jedes abgeschlossene Modul mit mindestens 60% Lernerfolg erhalten Sie ein Badge. Ein Schlusszertifikat wird ausgestellt, wenn Sie mindestens 3 Module mit einem durchschnittlichen Lernerfolg von 60% abgeschlossen haben.',
     highlight: 'badges-section',
     position: 'bottom-left'
   },
@@ -506,7 +506,7 @@ export default function AbstimmungDashboard() {
         className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all group"
         title="Hilfe & Tutorial"
       >
-        <HelpCircle className="h-6 w-6" />
+        <Info className="h-6 w-6" />
         <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
           Hilfe anzeigen
         </span>
@@ -926,6 +926,15 @@ function LearningAreaCard({ area, progress, modules, userData, onModuleClick, on
   )
 }
 
+// Zeitangaben für die Module
+const MODULE_DURATIONS: { [key: string]: string } = {
+  ausgangslage: '20 Min.',
+  grundlagen: '15 Min.',
+  procontra: '25 Min.',
+  vertiefung: '15 Min.',
+  spielerisch: '15 Min.'
+}
+
 // Komponente für Modul-Button
 interface ModuleButtonProps {
   moduleId: string
@@ -937,6 +946,8 @@ interface ModuleButtonProps {
 }
 
 function ModuleButton({ moduleId, moduleTitle, completed, score, progress, onClick }: ModuleButtonProps) {
+  const duration = MODULE_DURATIONS[moduleId] || '15 Min.'
+
   return (
     <button
       onClick={onClick}
@@ -962,8 +973,15 @@ function ModuleButton({ moduleId, moduleTitle, completed, score, progress, onCli
         </div>
         <div className="text-left">
           <div className="font-semibold text-gray-900">{moduleTitle}</div>
-          <div className="text-sm text-gray-600">
-            {completed ? `Abgeschlossen - ${score} Punkte` : progress > 0 ? `In Bearbeitung - ${progress}%` : 'Noch nicht begonnen'}
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            <span className="flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" />
+              {duration}
+            </span>
+            <span className="text-gray-400">•</span>
+            <span>
+              {completed ? `${score} Punkte` : progress > 0 ? `${progress}% erledigt` : 'Noch nicht begonnen'}
+            </span>
           </div>
         </div>
       </div>

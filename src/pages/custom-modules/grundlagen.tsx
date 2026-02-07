@@ -243,12 +243,19 @@ export default function GrundlagenPage() {
               Wie viele zusätzliche Steuererklärungen müssten verarbeitet werden? Beantworten Sie anschliessend
               vier Verständnisfragen zum Video.
             </p>
-            <p className="text-gray-700">
+            <p className="text-gray-700 mb-3">
               Die <strong>SRF Radio-Beiträge</strong> zeigen unterschiedliche Perspektiven: Der Beitrag «Rendez-vous»
               erklärt, wer von der Reform profitiert und wer verliert – mit Statements von Politikerinnen verschiedener
               Parteien. Der Beitrag «Echo der Zeit» analysiert die Auswirkungen auf den Arbeitsmarkt: Laut Studien
               könnten bis zu 16'000 neue Vollzeitstellen entstehen, da sich Mehrarbeit für Verheiratete mehr lohnen würde.
             </p>
+            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
+              <p className="text-blue-800">
+                <strong>📅 Wichtig:</strong> Wird die Vorlage am 8. März 2026 angenommen, tritt das Gesetz
+                <strong> spätestens 2032</strong> in Kraft. Der Bundesrat könnte auch ein früheres Datum bestimmen,
+                sobald die Steuerbehörden bereit sind (Umstellung der Systeme, Formulare und IT-Infrastruktur).
+              </p>
+            </div>
           </div>
 
           <div className="space-y-3">
@@ -523,14 +530,29 @@ export default function GrundlagenPage() {
 
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
           {/* AUDIO AUSWAHL */}
-          {!selectedAudio && !firstAudioDone && (
+          {!selectedAudio && (
             <div className="space-y-4">
-              <h3 className="font-bold text-gray-900 text-center text-lg">Wählen Sie einen Beitrag (Pflicht):</h3>
+              {firstAudioDone && (
+                <div className="bg-green-100 border border-green-300 rounded-xl p-4 text-center mb-4">
+                  <CheckCircle2 className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                  <p className="text-green-800 font-semibold">Pflicht-Audio abgeschlossen! (+50 Punkte)</p>
+                  <p className="text-green-700 text-sm">Sie können die Beiträge weiterhin anhören und Ihre Antworten überprüfen.</p>
+                </div>
+              )}
+              <h3 className="font-bold text-gray-900 text-center text-lg">
+                {firstAudioDone ? 'Beiträge nochmals anhören:' : 'Wählen Sie einen Beitrag (Pflicht):'}
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <button onClick={() => setSelectedAudio('rendezvous')}
-                  className="p-6 rounded-xl border-2 border-red-200 bg-white hover:border-red-400 hover:shadow-md text-left transition-all">
+                  className={`p-6 rounded-xl border-2 text-left transition-all ${
+                    firstAudioDone && matchingSubmitted
+                      ? 'border-green-300 bg-green-50 hover:border-green-400'
+                      : 'border-red-200 bg-white hover:border-red-400 hover:shadow-md'
+                  }`}>
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="bg-red-600 p-3 rounded-lg"><Volume2 className="h-6 w-6 text-white" /></div>
+                    <div className={`p-3 rounded-lg ${firstAudioDone && matchingSubmitted ? 'bg-green-500' : 'bg-red-600'}`}>
+                      {firstAudioDone && matchingSubmitted ? <CheckCircle2 className="h-6 w-6 text-white" /> : <Volume2 className="h-6 w-6 text-white" />}
+                    </div>
                     <div>
                       <p className="font-bold text-gray-900">SRF Rendez-vous</p>
                       <p className="text-sm text-gray-500">ca. 4 Minuten</p>
@@ -540,9 +562,15 @@ export default function GrundlagenPage() {
                 </button>
 
                 <button onClick={() => setSelectedAudio('echo')}
-                  className="p-6 rounded-xl border-2 border-red-200 bg-white hover:border-red-400 hover:shadow-md text-left transition-all">
+                  className={`p-6 rounded-xl border-2 text-left transition-all ${
+                    firstAudioDone && echoQuizSubmitted
+                      ? 'border-green-300 bg-green-50 hover:border-green-400'
+                      : 'border-red-200 bg-white hover:border-red-400 hover:shadow-md'
+                  }`}>
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="bg-red-600 p-3 rounded-lg"><Volume2 className="h-6 w-6 text-white" /></div>
+                    <div className={`p-3 rounded-lg ${firstAudioDone && echoQuizSubmitted ? 'bg-green-500' : 'bg-red-600'}`}>
+                      {firstAudioDone && echoQuizSubmitted ? <CheckCircle2 className="h-6 w-6 text-white" /> : <Volume2 className="h-6 w-6 text-white" />}
+                    </div>
                     <div>
                       <p className="font-bold text-gray-900">SRF Echo der Zeit</p>
                       <p className="text-sm text-gray-500">ca. 5 Minuten</p>
@@ -555,7 +583,7 @@ export default function GrundlagenPage() {
           )}
 
           {/* RENDEZ-VOUS */}
-          {selectedAudio === 'rendezvous' && !firstAudioDone && (
+          {selectedAudio === 'rendezvous' && (
             <div className="space-y-6">
               <button onClick={() => setSelectedAudio(null)} className="text-sm text-gray-500 hover:text-gray-700">← Andere Auswahl</button>
 
@@ -671,7 +699,7 @@ export default function GrundlagenPage() {
           )}
 
           {/* ECHO DER ZEIT */}
-          {selectedAudio === 'echo' && !firstAudioDone && (
+          {selectedAudio === 'echo' && (
             <div className="space-y-6">
               <button onClick={() => setSelectedAudio(null)} className="text-sm text-gray-500 hover:text-gray-700">← Andere Auswahl</button>
 
@@ -814,14 +842,8 @@ export default function GrundlagenPage() {
           )}
 
           {/* BONUS AUDIO */}
-          {firstAudioDone && !bonusAudioDone && (
-            <div className="space-y-6">
-              <div className="bg-green-100 border border-green-300 rounded-xl p-6 text-center">
-                <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-3" />
-                <h3 className="text-xl font-bold text-green-800 mb-2">Pflicht-Audio abgeschlossen!</h3>
-                <p className="text-green-700">Sie haben 50 Punkte erhalten.</p>
-              </div>
-
+          {firstAudioDone && !bonusAudioDone && !selectedAudio && (
+            <div className="mt-6">
               <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-300 rounded-xl p-6">
                 <div className="flex items-start gap-4">
                   <div className="bg-yellow-400 p-3 rounded-xl"><Star className="h-6 w-6 text-white" /></div>
@@ -941,8 +963,8 @@ export default function GrundlagenPage() {
             </div>
           )}
 
-          {firstAudioDone && bonusAudioDone && (
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-6 text-white text-center">
+          {firstAudioDone && bonusAudioDone && !selectedAudio && (
+            <div className="mt-6 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-6 text-white text-center">
               <div className="text-4xl mb-3">🎉</div>
               <h3 className="text-xl font-bold mb-2">Alle Audios abgeschlossen!</h3>
               <p className="text-green-100 mb-2">Pflicht: 50 Punkte ✓</p>

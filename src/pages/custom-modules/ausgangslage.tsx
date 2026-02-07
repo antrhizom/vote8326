@@ -5,10 +5,10 @@ import { auth, db } from '@/lib/firebase'
 import {
   ArrowLeft, CheckCircle2, Award, ChevronDown, ChevronUp, X,
   Vote, Film, ExternalLink, BarChart3, Scale, Building2,
-  Users, Calendar, Sparkles, Star, Lightbulb, ArrowRight, Info
+  Users, Calendar, Sparkles, Star, Lightbulb, ArrowRight, Info, Glasses
 } from 'lucide-react'
 
-// Tutorial Steps für das Ausgangslage-Modul (Übersicht)
+// Tutorial Steps für das Ausgangslage-Modul (Übersicht) - nur für erste Seite
 const TUTORIAL_STEPS = [
   {
     id: 'welcome',
@@ -20,111 +20,44 @@ const TUTORIAL_STEPS = [
   {
     id: 'chapter1',
     title: '📊 Kapitel 1: Ihre Ausgangslage',
-    description: 'Zuerst füllen Sie eine kurze Umfrage aus und reflektieren Ihre persönliche Situation. Wie werden Sie heute besteuert? Würde sich für Sie etwas ändern?',
+    description: 'Zuerst füllen Sie eine kurze Umfrage aus und reflektieren Ihre persönliche Situation.',
     highlight: 'chapter-survey',
     position: 'center'
   },
   {
     id: 'chapter2',
     title: '🗳️ Kapitel 2: Referendum verstehen',
-    description: 'Im zweiten Kapitel lernen Sie, wie ein Referendum funktioniert. Sie entdecken den Zeitstrahl der Gesetzgebung und verstehen, warum diese Abstimmung so lange gedauert hat.',
+    description: 'Im zweiten Kapitel lernen Sie, wie ein Referendum funktioniert und wie lange politische Prozesse dauern können.',
     highlight: 'chapter-referendum',
     position: 'center'
   },
   {
     id: 'chapter3',
     title: '🎬 Kapitel 3: Geschichte im Video',
-    description: 'Im dritten Kapitel sehen Sie ein Erklärvideo zur Geschichte der Heiratsstrafe und bearbeiten interaktive Übungen dazu.',
+    description: 'Im dritten Kapitel sehen Sie ein Erklärvideo zur Geschichte der Heiratsstrafe.',
     highlight: 'chapter-video',
     position: 'center'
   },
   {
     id: 'infoboxes',
     title: '📰 Wichtige Hintergrundinformationen',
-    description: 'In den blauen und grünen Info-Boxen finden Sie aktuelle Zitate und Fakten aus Qualitätsmedien. Diese helfen Ihnen, die Abstimmung besser einzuordnen.',
+    description: 'In den blauen und grünen Info-Boxen finden Sie aktuelle Zitate und Fakten aus Qualitätsmedien.',
     highlight: 'info-boxes',
     position: 'center'
   },
   {
-    id: 'points',
-    title: '⭐ Punkte sammeln',
-    description: 'Für jede abgeschlossene Aufgabe erhalten Sie Punkte. Oben rechts sehen Sie Ihren aktuellen Punktestand. Ziel: Sammeln Sie möglichst viele Punkte!',
-    highlight: 'points-display',
+    id: 'readinghelp',
+    title: '👓 Lesehilfe aktivieren',
+    description: 'Unten rechts finden Sie einen Brillen-Button. Klicken Sie darauf, um wichtige Texte hervorzuheben, die Sie lesen sollten.',
+    highlight: 'reading-help-btn',
     position: 'center'
   },
   {
     id: 'start',
     title: 'Los geht\'s! 🚀',
-    description: 'Klicken Sie auf Kapitel 1, um zu beginnen. Sie können jederzeit zwischen den Kapiteln wechseln. Viel Erfolg!',
+    description: 'Klicken Sie auf Kapitel 1, um zu beginnen. Viel Erfolg!',
     highlight: null,
     position: 'center'
-  }
-]
-
-// Tutorial Steps für Kapitel 1 (Survey)
-const CHAPTER1_TUTORIAL = [
-  {
-    id: 'intro',
-    title: '📊 Kapitel 1: Umfrage & Ergebnisse',
-    description: 'In diesem Kapitel füllen Sie zuerst eine kurze Umfrage aus und können anschliessend die Ergebnisse aller Teilnehmer:innen vergleichen.',
-  },
-  {
-    id: 'survey',
-    title: '📝 Aufgabe 1: Umfrage',
-    description: 'Beantworten Sie die Fragen zur Individualbesteuerung. So reflektieren Sie Ihre eigene Ausgangslage und sammeln 15 Punkte.',
-  },
-  {
-    id: 'results',
-    title: '📈 Aufgabe 2: Ergebnisse',
-    description: 'Nach der Umfrage können Sie die Ergebnisse aller Teilnehmer:innen einsehen. Tipp: Klicken Sie auf die Filter, um nach Gruppen zu filtern!',
-  }
-]
-
-// Tutorial Steps für Kapitel 2 (Referendum)
-const CHAPTER2_TUTORIAL = [
-  {
-    id: 'intro',
-    title: '🗳️ Kapitel 2: Referendum & Gesetzgebung',
-    description: 'Lernen Sie, wie das Referendum als Instrument der direkten Demokratie funktioniert.',
-  },
-  {
-    id: 'cards',
-    title: '🎴 Aufgabe 1: Referendum-Arten',
-    description: 'Klicken Sie auf alle vier Karten, um die verschiedenen Arten von Referenden kennenzulernen.',
-  },
-  {
-    id: 'timeline',
-    title: '📅 Aufgabe 2: Zeitstrahl',
-    description: 'Entdecken Sie, wie lange der Weg zur Abstimmung gedauert hat – von 1984 bis 2026!',
-  },
-  {
-    id: 'matching',
-    title: '🔗 Aufgabe 3: Begriffe zuordnen',
-    description: 'Testen Sie Ihr Wissen und ordnen Sie die Begriffe den richtigen Referendum-Arten zu.',
-  }
-]
-
-// Tutorial Steps für Kapitel 3 (Video)
-const CHAPTER3_TUTORIAL = [
-  {
-    id: 'intro',
-    title: '🎬 Kapitel 3: Geschichte der Heiratsstrafe',
-    description: 'In diesem Kapitel erfahren Sie die bewegte Geschichte der Heiratsstrafe durch ein Video und interaktive Übungen.',
-  },
-  {
-    id: 'video',
-    title: '📺 Video anschauen',
-    description: 'Schauen Sie das Erklärvideo zur Geschichte der Heiratsstrafe. Es zeigt, warum es über 40 Jahre gedauert hat, bis eine Lösung zur Abstimmung kommt.',
-  },
-  {
-    id: 'flipcards',
-    title: '🎴 Aufgabe 1: Schlüsselbegriffe',
-    description: 'Drehen Sie alle Flipcards um, um die wichtigsten Begriffe zu lernen.',
-  },
-  {
-    id: 'quiz',
-    title: '❓ Aufgabe 2: Verständnisfragen',
-    description: 'Beantworten Sie die Fragen zum Video. Die Fragen folgen der chronologischen Reihenfolge des Videos.',
   }
 ]
 
@@ -157,17 +90,12 @@ export default function AusgangslagePage() {
   const [videoQuizAnswers, setVideoQuizAnswers] = useState<{[key: string]: string}>({})
   const [videoQuizSubmitted, setVideoQuizSubmitted] = useState(false)
 
-  // Tutorial states (Übersicht)
+  // Tutorial states (nur für Übersicht)
   const [showTutorial, setShowTutorial] = useState(false)
   const [tutorialStep, setTutorialStep] = useState(0)
 
-  // Tutorial states für Kapitel
-  const [showChapter1Tutorial, setShowChapter1Tutorial] = useState(false)
-  const [chapter1TutorialStep, setChapter1TutorialStep] = useState(0)
-  const [showChapter2Tutorial, setShowChapter2Tutorial] = useState(false)
-  const [chapter2TutorialStep, setChapter2TutorialStep] = useState(0)
-  const [showChapter3Tutorial, setShowChapter3Tutorial] = useState(false)
-  const [chapter3TutorialStep, setChapter3TutorialStep] = useState(0)
+  // Lesehilfe state
+  const [readingHelpActive, setReadingHelpActive] = useState(false)
 
   const maxPoints = 150
 
@@ -334,6 +262,24 @@ export default function AusgangslagePage() {
     .fade-in {
       animation: fadeIn 0.3s ease-out;
     }
+    /* Lesehilfe Styles */
+    .reading-highlight {
+      background: linear-gradient(120deg, #fef08a 0%, #fde047 100%) !important;
+      box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.4);
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    .reading-highlight-box {
+      box-shadow: 0 0 0 4px #f59e0b, 0 0 20px rgba(245, 158, 11, 0.3) !important;
+      transform: scale(1.01);
+    }
+    @keyframes reading-pulse {
+      0%, 100% { box-shadow: 0 0 0 4px #f59e0b, 0 0 20px rgba(245, 158, 11, 0.3); }
+      50% { box-shadow: 0 0 0 6px #f59e0b, 0 0 30px rgba(245, 158, 11, 0.4); }
+    }
+    .reading-active .reading-highlight-box {
+      animation: reading-pulse 2s ease-in-out infinite;
+    }
   `
 
   // Tutorial-Funktionen
@@ -492,20 +438,40 @@ export default function AusgangslagePage() {
           </div>
         )}
 
-        {/* Help Button */}
-        <button
-          onClick={() => {
-            setTutorialStep(0)
-            setShowTutorial(true)
-          }}
-          className="fixed bottom-6 right-6 z-30 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all group"
-          title="Hilfe & Tutorial"
-        >
-          <Info className="h-6 w-6" />
-          <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-            Hilfe anzeigen
-          </span>
-        </button>
+        {/* Floating Buttons: Help & Reading Help */}
+        <div className="fixed bottom-6 right-6 z-30 flex flex-col gap-3">
+          {/* Lesehilfe Button */}
+          <button
+            id="reading-help-btn"
+            onClick={() => setReadingHelpActive(!readingHelpActive)}
+            className={`p-4 rounded-full shadow-lg hover:shadow-xl transition-all group ${
+              readingHelpActive
+                ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
+                : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
+            } ${showTutorial && currentTutorialStep.highlight === 'reading-help-btn' ? 'tutorial-highlight' : ''}`}
+            title={readingHelpActive ? 'Lesehilfe deaktivieren' : 'Lesehilfe aktivieren'}
+          >
+            <Glasses className="h-6 w-6" />
+            <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+              {readingHelpActive ? 'Lesehilfe aus' : 'Lesehilfe an'}
+            </span>
+          </button>
+
+          {/* Help Button */}
+          <button
+            onClick={() => {
+              setTutorialStep(0)
+              setShowTutorial(true)
+            }}
+            className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all group"
+            title="Hilfe & Tutorial"
+          >
+            <Info className="h-6 w-6" />
+            <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+              Hilfe anzeigen
+            </span>
+          </button>
+        </div>
 
         {/* Header */}
         <header className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
@@ -535,9 +501,20 @@ export default function AusgangslagePage() {
           </div>
         </header>
 
-        <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+        <main className={`max-w-4xl mx-auto px-4 py-6 space-y-4 ${readingHelpActive ? 'reading-active' : ''}`}>
+          {/* Lesehilfe Info-Banner */}
+          {readingHelpActive && (
+            <div className="bg-amber-100 border border-amber-300 rounded-xl p-4 flex items-center gap-3 animate-pulse">
+              <Glasses className="h-6 w-6 text-amber-600 flex-shrink-0" />
+              <div>
+                <p className="text-amber-800 font-semibold text-sm">Lesehilfe aktiv</p>
+                <p className="text-amber-700 text-xs">Die gelb markierten Bereiche enthalten wichtige Informationen, die Sie lesen sollten.</p>
+              </div>
+            </div>
+          )}
+
           {/* Intro Text */}
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div className={`bg-white rounded-xl p-6 shadow-sm transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}>
             <p className="text-gray-700 mb-3">
               Bevor Sie in die Details der Abstimmung eintauchen, erkunden Sie Ihre <strong>persönliche Ausgangslage</strong>.
               In einer kurzen Umfrage reflektieren Sie Ihre eigene Situation – zum Beispiel: Wie werden Sie heute besteuert?
@@ -563,7 +540,7 @@ export default function AusgangslagePage() {
             className={`space-y-4 ${showTutorial && currentTutorialStep.highlight === 'info-boxes' ? 'tutorial-highlight p-2 -m-2' : ''}`}
           >
           {/* Info-Box: Indirekter Gegenvorschlag */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 shadow-sm border border-blue-200">
+          <div className={`bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 shadow-sm border border-blue-200 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}>
             <div className="flex items-start gap-3">
               <div className="bg-blue-500 p-2 rounded-lg text-white">
                 <Scale className="h-5 w-5" />
@@ -591,7 +568,7 @@ export default function AusgangslagePage() {
           </div>
 
           {/* Info-Box: Wer profitiert? */}
-          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-5 shadow-sm border border-emerald-200">
+          <div className={`bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-5 shadow-sm border border-emerald-200 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}>
             <div className="flex items-start gap-3">
               <div className="bg-emerald-500 p-2 rounded-lg text-white">
                 <BarChart3 className="h-5 w-5" />
@@ -733,82 +710,22 @@ export default function AusgangslagePage() {
 
   // ========== CHAPTER: SURVEY ==========
   if (activeChapter === 'survey') {
-    // Tutorial beim ersten Öffnen anzeigen
-    const chapter1TutorialSeen = typeof window !== 'undefined' && localStorage.getItem('ausgangslage_chapter1_tutorial_seen')
-    if (!chapter1TutorialSeen && !showChapter1Tutorial && completedSections.size === 0) {
-      setShowChapter1Tutorial(true)
-    }
-
-    const closeChapter1Tutorial = () => {
-      setShowChapter1Tutorial(false)
-      setChapter1TutorialStep(0)
-      localStorage.setItem('ausgangslage_chapter1_tutorial_seen', 'true')
-    }
-
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50">
+      <div className={`min-h-screen bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 ${readingHelpActive ? 'reading-active' : ''}`}>
         <style dangerouslySetInnerHTML={{ __html: styles }} />
 
-        {/* Chapter 1 Tutorial Overlay */}
-        {showChapter1Tutorial && (
-          <>
-            <div className="fixed inset-0 z-40 bg-black/50" onClick={closeChapter1Tutorial} />
-            <div className="fixed z-50 bottom-8 left-1/2 -translate-x-1/2 max-w-md w-full px-4">
-              <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-                <div className="h-1.5 bg-gray-200">
-                  <div
-                    className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-300"
-                    style={{ width: `${((chapter1TutorialStep + 1) / CHAPTER1_TUTORIAL.length) * 100}%` }}
-                  />
-                </div>
-                <div className="p-6">
-                  <button onClick={closeChapter1Tutorial} className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600">
-                    <X className="h-5 w-5" />
-                  </button>
-                  <div className="absolute top-4 left-4 bg-purple-100 text-purple-700 text-xs font-bold px-2 py-1 rounded-full">
-                    {chapter1TutorialStep + 1} / {CHAPTER1_TUTORIAL.length}
-                  </div>
-                  <div className="flex justify-center mb-4 mt-2">
-                    <div className="bg-gradient-to-br from-purple-100 to-indigo-100 p-4 rounded-full">
-                      <Sparkles className="h-8 w-8 text-purple-600" />
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 text-center mb-3">
-                    {CHAPTER1_TUTORIAL[chapter1TutorialStep]?.title}
-                  </h3>
-                  <p className="text-gray-600 text-center mb-6">
-                    {CHAPTER1_TUTORIAL[chapter1TutorialStep]?.description}
-                  </p>
-                  <div className="flex gap-3">
-                    {chapter1TutorialStep > 0 && (
-                      <button
-                        onClick={() => setChapter1TutorialStep(chapter1TutorialStep - 1)}
-                        className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg"
-                      >
-                        Zurück
-                      </button>
-                    )}
-                    <button
-                      onClick={() => {
-                        if (chapter1TutorialStep < CHAPTER1_TUTORIAL.length - 1) {
-                          setChapter1TutorialStep(chapter1TutorialStep + 1)
-                        } else {
-                          closeChapter1Tutorial()
-                        }
-                      }}
-                      className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-semibold rounded-lg flex items-center justify-center gap-2"
-                    >
-                      {chapter1TutorialStep === CHAPTER1_TUTORIAL.length - 1 ? 'Los geht\'s!' : <>Weiter <ArrowRight className="h-4 w-4" /></>}
-                    </button>
-                  </div>
-                  <button onClick={closeChapter1Tutorial} className="w-full mt-3 py-2 text-sm text-gray-500 hover:text-gray-700">
-                    Überspringen
-                  </button>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
+        {/* Lesehilfe Button */}
+        <button
+          onClick={() => setReadingHelpActive(!readingHelpActive)}
+          className={`fixed bottom-6 right-6 z-30 p-4 rounded-full shadow-lg hover:shadow-xl transition-all ${
+            readingHelpActive
+              ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
+              : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
+          }`}
+          title={readingHelpActive ? 'Lesehilfe deaktivieren' : 'Lesehilfe aktivieren'}
+        >
+          <Glasses className="h-6 w-6" />
+        </button>
 
         <header className="bg-gradient-to-r from-purple-600 to-purple-700 text-white sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
@@ -826,6 +743,17 @@ export default function AusgangslagePage() {
         </header>
 
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+          {/* Lesehilfe Info-Banner */}
+          {readingHelpActive && (
+            <div className="bg-amber-100 border border-amber-300 rounded-xl p-4 flex items-center gap-3">
+              <Glasses className="h-6 w-6 text-amber-600 flex-shrink-0" />
+              <div>
+                <p className="text-amber-800 font-semibold text-sm">Lesehilfe aktiv</p>
+                <p className="text-amber-700 text-xs">Die gelb markierten Bereiche enthalten wichtige Informationen.</p>
+              </div>
+            </div>
+          )}
+
           {/* Aufgabe 1: Umfrage */}
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
             <div className="bg-purple-50 p-4 border-b flex items-center justify-between">
@@ -842,9 +770,9 @@ export default function AusgangslagePage() {
             </div>
             
             <div className="p-6">
-              <div className="bg-purple-50 border-l-4 border-purple-500 p-4 mb-4">
+              <div className={`bg-purple-50 border-l-4 border-purple-500 p-4 mb-4 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}>
                 <p className="text-purple-800 text-sm">
-                  <strong>🎯 Warum diese Umfrage?</strong> Bevor Sie in die Inhalte eintauchen, interessiert uns Ihre 
+                  <strong>🎯 Warum diese Umfrage?</strong> Bevor Sie in die Inhalte eintauchen, interessiert uns Ihre
                   persönliche Ausgangslage. Die Umfrage hilft Ihnen, Ihre eigene Position zu reflektieren.
                 </p>
               </div>
@@ -884,10 +812,10 @@ export default function AusgangslagePage() {
             </div>
             
             <div className="p-6">
-              <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-4">
+              <div className={`bg-amber-50 border-l-4 border-amber-400 p-4 mb-4 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}>
                 <p className="text-amber-800 text-sm">
-                  <strong>💡 Tipp:</strong> In der Ergebnisansicht können Sie auf die <strong>Antwortbezeichnungen</strong> klicken, 
-                  um die Ergebnisse entsprechend zu filtern. So sehen Sie z.B. nur die Antworten von Personen, 
+                  <strong>💡 Tipp:</strong> In der Ergebnisansicht können Sie auf die <strong>Antwortbezeichnungen</strong> klicken,
+                  um die Ergebnisse entsprechend zu filtern. So sehen Sie z.B. nur die Antworten von Personen,
                   die bereits Steuern zahlen, oder von bestimmten Altersgruppen.
                 </p>
               </div>
@@ -937,82 +865,22 @@ export default function AusgangslagePage() {
 
   // ========== CHAPTER: REFERENDUM ==========
   if (activeChapter === 'referendum') {
-    // Tutorial beim ersten Öffnen anzeigen
-    const chapter2TutorialSeen = typeof window !== 'undefined' && localStorage.getItem('ausgangslage_chapter2_tutorial_seen')
-    if (!chapter2TutorialSeen && !showChapter2Tutorial && !completedSections.has('referendum_info')) {
-      setShowChapter2Tutorial(true)
-    }
-
-    const closeChapter2Tutorial = () => {
-      setShowChapter2Tutorial(false)
-      setChapter2TutorialStep(0)
-      localStorage.setItem('ausgangslage_chapter2_tutorial_seen', 'true')
-    }
-
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50">
+      <div className={`min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50 ${readingHelpActive ? 'reading-active' : ''}`}>
         <style dangerouslySetInnerHTML={{ __html: styles }} />
 
-        {/* Chapter 2 Tutorial Overlay */}
-        {showChapter2Tutorial && (
-          <>
-            <div className="fixed inset-0 z-40 bg-black/50" onClick={closeChapter2Tutorial} />
-            <div className="fixed z-50 bottom-8 left-1/2 -translate-x-1/2 max-w-md w-full px-4">
-              <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-                <div className="h-1.5 bg-gray-200">
-                  <div
-                    className="h-full bg-gradient-to-r from-indigo-500 to-blue-500 transition-all duration-300"
-                    style={{ width: `${((chapter2TutorialStep + 1) / CHAPTER2_TUTORIAL.length) * 100}%` }}
-                  />
-                </div>
-                <div className="p-6">
-                  <button onClick={closeChapter2Tutorial} className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600">
-                    <X className="h-5 w-5" />
-                  </button>
-                  <div className="absolute top-4 left-4 bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-1 rounded-full">
-                    {chapter2TutorialStep + 1} / {CHAPTER2_TUTORIAL.length}
-                  </div>
-                  <div className="flex justify-center mb-4 mt-2">
-                    <div className="bg-gradient-to-br from-indigo-100 to-blue-100 p-4 rounded-full">
-                      <Vote className="h-8 w-8 text-indigo-600" />
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 text-center mb-3">
-                    {CHAPTER2_TUTORIAL[chapter2TutorialStep]?.title}
-                  </h3>
-                  <p className="text-gray-600 text-center mb-6">
-                    {CHAPTER2_TUTORIAL[chapter2TutorialStep]?.description}
-                  </p>
-                  <div className="flex gap-3">
-                    {chapter2TutorialStep > 0 && (
-                      <button
-                        onClick={() => setChapter2TutorialStep(chapter2TutorialStep - 1)}
-                        className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg"
-                      >
-                        Zurück
-                      </button>
-                    )}
-                    <button
-                      onClick={() => {
-                        if (chapter2TutorialStep < CHAPTER2_TUTORIAL.length - 1) {
-                          setChapter2TutorialStep(chapter2TutorialStep + 1)
-                        } else {
-                          closeChapter2Tutorial()
-                        }
-                      }}
-                      className="flex-1 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-semibold rounded-lg flex items-center justify-center gap-2"
-                    >
-                      {chapter2TutorialStep === CHAPTER2_TUTORIAL.length - 1 ? 'Los geht\'s!' : <>Weiter <ArrowRight className="h-4 w-4" /></>}
-                    </button>
-                  </div>
-                  <button onClick={closeChapter2Tutorial} className="w-full mt-3 py-2 text-sm text-gray-500 hover:text-gray-700">
-                    Überspringen
-                  </button>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
+        {/* Lesehilfe Button */}
+        <button
+          onClick={() => setReadingHelpActive(!readingHelpActive)}
+          className={`fixed bottom-6 right-6 z-30 p-4 rounded-full shadow-lg hover:shadow-xl transition-all ${
+            readingHelpActive
+              ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
+              : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
+          }`}
+          title={readingHelpActive ? 'Lesehilfe deaktivieren' : 'Lesehilfe aktivieren'}
+        >
+          <Glasses className="h-6 w-6" />
+        </button>
 
         <header className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
@@ -1030,8 +898,19 @@ export default function AusgangslagePage() {
         </header>
 
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+          {/* Lesehilfe Info-Banner */}
+          {readingHelpActive && (
+            <div className="bg-amber-100 border border-amber-300 rounded-xl p-4 flex items-center gap-3">
+              <Glasses className="h-6 w-6 text-amber-600 flex-shrink-0" />
+              <div>
+                <p className="text-amber-800 font-semibold text-sm">Lesehilfe aktiv</p>
+                <p className="text-amber-700 text-xs">Die gelb markierten Bereiche enthalten wichtige Informationen.</p>
+              </div>
+            </div>
+          )}
+
           {/* Einführung */}
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div className={`bg-white rounded-xl p-6 shadow-sm transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}>
             <p className="text-gray-700 mb-3">
               Das Referendum ist ein zentrales Instrument der <strong>direkten Demokratie</strong> in der Schweiz.
               Es ermöglicht den Stimmberechtigten, über Entscheide des Parlaments das letzte Wort zu haben.
@@ -1307,82 +1186,22 @@ export default function AusgangslagePage() {
 
   // ========== CHAPTER: VIDEO ==========
   if (activeChapter === 'video') {
-    // Tutorial beim ersten Öffnen anzeigen
-    const chapter3TutorialSeen = typeof window !== 'undefined' && localStorage.getItem('ausgangslage_chapter3_tutorial_seen')
-    if (!chapter3TutorialSeen && !showChapter3Tutorial && !completedSections.has('flipcards')) {
-      setShowChapter3Tutorial(true)
-    }
-
-    const closeChapter3Tutorial = () => {
-      setShowChapter3Tutorial(false)
-      setChapter3TutorialStep(0)
-      localStorage.setItem('ausgangslage_chapter3_tutorial_seen', 'true')
-    }
-
     return (
-      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50">
+      <div className={`min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 ${readingHelpActive ? 'reading-active' : ''}`}>
         <style dangerouslySetInnerHTML={{ __html: styles }} />
 
-        {/* Chapter 3 Tutorial Overlay */}
-        {showChapter3Tutorial && (
-          <>
-            <div className="fixed inset-0 z-40 bg-black/50" onClick={closeChapter3Tutorial} />
-            <div className="fixed z-50 bottom-8 left-1/2 -translate-x-1/2 max-w-md w-full px-4">
-              <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-                <div className="h-1.5 bg-gray-200">
-                  <div
-                    className="h-full bg-gradient-to-r from-rose-500 to-pink-500 transition-all duration-300"
-                    style={{ width: `${((chapter3TutorialStep + 1) / CHAPTER3_TUTORIAL.length) * 100}%` }}
-                  />
-                </div>
-                <div className="p-6">
-                  <button onClick={closeChapter3Tutorial} className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600">
-                    <X className="h-5 w-5" />
-                  </button>
-                  <div className="absolute top-4 left-4 bg-rose-100 text-rose-700 text-xs font-bold px-2 py-1 rounded-full">
-                    {chapter3TutorialStep + 1} / {CHAPTER3_TUTORIAL.length}
-                  </div>
-                  <div className="flex justify-center mb-4 mt-2">
-                    <div className="bg-gradient-to-br from-rose-100 to-pink-100 p-4 rounded-full">
-                      <Film className="h-8 w-8 text-rose-600" />
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 text-center mb-3">
-                    {CHAPTER3_TUTORIAL[chapter3TutorialStep]?.title}
-                  </h3>
-                  <p className="text-gray-600 text-center mb-6">
-                    {CHAPTER3_TUTORIAL[chapter3TutorialStep]?.description}
-                  </p>
-                  <div className="flex gap-3">
-                    {chapter3TutorialStep > 0 && (
-                      <button
-                        onClick={() => setChapter3TutorialStep(chapter3TutorialStep - 1)}
-                        className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg"
-                      >
-                        Zurück
-                      </button>
-                    )}
-                    <button
-                      onClick={() => {
-                        if (chapter3TutorialStep < CHAPTER3_TUTORIAL.length - 1) {
-                          setChapter3TutorialStep(chapter3TutorialStep + 1)
-                        } else {
-                          closeChapter3Tutorial()
-                        }
-                      }}
-                      className="flex-1 py-3 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-semibold rounded-lg flex items-center justify-center gap-2"
-                    >
-                      {chapter3TutorialStep === CHAPTER3_TUTORIAL.length - 1 ? 'Los geht\'s!' : <>Weiter <ArrowRight className="h-4 w-4" /></>}
-                    </button>
-                  </div>
-                  <button onClick={closeChapter3Tutorial} className="w-full mt-3 py-2 text-sm text-gray-500 hover:text-gray-700">
-                    Überspringen
-                  </button>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
+        {/* Lesehilfe Button */}
+        <button
+          onClick={() => setReadingHelpActive(!readingHelpActive)}
+          className={`fixed bottom-6 right-6 z-30 p-4 rounded-full shadow-lg hover:shadow-xl transition-all ${
+            readingHelpActive
+              ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
+              : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
+          }`}
+          title={readingHelpActive ? 'Lesehilfe deaktivieren' : 'Lesehilfe aktivieren'}
+        >
+          <Glasses className="h-6 w-6" />
+        </button>
 
         <header className="bg-gradient-to-r from-rose-600 to-rose-700 text-white sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
@@ -1400,6 +1219,17 @@ export default function AusgangslagePage() {
         </header>
 
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+          {/* Lesehilfe Info-Banner */}
+          {readingHelpActive && (
+            <div className="bg-amber-100 border border-amber-300 rounded-xl p-4 flex items-center gap-3">
+              <Glasses className="h-6 w-6 text-amber-600 flex-shrink-0" />
+              <div>
+                <p className="text-amber-800 font-semibold text-sm">Lesehilfe aktiv</p>
+                <p className="text-amber-700 text-xs">Die gelb markierten Bereiche enthalten wichtige Informationen.</p>
+              </div>
+            </div>
+          )}
+
           {/* Video */}
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
             <div className="bg-rose-50 p-4 border-b">
@@ -1411,9 +1241,9 @@ export default function AusgangslagePage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="p-6">
-              <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-4">
+              <div className={`bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-4 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}>
                 <p className="text-amber-800 text-sm mb-2">
                   <strong>📖 Worum geht es?</strong> Dieses Video erklärt die bewegte Geschichte der Heiratsstrafe in der Schweiz.
                 </p>

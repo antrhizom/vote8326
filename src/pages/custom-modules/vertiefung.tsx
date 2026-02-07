@@ -277,6 +277,7 @@ export default function VertiefungPage() {
   // Zeitungsartikel-Bewertungen
   const [readArticles, setReadArticles] = useState<Set<string>>(new Set())
   const [articleRatings, setArticleRatings] = useState<{[key: string]: {lesefreundlichkeit: number, inhalt: number}}>({})
+  const [articleClicks, setArticleClicks] = useState<{[key: string]: number}>({})
 
   const maxPoints = 100
 
@@ -293,6 +294,10 @@ export default function VertiefungPage() {
             setTotalScore(data.score || 0)
             setBonusScore(data.bonusScore || 0)
             setCompletedSections(new Set(data.completedSections || []))
+            // Zeitungsartikel-Daten laden
+            if (data.readArticles) setReadArticles(new Set(data.readArticles))
+            if (data.articleRatings) setArticleRatings(data.articleRatings)
+            if (data.articleClicks) setArticleClicks(data.articleClicks)
           }
         }
       } catch (e) { console.error(e) }
@@ -343,7 +348,11 @@ export default function VertiefungPage() {
           bonusScore: bonus,
           progress: Math.round((score / maxPoints) * 100),
           completedSections: completed,
-          lastUpdated: new Date().toISOString()
+          lastUpdated: new Date().toISOString(),
+          // Zeitungsartikel-Daten speichern
+          readArticles: Array.from(readArticles),
+          articleRatings: articleRatings,
+          articleClicks: articleClicks
         }
 
         let totalPoints = 0
@@ -359,6 +368,67 @@ export default function VertiefungPage() {
         await updateDoc(userRef, { modules, totalPoints, totalBonus, overallProgress })
       }
     } catch (e) { console.error(e) }
+  }
+
+  // Speichert nur die Zeitungsartikel-Daten (ohne Punkte zu ändern)
+  const saveArticleData = async (newReadArticles: Set<string>, newRatings: {[key: string]: {lesefreundlichkeit: number, inhalt: number}}, newClicks: {[key: string]: number}) => {
+    const user = auth.currentUser
+    if (!user) return
+
+    try {
+      const userRef = doc(db, 'users', user.uid)
+      const userDoc = await getDoc(userRef)
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data()
+        const modules = userData.modules || {}
+
+        modules.vertiefung = {
+          ...modules.vertiefung,
+          readArticles: Array.from(newReadArticles),
+          articleRatings: newRatings,
+          articleClicks: newClicks,
+          lastUpdated: new Date().toISOString()
+        }
+
+        await updateDoc(userRef, { modules })
+      }
+    } catch (e) { console.error(e) }
+  }
+
+  // Artikel als gelesen markieren und speichern
+  const toggleArticleRead = async (articleId: string) => {
+    const newRead = new Set(readArticles)
+    if (newRead.has(articleId)) {
+      newRead.delete(articleId)
+    } else {
+      newRead.add(articleId)
+    }
+    setReadArticles(newRead)
+    await saveArticleData(newRead, articleRatings, articleClicks)
+  }
+
+  // Artikel bewerten und speichern
+  const rateArticle = async (articleId: string, category: 'lesefreundlichkeit' | 'inhalt', rating: number) => {
+    const newRatings = {
+      ...articleRatings,
+      [articleId]: {
+        ...articleRatings[articleId],
+        [category]: rating
+      }
+    }
+    setArticleRatings(newRatings)
+    await saveArticleData(readArticles, newRatings, articleClicks)
+  }
+
+  // Klick auf Artikel tracken
+  const trackArticleClick = async (articleId: string) => {
+    const newClicks = {
+      ...articleClicks,
+      [articleId]: (articleClicks[articleId] || 0) + 1
+    }
+    setArticleClicks(newClicks)
+    await saveArticleData(readArticles, articleRatings, newClicks)
   }
 
   const handleEventClick = (id: number) => {
@@ -523,20 +593,34 @@ export default function VertiefungPage() {
             </button>
           </div>
 
-          {/* Zeitungstextempfehlungen */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          {/* Zeitungstextempfehlungen - Freiwillige Aufgabe */}
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden border-2 border-dashed border-slate-300">
             <div className="bg-gradient-to-r from-slate-100 to-gray-100 p-4 border-b">
-              <div className="flex items-center gap-3">
-                <div className="bg-slate-600 p-2 rounded-lg">
-                  <Newspaper className="h-5 w-5 text-white" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-slate-600 p-2 rounded-lg">
+                    <Newspaper className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900">📰 Zeitungstextempfehlungen</h3>
+                    <p className="text-sm text-gray-500">Vertiefen Sie Ihr Wissen mit Qualitätsjournalismus</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-bold text-gray-900">Zeitungstextempfehlungen</h3>
-                  <p className="text-sm text-gray-500">Vertiefen Sie Ihr Wissen mit Qualitätsjournalismus</p>
+                <div className="flex flex-col items-end">
+                  <span className="px-3 py-1 bg-slate-200 text-slate-700 text-xs font-semibold rounded-full">
+                    📖 Freiwillig
+                  </span>
+                  <span className="text-xs text-gray-400 mt-1">Keine Punkte</span>
                 </div>
               </div>
             </div>
             <div className="p-5">
+              <div className="bg-emerald-50 border-l-4 border-emerald-400 p-3 rounded-r-lg mb-4">
+                <p className="text-emerald-800 text-sm">
+                  <strong>🎯 Freiwillige Vertiefung:</strong> Diese Texte sind <strong>optional</strong>, aber sehr empfehlenswert!
+                  Markieren Sie gelesene Artikel und bewerten Sie diese – Ihr Feedback hilft anderen Lernenden.
+                </p>
+              </div>
               <div className="bg-amber-50 border-l-4 border-amber-400 p-3 rounded-r-lg mb-4">
                 <p className="text-amber-800 text-sm">
                   <strong>💡 Hinweis:</strong> Diese Artikel sind z.T. hinter einer <strong>Paywall</strong>.
@@ -569,7 +653,7 @@ export default function VertiefungPage() {
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className={`px-2 py-0.5 ${bgClasses[article.color]} text-white text-xs font-semibold rounded`}>
                               {article.source}
                             </span>
@@ -579,6 +663,11 @@ export default function VertiefungPage() {
                               </span>
                             )}
                             <span className="text-xs text-gray-400">{article.date}</span>
+                            {articleClicks[article.id] > 0 && (
+                              <span className="text-xs text-gray-400 flex items-center gap-1">
+                                👁️ {articleClicks[article.id]}x aufgerufen
+                              </span>
+                            )}
                           </div>
                           <h4 className="font-semibold text-gray-900 mb-1">{article.title}</h4>
                           <p className="text-sm text-gray-600 mb-2">{article.description}</p>
@@ -586,6 +675,7 @@ export default function VertiefungPage() {
                             href={article.url}
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={() => trackArticleClick(article.id)}
                             className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 hover:underline"
                           >
                             <ExternalLink className="h-3 w-3" /> Artikel öffnen
@@ -594,15 +684,7 @@ export default function VertiefungPage() {
 
                         <div className="flex flex-col items-center gap-2">
                           <button
-                            onClick={() => {
-                              const newRead = new Set(readArticles)
-                              if (isRead) {
-                                newRead.delete(article.id)
-                              } else {
-                                newRead.add(article.id)
-                              }
-                              setReadArticles(newRead)
-                            }}
+                            onClick={() => toggleArticleRead(article.id)}
                             className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
                               isRead ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
@@ -623,13 +705,7 @@ export default function VertiefungPage() {
                                 {[1, 2, 3, 4, 5].map(star => (
                                   <button
                                     key={star}
-                                    onClick={() => setArticleRatings({
-                                      ...articleRatings,
-                                      [article.id]: {
-                                        ...articleRatings[article.id],
-                                        lesefreundlichkeit: star
-                                      }
-                                    })}
+                                    onClick={() => rateArticle(article.id, 'lesefreundlichkeit', star)}
                                     className={`text-lg transition-colors ${
                                       (rating?.lesefreundlichkeit || 0) >= star ? 'text-yellow-400' : 'text-gray-300'
                                     }`}
@@ -645,13 +721,7 @@ export default function VertiefungPage() {
                                 {[1, 2, 3, 4, 5].map(star => (
                                   <button
                                     key={star}
-                                    onClick={() => setArticleRatings({
-                                      ...articleRatings,
-                                      [article.id]: {
-                                        ...articleRatings[article.id],
-                                        inhalt: star
-                                      }
-                                    })}
+                                    onClick={() => rateArticle(article.id, 'inhalt', star)}
                                     className={`text-lg transition-colors ${
                                       (rating?.inhalt || 0) >= star ? 'text-yellow-400' : 'text-gray-300'
                                     }`}

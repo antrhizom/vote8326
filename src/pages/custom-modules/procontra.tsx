@@ -386,7 +386,7 @@ const SECTIONS: Section[] = [
     icon: 'Building',
     colorClass: 'from-purple-500 to-purple-600',
     bgColor: 'bg-purple-500',
-    intro: 'Anders als die Kantone begrüssen die Städte die Individualbesteuerung. Der Schweizerische Städteverband und die städtischen Finanzdirektoren sehen darin eine Vereinfachung des Steuersystems.',
+    intro: 'Anders als die Kantone begrüssen die Städte die Individualbesteuerung. Die Konferenz der städtischen Finanzdirektoren sieht darin eine Vereinfachung des Steuersystems: Keine Sonderregeln mehr für Ehepaare, keine Systemwechsel bei Heirat oder Scheidung. Die Stadt Winterthur – eines der grössten Steuerämter der Schweiz – rechnet vor, dass der Prüfaufwand langfristig sinken wird.',
     videoUrl: '',
     videoTitle: '',
     totalPoints: 40,
@@ -394,7 +394,7 @@ const SECTIONS: Section[] = [
       {
         type: 'info',
         title: 'Position des Städteverbands',
-        content: 'Die Städte erwarten ein wesentlich einfacheres Steuersystem. Anders als die Kantone argumentieren die städtischen Finanzdirektoren, dass die Individualbesteuerung die Steuerämter entlasten wird – nicht belasten.',
+        content: 'Während die Kantone von einem «Bürokratiemonster» sprechen, argumentieren die Städte genau umgekehrt: Heute existieren zwei parallele Steuersysteme – eines für Ledige, eines für Verheiratete. Bei Heirat, Scheidung oder Tod wechselt man zwischen diesen Systemen, was erheblichen Aufwand verursacht. Das Kreisschreiben der Eidgenössischen Steuerverwaltung zur Ehepaarbesteuerung umfasst über 40 Seiten mit Sonderbestimmungen! Ein einheitliches System würde diese Wechselfälle dauerhaft beseitigen.',
         highlight: '🔗 Mehr erfahren: staedteverband.ch/1543/de/die-stadte-begrussen-die-individualbesteuerung'
       },
       {
@@ -402,20 +402,20 @@ const SECTIONS: Section[] = [
         title: '🎴 Argumente der Städte',
         instruction: 'Drehen Sie die Karten:',
         cards: [
-          { front: 'Warum wird es einfacher?', back: 'Keine Sonderregeln mehr für Ehepaare: Ein einheitliches System für alle, unabhängig vom Zivilstand.', emoji: '📋' },
-          { front: 'Was passiert bei Heirat/Scheidung heute?', back: 'Wechsel zwischen zwei Systemen verursacht erheblichen Aufwand für Steuerämter und Steuerpflichtige.', emoji: '💍' },
-          { front: 'Was sagt Winterthur?', back: 'Eines der grössten Steuerämter der Schweiz: Mit Digitalisierung kann die zusätzliche Menge an Dossiers aufgefangen werden.', emoji: '🏙️' }
+          { front: 'Warum wird es einfacher?', back: 'Keine Sonderregeln mehr für Ehepaare: Ein einheitliches System für alle, unabhängig vom Zivilstand. Das Steuersystem bleibt für jede Person durchgehend gleich.', emoji: '📋' },
+          { front: 'Was passiert heute bei Heirat/Scheidung?', back: 'Systemwechsel: Von Einzelveranlagung zur gemeinsamen Veranlagung und zurück. Vermögen müssen aufgeteilt werden, neue Tarife gelten – das verursacht Mehraufwand.', emoji: '💍' },
+          { front: 'Was sagt Winterthur?', back: 'Die Regeln sind klar: Einkommen wird der Person zugerechnet, die es erzielt. Vermögen gehört dem Eigentümer. Mit Digitalisierung kann die Mehrarbeit aufgefangen werden.', emoji: '🏙️' }
         ],
         points: 15
       },
       {
         type: 'term_reveal',
-        title: 'Argumente der Städte',
+        title: 'Kernargumente im Detail',
         instruction: 'Klicken Sie, um mehr zu erfahren:',
         terms: [
-          { term: 'Kein Systemwechsel', definition: 'Heute wechselt man bei Heirat/Scheidung zwischen zwei Steuersystemen.', example: 'Das verursacht Mehraufwand für Steuerämter.' },
-          { term: 'Einfachere Regeln', definition: 'Jede Person deklariert ihr eigenes Einkommen und Vermögen.', example: 'Klare Zuordnung: Wer verdient es, wem gehört es.' },
-          { term: 'Digitalisierung', definition: 'Maschinelle Veranlagung macht mehr Dossiers handhabbar.', example: 'Der Prüfaufwand wird langfristig sinken.' }
+          { term: 'Heiratsstrafe auch kantonal', definition: 'Die Kantone behaupten, die Heiratsstrafe sei nur ein Problem des Bundes.', example: 'Falsch! Auch in vielen Kantonen zahlen Doppelverdiener-Ehepaare mehr als Konkubinatspaare.' },
+          { term: 'Klare Zuordnung', definition: 'Jede Person deklariert ihr eigenes Einkommen und Vermögen.', example: 'Lohn, Renten, Dividenden: Wer verdient es, dem gehört es. Immobilien, Konti: Nach Eigentum.' },
+          { term: 'Langfristige Entlastung', definition: 'Im ersten Jahr ist Koordinationsaufwand nötig.', example: 'Danach sinkt der Prüfaufwand – maschinelle Veranlagung macht es möglich.' }
         ],
         points: 10
       },
@@ -424,7 +424,8 @@ const SECTIONS: Section[] = [
         title: 'Richtig oder Falsch?',
         statements: [
           { text: 'Die Städte lehnen die Individualbesteuerung ab, genau wie die Kantone.', correct: false, explanation: 'Falsch! Die Städte begrüssen die Reform und sehen sie als Vereinfachung.' },
-          { text: 'Das Kreisschreiben zur Ehepaarbesteuerung umfasst über 40 Seiten.', correct: true, explanation: 'Richtig! Die vielen Sonderbestimmungen für Ehepaare zeigen die Komplexität des heutigen Systems.' }
+          { text: 'Das Kreisschreiben zur Ehepaarbesteuerung umfasst über 40 Seiten.', correct: true, explanation: 'Richtig! Die vielen Sonderbestimmungen für Ehepaare zeigen die Komplexität des heutigen Systems.' },
+          { text: 'Mit der Individualbesteuerung würden ca. 1,7 Mio. zusätzliche Steuerdossiers entstehen.', correct: true, explanation: 'Richtig! Aber die Städte argumentieren, dass die Digitalisierung und der Wegfall von Systemwechseln dies kompensieren.' }
         ],
         points: 15
       }
@@ -562,7 +563,7 @@ function FlipCardAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }:
                   <div className="flip-card-front">
                     {card.emoji && <span className="text-4xl mb-2">{card.emoji}</span>}
                     <p className="font-medium text-sm">{card.front}</p>
-                    <p className="text-xs mt-2 opacity-75">Klicken zum Umdrehen</p>
+                    <p className="text-sm mt-2 opacity-75">Klicken zum Umdrehen</p>
                   </div>
                   <div className="flip-card-back">
                     <p className="text-sm">{card.back}</p>
@@ -755,7 +756,7 @@ function TimelineAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }:
                       <p className="text-gray-600 text-sm mt-1">{event.detail}</p>
                     )}
                     {!revealed.has(index) && (
-                      <p className="text-gray-400 text-xs mt-1">Klicken für Details...</p>
+                      <p className="text-gray-400 text-sm mt-1">Klicken für Details...</p>
                     )}
                   </div>
                 </div>
@@ -806,7 +807,7 @@ function QuoteRevealAccordion({ slide, isOpen, onToggle, isCompleted, onComplete
                       <span className="font-semibold text-gray-900 text-sm">{q.author}</span>
                     </div>
                     <p className="text-gray-700 italic text-sm mb-2">"{q.quote}"</p>
-                    <span className="bg-teal-100 text-teal-800 text-xs px-2 py-0.5 rounded-full">💡 {q.key_point}</span>
+                    <span className="bg-teal-100 text-teal-800 text-sm px-2 py-0.5 rounded-full">💡 {q.key_point}</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 text-gray-500">
@@ -860,7 +861,7 @@ function TermRevealAccordion({ slide, isOpen, onToggle, isCompleted, onComplete 
                 {revealed.has(index) && (
                   <div className="p-3 border-t border-gray-100 bg-white">
                     <p className="text-gray-700 text-sm mb-2">{t.definition}</p>
-                    {t.example && <p className="text-xs text-gray-500 bg-gray-100 p-2 rounded"><strong>Beispiel:</strong> {t.example}</p>}
+                    {t.example && <p className="text-sm text-gray-500 bg-gray-100 p-2 rounded"><strong>Beispiel:</strong> {t.example}</p>}
                   </div>
                 )}
               </div>
@@ -965,11 +966,11 @@ function TrueFalseAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }
                   <p className="text-gray-800 text-sm mb-2">{s.text}</p>
                   <div className="flex gap-2">
                     <button onClick={() => !showResults && setAnswers({ ...answers, [index]: true })} disabled={showResults}
-                      className={`flex-1 py-1.5 rounded text-xs font-semibold ${answer === true ? showResults ? s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>✓ Richtig</button>
+                      className={`flex-1 py-1.5 rounded text-sm font-semibold ${answer === true ? showResults ? s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>✓ Richtig</button>
                     <button onClick={() => !showResults && setAnswers({ ...answers, [index]: false })} disabled={showResults}
-                      className={`flex-1 py-1.5 rounded text-xs font-semibold ${answer === false ? showResults ? !s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>✗ Falsch</button>
+                      className={`flex-1 py-1.5 rounded text-sm font-semibold ${answer === false ? showResults ? !s.correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>✗ Falsch</button>
                   </div>
-                  {showResults && <p className={`mt-2 text-xs ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>{s.explanation}</p>}
+                  {showResults && <p className={`mt-2 text-sm ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>{s.explanation}</p>}
                 </div>
               )
             })}
@@ -1017,7 +1018,7 @@ function DefinitionMatchAccordion({ slide, isOpen, onToggle, isCompleted, onComp
                   <div className="flex gap-2">
                     {options.map((opt) => (
                       <button key={opt} onClick={() => !showResults && setAnswers({ ...answers, [index]: opt })} disabled={showResults}
-                        className={`flex-1 px-2 py-1.5 rounded text-xs font-semibold ${
+                        className={`flex-1 px-2 py-1.5 rounded text-sm font-semibold ${
                           answer === opt ? showResults ? opt === pair.definition ? 'bg-green-500 text-white' : 'bg-red-500 text-white' : 'bg-teal-500 text-white'
                           : showResults && opt === pair.definition ? 'bg-green-200 text-green-800' : 'bg-gray-100 hover:bg-gray-200'
                         }`}>{opt}</button>
@@ -1328,7 +1329,7 @@ export default function ProContraPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-gray-900 text-sm">{section.shortTitle}</h3>
-                    <p className="text-xs text-gray-500">{progress.earned} / {progress.total} Punkte</p>
+                    <p className="text-sm text-gray-500">{progress.earned} / {progress.total} Punkte</p>
                   </div>
                   {progress.complete && <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />}
                 </div>

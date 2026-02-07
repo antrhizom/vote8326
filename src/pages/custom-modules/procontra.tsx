@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { doc, updateDoc, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
-import { 
-  ArrowLeft, CheckCircle2, Award, XCircle, 
+import {
+  ArrowLeft, CheckCircle2, Award, XCircle,
   Building2, Users, MapPin, ThumbsUp, ThumbsDown,
   Eye, EyeOff, Quote, BookOpen, ChevronDown, ChevronUp, X,
-  RotateCcw, Sparkles, ArrowRight, Clock
+  RotateCcw, Sparkles, ArrowRight, Clock, Building, ExternalLink
 } from 'lucide-react'
 
 // ===========================================
@@ -168,7 +168,7 @@ const SECTIONS: Section[] = [
       {
         type: 'swipe_cards',
         title: '👈 PRO oder CONTRA? 👉',
-        instruction: 'Wischen Sie die Karten zur richtigen Seite:',
+        instruction: 'Ordnen Sie die Aussagen der richtigen Seite zu:',
         cards: [
           { statement: 'Schafft Erwerbsanreize', correct: 'PRO' },
           { statement: 'Bedeutet mehr Bürokratie', correct: 'CONTRA' },
@@ -198,7 +198,7 @@ const SECTIONS: Section[] = [
         title: '📅 Zeitstrahl: Weg zur Abstimmung',
         instruction: 'Entdecken Sie die wichtigsten Meilensteine:',
         events: [
-          { year: '1984', event: 'Gleichstellungsartikel', detail: 'Gleichstellung von Mann und Frau wird in der Verfassung verankert.' },
+          { year: '1984', event: 'Bundesgerichtsentscheid', detail: 'Das Bundesgericht erklärt die gemeinsame Besteuerung von Ehepaaren für verfassungswidrig.' },
           { year: '2016', event: 'CVP-Initiative abgelehnt', detail: 'Volk lehnt Initiative ab – Bundesrat hatte mit falschen Zahlen informiert.' },
           { year: '2024', event: 'Parlament beschliesst Reform', detail: 'National- und Ständerat stimmen der Individualbesteuerung zu.' },
           { year: '2026', event: 'Volksabstimmung', detail: 'Am 8. März 2026 entscheidet das Volk.' }
@@ -286,7 +286,7 @@ const SECTIONS: Section[] = [
       {
         type: 'swipe_cards',
         title: '👈 PRO oder CONTRA? 👉',
-        instruction: 'Wischen Sie zur richtigen Seite:',
+        instruction: 'Ordnen Sie die Aussagen der richtigen Seite zu:',
         cards: [
           { statement: '630 Mio. Fr. Steuerausfälle', correct: 'CONTRA' },
           { statement: 'Gleichstellung von Mann und Frau', correct: 'PRO' },
@@ -369,9 +369,62 @@ const SECTIONS: Section[] = [
         instruction: 'Die wichtigsten Schritte:',
         events: [
           { year: 'Herbst 2024', event: 'Parlament beschliesst Gesetz', detail: 'National- und Ständerat stimmen der Reform zu.' },
-          { year: 'Winter 2024', event: 'Kantone sammeln Unterschriften', detail: 'Mehr als 8 Kantone fordern das Referendum.' },
+          { year: 'Winter 2024', event: 'Kantonsparlamente beschliessen Referendum', detail: 'Mehr als 8 Kantonsparlamente beschliessen, das Referendum zu ergreifen.' },
           { year: 'Frühling 2025', event: 'Referendum kommt zustande', detail: 'Das Volk wird über das Gesetz abstimmen.' },
           { year: '8. März 2026', event: 'Volksabstimmung', detail: 'Das Schweizer Volk entscheidet.' }
+        ],
+        points: 15
+      }
+    ]
+  },
+
+  // 5. STÄDTE
+  {
+    id: 'staedte',
+    title: 'Städte (Städteverband)',
+    shortTitle: 'Städte',
+    icon: 'Building',
+    colorClass: 'from-purple-500 to-purple-600',
+    bgColor: 'bg-purple-500',
+    intro: 'Anders als die Kantone begrüssen die Städte die Individualbesteuerung. Der Schweizerische Städteverband und die städtischen Finanzdirektoren sehen darin eine Vereinfachung des Steuersystems.',
+    videoUrl: '',
+    videoTitle: '',
+    totalPoints: 40,
+    slides: [
+      {
+        type: 'info',
+        title: 'Position des Städteverbands',
+        content: 'Die Städte erwarten ein wesentlich einfacheres Steuersystem. Anders als die Kantone argumentieren die städtischen Finanzdirektoren, dass die Individualbesteuerung die Steuerämter entlasten wird – nicht belasten.',
+        highlight: '🔗 Mehr erfahren: staedteverband.ch/1543/de/die-stadte-begrussen-die-individualbesteuerung'
+      },
+      {
+        type: 'flipcard',
+        title: '🎴 Argumente der Städte',
+        instruction: 'Drehen Sie die Karten:',
+        cards: [
+          { front: 'Warum wird es einfacher?', back: 'Keine Sonderregeln mehr für Ehepaare: Ein einheitliches System für alle, unabhängig vom Zivilstand.', emoji: '📋' },
+          { front: 'Was passiert bei Heirat/Scheidung heute?', back: 'Wechsel zwischen zwei Systemen verursacht erheblichen Aufwand für Steuerämter und Steuerpflichtige.', emoji: '💍' },
+          { front: 'Was sagt Winterthur?', back: 'Eines der grössten Steuerämter der Schweiz: Mit Digitalisierung kann die zusätzliche Menge an Dossiers aufgefangen werden.', emoji: '🏙️' }
+        ],
+        points: 15
+      },
+      {
+        type: 'term_reveal',
+        title: 'Argumente der Städte',
+        instruction: 'Klicken Sie, um mehr zu erfahren:',
+        terms: [
+          { term: 'Kein Systemwechsel', definition: 'Heute wechselt man bei Heirat/Scheidung zwischen zwei Steuersystemen.', example: 'Das verursacht Mehraufwand für Steuerämter.' },
+          { term: 'Einfachere Regeln', definition: 'Jede Person deklariert ihr eigenes Einkommen und Vermögen.', example: 'Klare Zuordnung: Wer verdient es, wem gehört es.' },
+          { term: 'Digitalisierung', definition: 'Maschinelle Veranlagung macht mehr Dossiers handhabbar.', example: 'Der Prüfaufwand wird langfristig sinken.' }
+        ],
+        points: 10
+      },
+      {
+        type: 'truefalse',
+        title: 'Richtig oder Falsch?',
+        statements: [
+          { text: 'Die Städte lehnen die Individualbesteuerung ab, genau wie die Kantone.', correct: false, explanation: 'Falsch! Die Städte begrüssen die Reform und sehen sie als Vereinfachung.' },
+          { text: 'Das Kreisschreiben zur Ehepaarbesteuerung umfasst über 40 Seiten.', correct: true, explanation: 'Richtig! Die vielen Sonderbestimmungen für Ehepaare zeigen die Komplexität des heutigen Systems.' }
         ],
         points: 15
       }
@@ -382,7 +435,7 @@ const SECTIONS: Section[] = [
 // ===========================================
 // ICON MAP
 // ===========================================
-const IconMap: { [key: string]: any } = { Building2, Users, MapPin, ThumbsUp, ThumbsDown }
+const IconMap: { [key: string]: any } = { Building2, Users, MapPin, ThumbsUp, ThumbsDown, Building }
 
 // ===========================================
 // CSS für 3D Flip Animation (wird inline eingefügt)
@@ -983,9 +1036,33 @@ function DefinitionMatchAccordion({ slide, isOpen, onToggle, isCompleted, onComp
   )
 }
 
-function InfoAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: { 
-  slide: InfoSlide; isOpen: boolean; onToggle: () => void; isCompleted: boolean; onComplete: () => void 
+function InfoAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: {
+  slide: InfoSlide; isOpen: boolean; onToggle: () => void; isCompleted: boolean; onComplete: () => void
 }) {
+  // Funktion um URLs im Text zu erkennen und Links zu erstellen
+  const renderHighlightWithLinks = (text: string) => {
+    // Suche nach URLs im Format: staedteverband.ch/... oder https://...
+    const urlRegex = /(staedteverband\.ch\/[^\s]+)/g
+    const parts = text.split(urlRegex)
+
+    return parts.map((part, index) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a
+            key={index}
+            href={`https://${part}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-purple-700 underline hover:text-purple-900 inline-flex items-center gap-1"
+          >
+            {part} <ExternalLink className="h-3 w-3 inline" />
+          </a>
+        )
+      }
+      return part
+    })
+  }
+
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
       <button onClick={onToggle} className="w-full p-4 flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-150">
@@ -1001,7 +1078,7 @@ function InfoAccordion({ slide, isOpen, onToggle, isCompleted, onComplete }: {
           <p className="text-gray-700 text-sm mb-3">{slide.content}</p>
           {slide.highlight && (
             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-3">
-              <p className="text-yellow-800 text-sm">{slide.highlight}</p>
+              <p className="text-yellow-800 text-sm">{renderHighlightWithLinks(slide.highlight)}</p>
             </div>
           )}
           {!isCompleted && (
@@ -1078,9 +1155,11 @@ function SectionView({ section, onClose, onComplete, initialCompletedSlides }: {
           <p className="text-gray-700 text-sm">{section.intro}</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-4">
-          <iframe className="w-full aspect-video" src={section.videoUrl} title={section.videoTitle} frameBorder="0" allow="autoplay; fullscreen" allowFullScreen />
-        </div>
+        {section.videoUrl && (
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-4">
+            <iframe className="w-full aspect-video" src={section.videoUrl} title={section.videoTitle} frameBorder="0" allow="autoplay; fullscreen" allowFullScreen />
+          </div>
+        )}
 
         <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-teal-500" /> Interaktive Aufgaben

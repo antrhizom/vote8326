@@ -536,7 +536,7 @@ export default function GrundlagenPage() {
                       <p className="text-sm text-gray-500">ca. 4 Minuten</p>
                     </div>
                   </div>
-                  <p className="text-gray-700 text-sm"><strong>Thema:</strong> Was ändert sich? Wer profitiert, wer verliert?</p>
+                  <p className="text-gray-700 text-sm"><strong>Thema:</strong> Wer profitiert, wer verliert? Politikerinnen verschiedener Parteien beziehen Stellung – von der Mitte bis zu den Grünliberalen. Ideal, um die politische Debatte zu verstehen.</p>
                 </button>
 
                 <button onClick={() => setSelectedAudio('echo')}
@@ -548,7 +548,7 @@ export default function GrundlagenPage() {
                       <p className="text-sm text-gray-500">ca. 5 Minuten</p>
                     </div>
                   </div>
-                  <p className="text-gray-700 text-sm"><strong>Thema:</strong> Auswirkungen auf den Arbeitsmarkt</p>
+                  <p className="text-gray-700 text-sm"><strong>Thema:</strong> Bringt die Reform mehr Arbeitskräfte? Eine Studie der Uni Luzern schätzt bis zu 16'000 neue Vollzeitstellen. Warum? Weil sich Mehrarbeit für Verheiratete endlich lohnt!</p>
                 </button>
               </div>
             </div>

@@ -6,7 +6,7 @@ import {
   ArrowLeft, CheckCircle2, Award,
   History, Scale, Film, ChevronRight, ChevronDown,
   AlertTriangle, Calendar, Users, Star, BookOpen,
-  HelpCircle, Lightbulb
+  HelpCircle, Lightbulb, Newspaper, ExternalLink, Lock, ThumbsUp, ThumbsDown
 } from 'lucide-react'
 
 // ===========================================
@@ -158,6 +158,50 @@ const PARTY_POSITIONS = [
   { party: 'Mitte', position: 'contra', reason: 'Eigene Initiative mit alternativem Modell' }
 ]
 
+// Zeitungsartikel-Empfehlungen
+const NEWSPAPER_ARTICLES = [
+  {
+    id: 'nzz',
+    title: 'Keine Sonderregeln mehr für Ehepaare',
+    source: 'NZZ',
+    date: '2026',
+    url: 'https://www.nzz.ch/schweiz/keine-sonderregeln-mehr-fuer-ehepaare-die-staedte-erwarten-ein-wesentlich-einfacheres-steuersystem-ld.1923084',
+    description: 'Die Städte erwarten ein wesentlich einfacheres Steuersystem. Der Artikel beleuchtet die praktischen Auswirkungen der Reform auf die Steuerverwaltung.',
+    hasPaywall: true,
+    color: 'blue'
+  },
+  {
+    id: 'republik',
+    title: 'Heiratsstrafe: In guten wie in teuren Tagen',
+    source: 'Republik',
+    date: '6. Februar 2026',
+    url: 'https://www.republik.ch/2026/02/06/heiratsstrafe-in-guten-wie-in-teuren-tagen',
+    description: 'Umfassende Erklärung zur Vorlage: Woher kommt sie? Wer profitiert? Was sind die Argumente? Ein sehr gut recherchierter Überblicksartikel.',
+    hasPaywall: true,
+    color: 'purple'
+  },
+  {
+    id: 'woz',
+    title: 'Angriff auf den Einzelernährer',
+    source: 'WOZ',
+    date: '2026',
+    url: 'https://www.woz.ch/2605/individualbesteuerung/angriff-auf-den-einzelernaehrer/!TTGR99PS2AFA',
+    description: 'Kritische Perspektive aus linker Sicht: Wie verändert die Reform die Arbeitsteilung in Familien? Welche gesellschaftlichen Folgen hat sie?',
+    hasPaywall: true,
+    color: 'red'
+  },
+  {
+    id: 'tagesanzeiger',
+    title: 'Wer profitiert und wer verliert',
+    source: 'Tages-Anzeiger',
+    date: '2026',
+    url: 'https://www.tagesanzeiger.ch/abstimmung-individualbesteuerung-wer-profitiert-und-wer-verliert-940664083586',
+    description: 'Detaillierte Analyse mit konkreten Rechenbeispielen: Welche Haushaltstypen zahlen künftig mehr oder weniger Steuern?',
+    hasPaywall: true,
+    color: 'amber'
+  }
+]
+
 // Quiz für Kapitel 2 (basierend auf dem Film "Steuergerechtigkeit")
 const STEUERZIELE_QUIZ = [
   {
@@ -229,6 +273,10 @@ export default function VertiefungPage() {
   const [exploredZiele, setExploredZiele] = useState<Set<string>>(new Set())
   const [steuerQuizAnswers, setSteuerQuizAnswers] = useState<{[key: string]: string}>({})
   const [steuerQuizSubmitted, setSteuerQuizSubmitted] = useState(false)
+
+  // Zeitungsartikel-Bewertungen
+  const [readArticles, setReadArticles] = useState<Set<string>>(new Set())
+  const [articleRatings, setArticleRatings] = useState<{[key: string]: {lesefreundlichkeit: number, inhalt: number}}>({})
 
   const maxPoints = 100
 
@@ -473,6 +521,163 @@ export default function VertiefungPage() {
                 </div>
               )}
             </button>
+          </div>
+
+          {/* Zeitungstextempfehlungen */}
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="bg-gradient-to-r from-slate-100 to-gray-100 p-4 border-b">
+              <div className="flex items-center gap-3">
+                <div className="bg-slate-600 p-2 rounded-lg">
+                  <Newspaper className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Zeitungstextempfehlungen</h3>
+                  <p className="text-sm text-gray-500">Vertiefen Sie Ihr Wissen mit Qualitätsjournalismus</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-5">
+              <div className="bg-amber-50 border-l-4 border-amber-400 p-3 rounded-r-lg mb-4">
+                <p className="text-amber-800 text-sm">
+                  <strong>💡 Hinweis:</strong> Diese Artikel sind z.T. hinter einer <strong>Paywall</strong>.
+                  Als Schüler:in können Sie diese über <strong>Swissdox</strong> kostenlos lesen.
+                  Fragen Sie Ihre Lehrperson nach dem Zugang.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {NEWSPAPER_ARTICLES.map((article) => {
+                  const isRead = readArticles.has(article.id)
+                  const rating = articleRatings[article.id]
+                  const colorClasses: {[key: string]: string} = {
+                    blue: 'border-blue-200 hover:border-blue-400',
+                    purple: 'border-purple-200 hover:border-purple-400',
+                    red: 'border-red-200 hover:border-red-400',
+                    amber: 'border-amber-200 hover:border-amber-400'
+                  }
+                  const bgClasses: {[key: string]: string} = {
+                    blue: 'bg-blue-500',
+                    purple: 'bg-purple-500',
+                    red: 'bg-red-500',
+                    amber: 'bg-amber-500'
+                  }
+
+                  return (
+                    <div
+                      key={article.id}
+                      className={`p-4 rounded-xl border-2 transition-all ${colorClasses[article.color]} ${isRead ? 'bg-gray-50' : 'bg-white'}`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`px-2 py-0.5 ${bgClasses[article.color]} text-white text-xs font-semibold rounded`}>
+                              {article.source}
+                            </span>
+                            {article.hasPaywall && (
+                              <span className="flex items-center gap-1 text-xs text-gray-500">
+                                <Lock className="h-3 w-3" /> Paywall
+                              </span>
+                            )}
+                            <span className="text-xs text-gray-400">{article.date}</span>
+                          </div>
+                          <h4 className="font-semibold text-gray-900 mb-1">{article.title}</h4>
+                          <p className="text-sm text-gray-600 mb-2">{article.description}</p>
+                          <a
+                            href={article.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                          >
+                            <ExternalLink className="h-3 w-3" /> Artikel öffnen
+                          </a>
+                        </div>
+
+                        <div className="flex flex-col items-center gap-2">
+                          <button
+                            onClick={() => {
+                              const newRead = new Set(readArticles)
+                              if (isRead) {
+                                newRead.delete(article.id)
+                              } else {
+                                newRead.add(article.id)
+                              }
+                              setReadArticles(newRead)
+                            }}
+                            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                              isRead ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                          >
+                            {isRead ? '✓ Gelesen' : 'Als gelesen markieren'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Bewertung */}
+                      {isRead && (
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <p className="text-xs text-gray-500 mb-2">Wie fanden Sie diesen Artikel?</p>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-xs text-gray-600 mb-1">Lesefreundlichkeit</p>
+                              <div className="flex gap-1">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                  <button
+                                    key={star}
+                                    onClick={() => setArticleRatings({
+                                      ...articleRatings,
+                                      [article.id]: {
+                                        ...articleRatings[article.id],
+                                        lesefreundlichkeit: star
+                                      }
+                                    })}
+                                    className={`text-lg transition-colors ${
+                                      (rating?.lesefreundlichkeit || 0) >= star ? 'text-yellow-400' : 'text-gray-300'
+                                    }`}
+                                  >
+                                    ★
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-600 mb-1">Inhalt</p>
+                              <div className="flex gap-1">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                  <button
+                                    key={star}
+                                    onClick={() => setArticleRatings({
+                                      ...articleRatings,
+                                      [article.id]: {
+                                        ...articleRatings[article.id],
+                                        inhalt: star
+                                      }
+                                    })}
+                                    className={`text-lg transition-colors ${
+                                      (rating?.inhalt || 0) >= star ? 'text-yellow-400' : 'text-gray-300'
+                                    }`}
+                                  >
+                                    ★
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+
+              {readArticles.size > 0 && (
+                <div className="mt-4 p-3 bg-emerald-50 rounded-lg text-emerald-800 text-sm">
+                  <strong>📚 Sie haben {readArticles.size} von {NEWSPAPER_ARTICLES.length} Artikeln gelesen!</strong>
+                  {readArticles.size === NEWSPAPER_ARTICLES.length && (
+                    <span className="ml-2">Hervorragend – Sie sind bestens informiert!</span>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {isComplete && (

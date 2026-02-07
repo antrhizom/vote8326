@@ -250,6 +250,62 @@ export default function AusgangslagePage() {
             </p>
           </div>
 
+          {/* Info-Box: Indirekter Gegenvorschlag */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 shadow-sm border border-blue-200">
+            <div className="flex items-start gap-3">
+              <div className="bg-blue-500 p-2 rounded-lg text-white">
+                <Scale className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-blue-900 mb-2">Gut zu wissen: Indirekter Gegenvorschlag</h3>
+                <p className="text-blue-800 text-sm mb-3">
+                  Das aktuelle Gesetz, über das wir am 8. März 2026 abstimmen, ist ein <strong>indirekter Gegenvorschlag</strong> zur
+                  «Steuergerechtigkeits-Initiative» der FDP-Frauen.
+                </p>
+                <blockquote className="border-l-4 border-blue-400 pl-3 py-1 bg-white/50 rounded-r-lg text-sm text-blue-700 italic">
+                  «Wir stimmen nicht über die Initiative der FDP-Frauen ab, sondern über einen indirekten Gegenvorschlag.
+                  Inhaltlich unterscheiden sie sich kaum. Nach der parlamentarischen Debatte zogen die Initiantinnen im
+                  Sommer 2025 ihre Initiative bedingt zurück – das bedeutet, sie unterstützen die Vorlage des Parlaments,
+                  behalten sich aber vor, ihre Initiative zu reaktivieren, falls es am 8. März ein Nein gibt.»
+                </blockquote>
+                <p className="text-xs text-blue-600 mt-2 flex items-center gap-1">
+                  <ExternalLink className="h-3 w-3" />
+                  <a href="https://www.republik.ch/2026/02/06/heiratsstrafe-in-guten-wie-in-teuren-tagen" target="_blank" rel="noopener" className="hover:underline">
+                    Quelle: Republik, 6. Februar 2026
+                  </a>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Info-Box: Wer profitiert? */}
+          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-5 shadow-sm border border-emerald-200">
+            <div className="flex items-start gap-3">
+              <div className="bg-emerald-500 p-2 rounded-lg text-white">
+                <BarChart3 className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-emerald-900 mb-2">Wer profitiert von der Vorlage?</h3>
+                <blockquote className="border-l-4 border-emerald-400 pl-3 py-1 bg-white/50 rounded-r-lg text-sm text-emerald-700 italic mb-3">
+                  «Die aktuellste Schätzung der Steuerverwaltung zeigt: <strong>51,6 Prozent</strong> der Steuerzahlenden
+                  würden bei einer Annahme künftig weniger Steuern zahlen. <strong>12,6 Prozent</strong> müssten mehr bezahlen
+                  und für <strong>35,8 Prozent</strong> würde sich nichts ändern.»
+                </blockquote>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">51.6% weniger Steuern</span>
+                  <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">12.6% mehr Steuern</span>
+                  <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold">35.8% keine Änderung</span>
+                </div>
+                <p className="text-xs text-emerald-600 mt-2 flex items-center gap-1">
+                  <ExternalLink className="h-3 w-3" />
+                  <a href="https://www.republik.ch/2026/02/06/heiratsstrafe-in-guten-wie-in-teuren-tagen" target="_blank" rel="noopener" className="hover:underline">
+                    Quelle: Republik, 6. Februar 2026
+                  </a>
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Chapter Cards */}
           <div className="space-y-3">
             {/* Kapitel 1: Umfrage */}
@@ -558,7 +614,7 @@ export default function AusgangslagePage() {
                     details: ['Erst 2x in der Geschichte', '2003: Steuerpaket (65.9% Nein)', '2025: Individualbesteuerung'] },
                   { id: 'aktuell', icon: Calendar, color: 'red', title: 'Individualbesteuerung 2026',
                     content: '10 Kantone haben das Referendum ergriffen!',
-                    details: ['Dafür: SVP, Mitte, EVP, EDU', 'Dagegen: SP, FDP, Grüne, GLP', 'Abstimmung: 8. März 2026'] }
+                    details: ['Dafür: SVP, Mitte, EVP, EDU', 'Dagegen: SP, FDP, Grüne, GLP', 'Abstimmung: 8. März 2026', 'Indirekter Gegenvorschlag zur FDP-Initiative'] }
                 ].map(card => {
                   const Icon = card.icon
                   const revealed = revealedCards.has(card.id)

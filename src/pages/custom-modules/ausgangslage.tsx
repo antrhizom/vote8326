@@ -96,6 +96,96 @@ export default function AusgangslagePage() {
 
   // Lesehilfe state
   const [readingHelpActive, setReadingHelpActive] = useState(false)
+  const [currentReadingIndex, setCurrentReadingIndex] = useState(0)
+
+  // Lesehilfe Targets - definiert welche Elemente markiert werden sollen
+  const READING_TARGETS = [
+    { id: 'intro-text', label: '📖 Infotext' },
+    { id: 'info-gegenvorschlag', label: '📰 Hintergrundinfo' },
+    { id: 'info-profitiert', label: '📊 Fakten & Zahlen' },
+  ]
+
+  // Tutorial Position basierend auf hervorgehobenem Element
+  const [tutorialTopOffset, setTutorialTopOffset] = useState<number | null>(null)
+
+  // Effect um Tutorial-Position zu aktualisieren
+  useEffect(() => {
+    if (showTutorial && currentTutorialStep.highlight) {
+      const element = document.getElementById(currentTutorialStep.highlight)
+      if (element) {
+        const rect = element.getBoundingClientRect()
+        const viewportHeight = window.innerHeight
+        // Position das Tutorial-Panel so, dass es auf gleicher Höhe wie das hervorgehobene Element ist
+        const targetTop = Math.max(80, Math.min(rect.top, viewportHeight - 400))
+        setTutorialTopOffset(targetTop)
+      } else {
+        setTutorialTopOffset(null)
+      }
+    } else {
+      setTutorialTopOffset(null)
+    }
+  }, [showTutorial, tutorialStep, currentTutorialStep.highlight])
+
+  // Lesehilfe Navigation
+  const navigateReadingHelp = () => {
+    if (!readingHelpActive) {
+      // Lesehilfe aktivieren und zum ersten Element scrollen
+      setReadingHelpActive(true)
+      setCurrentReadingIndex(0)
+      scrollToReadingTarget(0)
+    } else {
+      // Zum nächsten Element navigieren
+      const nextIndex = (currentReadingIndex + 1) % READING_TARGETS.length
+      setCurrentReadingIndex(nextIndex)
+      scrollToReadingTarget(nextIndex)
+    }
+  }
+
+  const scrollToReadingTarget = (index: number) => {
+    const target = READING_TARGETS[index]
+    if (target) {
+      const element = document.getElementById(target.id)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+  }
+
+  const closeReadingHelp = () => {
+    setReadingHelpActive(false)
+    setCurrentReadingIndex(0)
+    setReadingHelpPosition(null)
+  }
+
+  // Lesehilfe Button Position - schwebt mit dem aktuellen Element
+  const [readingHelpPosition, setReadingHelpPosition] = useState<{ top: number } | null>(null)
+
+  // Effect um Lesehilfe-Button Position zu aktualisieren
+  useEffect(() => {
+    const updatePosition = () => {
+      if (readingHelpActive && READING_TARGETS[currentReadingIndex]) {
+        const element = document.getElementById(READING_TARGETS[currentReadingIndex].id)
+        if (element) {
+          const rect = element.getBoundingClientRect()
+          // Position den Button neben dem aktuellen Element (viewport-relativ)
+          const targetTop = rect.top + (rect.height / 2) - 30
+          // Begrenze auf sichtbaren Bereich
+          const clampedTop = Math.max(80, Math.min(targetTop, window.innerHeight - 100))
+          setReadingHelpPosition({ top: clampedTop })
+        }
+      } else {
+        setReadingHelpPosition(null)
+      }
+    }
+
+    updatePosition()
+
+    // Auch bei Scroll aktualisieren
+    if (readingHelpActive) {
+      window.addEventListener('scroll', updatePosition)
+      return () => window.removeEventListener('scroll', updatePosition)
+    }
+  }, [readingHelpActive, currentReadingIndex])
 
   const maxPoints = 150
 
@@ -265,30 +355,29 @@ export default function AusgangslagePage() {
     /* Lesehilfe Styles */
     .reading-highlight-box {
       position: relative;
-      box-shadow: 0 0 0 3px #f59e0b, 0 0 15px rgba(245, 158, 11, 0.25) !important;
+      box-shadow: 0 0 0 4px #f59e0b, 0 0 20px rgba(245, 158, 11, 0.4) !important;
       border-radius: 12px;
-      transition: all 0.3s ease;
+      transition: all 0.5s ease;
+      animation: reading-pulse 2s ease-in-out infinite;
     }
     .reading-highlight-box::before {
       content: attr(data-reading-label);
       position: absolute;
-      top: -10px;
+      top: -12px;
       left: 12px;
-      background: #f59e0b;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
       color: white;
-      font-size: 10px;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 6px;
       z-index: 10;
       white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
     }
     @keyframes reading-pulse {
-      0%, 100% { box-shadow: 0 0 0 3px #f59e0b, 0 0 15px rgba(245, 158, 11, 0.25); }
-      50% { box-shadow: 0 0 0 4px #f59e0b, 0 0 25px rgba(245, 158, 11, 0.35); }
-    }
-    .reading-active .reading-highlight-box {
-      animation: reading-pulse 2s ease-in-out infinite;
+      0%, 100% { box-shadow: 0 0 0 4px #f59e0b, 0 0 20px rgba(245, 158, 11, 0.4); }
+      50% { box-shadow: 0 0 0 6px #f59e0b, 0 0 35px rgba(245, 158, 11, 0.6); }
     }
   `
 
@@ -343,103 +432,87 @@ export default function AusgangslagePage() {
           `}} />
         )}
 
-        {/* Tutorial Overlay - Seitlich positioniert */}
+        {/* Tutorial Overlay - Seitlich positioniert, schmal */}
         {showTutorial && (
           <div className="fixed inset-0 z-40 pointer-events-none">
             <div
-              className="absolute inset-0 bg-black/40 pointer-events-auto"
+              className="absolute inset-0 bg-black/30 pointer-events-auto"
               onClick={closeTutorial}
             />
 
-            {/* Tutorial Panel - links am Rand, vertikal gestreckt */}
-            <div className="fixed z-50 left-4 top-1/2 -translate-y-1/2 w-72 max-h-[85vh] pointer-events-auto">
-              <div className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            {/* Tutorial Panel - ganz links am Rand, schmal, dynamische Höhe */}
+            <div
+              className="fixed z-50 left-0 w-56 pointer-events-auto transition-all duration-300"
+              style={{
+                top: tutorialTopOffset !== null ? `${tutorialTopOffset}px` : '50%',
+                transform: tutorialTopOffset !== null ? 'none' : 'translateY(-50%)'
+              }}
+            >
+              <div className="bg-white rounded-r-xl shadow-2xl overflow-hidden flex flex-col border-l-4 border-purple-500">
                 {/* Progress Bar */}
-                <div className="h-1.5 bg-gray-200 flex-shrink-0">
+                <div className="h-1 bg-gray-200 flex-shrink-0">
                   <div
                     className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-300"
                     style={{ width: `${((tutorialStep + 1) / TUTORIAL_STEPS.length) * 100}%` }}
                   />
                 </div>
 
-                {/* Header */}
-                <div className="bg-gradient-to-r from-purple-500 to-indigo-600 px-4 py-3 flex items-center justify-between flex-shrink-0">
-                  <div className="flex items-center gap-2">
-                    <Lightbulb className="h-5 w-5 text-white" />
-                    <span className="text-white font-semibold text-sm">Tutorial</span>
+                {/* Header - kompakt */}
+                <div className="bg-gradient-to-r from-purple-500 to-indigo-600 px-3 py-2 flex items-center justify-between flex-shrink-0">
+                  <div className="flex items-center gap-1.5">
+                    <Lightbulb className="h-4 w-4 text-white" />
+                    <span className="text-white font-semibold text-xs">{tutorialStep + 1}/{TUTORIAL_STEPS.length}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                      {tutorialStep + 1}/{TUTORIAL_STEPS.length}
-                    </span>
-                    <button
-                      onClick={closeTutorial}
-                      className="p-1 text-white/70 hover:text-white"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={closeTutorial}
+                    className="p-0.5 text-white/70 hover:text-white"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
                 </div>
 
-                {/* Content */}
-                <div className="p-4 flex-1 overflow-y-auto">
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">
+                {/* Content - kompakt */}
+                <div className="p-3 flex-1">
+                  <h3 className="text-sm font-bold text-gray-900 mb-1.5 leading-tight">
                     {currentTutorialStep.title}
                   </h3>
-                  <p className="text-gray-600 text-sm mb-4">
+                  <p className="text-gray-600 text-xs mb-3 leading-relaxed">
                     {currentTutorialStep.description}
                   </p>
 
                   {currentTutorialStep.highlight && (
-                    <div className="bg-purple-50 border border-purple-200 rounded-lg px-3 py-2 text-xs text-purple-700 flex items-center gap-2 mb-4">
+                    <div className="bg-purple-50 border border-purple-200 rounded px-2 py-1.5 text-xs text-purple-700 flex items-center gap-1.5 mb-3">
                       <span>👉</span>
-                      <span>Markierter Bereich rechts</span>
+                      <span className="text-[10px]">Markiert</span>
                     </div>
                   )}
-
-                  {/* Step indicators */}
-                  <div className="flex justify-center gap-1.5 mb-4">
-                    {TUTORIAL_STEPS.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setTutorialStep(index)}
-                        className={`h-1.5 rounded-full transition-all ${
-                          index === tutorialStep
-                            ? 'bg-purple-500 w-4'
-                            : index < tutorialStep
-                            ? 'bg-purple-300 w-1.5'
-                            : 'bg-gray-300 w-1.5'
-                        }`}
-                      />
-                    ))}
-                  </div>
                 </div>
 
-                {/* Footer Buttons */}
-                <div className="p-3 border-t bg-gray-50 flex-shrink-0">
-                  <div className="flex gap-2">
+                {/* Footer Buttons - kompakt */}
+                <div className="px-3 pb-3 flex-shrink-0">
+                  <div className="flex gap-1.5">
                     {tutorialStep > 0 && (
                       <button
                         onClick={prevTutorialStep}
-                        className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg text-sm"
+                        className="flex-1 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded text-xs"
                       >
-                        Zurück
+                        ←
                       </button>
                     )}
                     <button
                       onClick={nextTutorialStep}
-                      className="flex-1 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-medium rounded-lg text-sm flex items-center justify-center gap-1"
+                      className="flex-1 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-medium rounded text-xs flex items-center justify-center gap-1"
                     >
                       {tutorialStep === TUTORIAL_STEPS.length - 1 ? (
-                        <>Los geht's!</>
+                        <>Start</>
                       ) : (
-                        <>Weiter <ArrowRight className="h-3 w-3" /></>
+                        <>Weiter →</>
                       )}
                     </button>
                   </div>
                   <button
                     onClick={closeTutorial}
-                    className="w-full mt-2 py-1.5 text-xs text-gray-500 hover:text-gray-700"
+                    className="w-full mt-1.5 py-1 text-[10px] text-gray-400 hover:text-gray-600"
                   >
                     Überspringen
                   </button>
@@ -449,26 +522,65 @@ export default function AusgangslagePage() {
           </div>
         )}
 
-        {/* Floating Buttons: Help & Reading Help */}
-        <div className="fixed bottom-6 right-6 z-30 flex flex-col gap-3">
-          {/* Lesehilfe Button */}
-          <button
-            id="reading-help-btn"
-            onClick={() => setReadingHelpActive(!readingHelpActive)}
-            className={`p-4 rounded-full shadow-lg hover:shadow-xl transition-all group ${
-              readingHelpActive
-                ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
-                : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
-            } ${showTutorial && currentTutorialStep.highlight === 'reading-help-btn' ? 'tutorial-highlight' : ''}`}
-            title={readingHelpActive ? 'Lesehilfe deaktivieren' : 'Lesehilfe aktivieren'}
-          >
-            <Glasses className="h-6 w-6" />
-            <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-              {readingHelpActive ? 'Lesehilfe aus' : 'Lesehilfe an'}
-            </span>
-          </button>
+        {/* Floating Lesehilfe Button - schwebt mit dem Element */}
+        <div
+          className="fixed z-30 right-4 transition-all duration-300 ease-out"
+          style={{
+            top: readingHelpActive && readingHelpPosition ? `${readingHelpPosition.top}px` : 'auto',
+            bottom: readingHelpActive && readingHelpPosition ? 'auto' : '6rem'
+          }}
+        >
+          <div className="relative">
+            <button
+              id="reading-help-btn"
+              onClick={navigateReadingHelp}
+              className={`p-4 rounded-full shadow-lg hover:shadow-xl transition-all group ${
+                readingHelpActive
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
+                  : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
+              } ${showTutorial && currentTutorialStep.highlight === 'reading-help-btn' ? 'tutorial-highlight' : ''}`}
+              title={readingHelpActive ? `${currentReadingIndex + 1}/${READING_TARGETS.length} - Klicken für nächstes` : 'Lesehilfe aktivieren'}
+            >
+              <Glasses className="h-6 w-6" />
+            </button>
 
-          {/* Help Button */}
+            {/* Zähler Badge */}
+            {readingHelpActive && (
+              <div className="absolute -top-2 -right-2 bg-amber-600 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[2.5rem] text-center shadow-md animate-pulse">
+                {currentReadingIndex + 1}/{READING_TARGETS.length}
+              </div>
+            )}
+
+            {/* Tooltip mit aktuellem Label */}
+            {readingHelpActive && (
+              <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-amber-600 text-white text-sm px-3 py-2 rounded-lg shadow-lg whitespace-nowrap">
+                <div className="font-semibold text-xs">{READING_TARGETS[currentReadingIndex]?.label}</div>
+                <div className="text-[10px] text-amber-200 mt-0.5">Klicken → weiter</div>
+                {/* Pfeil */}
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
+                  <div className="border-8 border-transparent border-l-amber-600"></div>
+                </div>
+              </div>
+            )}
+
+            {/* Schliessen-Button wenn aktiv */}
+            {readingHelpActive && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  closeReadingHelp()
+                }}
+                className="absolute -top-1 -left-1 bg-gray-700 hover:bg-gray-800 text-white rounded-full p-1 shadow-md"
+                title="Lesehilfe beenden"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Help Button - unten rechts fixiert */}
+        <div className="fixed bottom-6 right-6 z-30">
           <button
             onClick={() => {
               setTutorialStep(0)
@@ -515,18 +627,35 @@ export default function AusgangslagePage() {
         <main className={`max-w-4xl mx-auto px-4 py-6 space-y-4 ${readingHelpActive ? 'reading-active' : ''}`}>
           {/* Lesehilfe Info-Banner */}
           {readingHelpActive && (
-            <div className="bg-amber-100 border border-amber-300 rounded-xl p-4 flex items-center gap-3 animate-pulse">
-              <Glasses className="h-6 w-6 text-amber-600 flex-shrink-0" />
-              <div>
-                <p className="text-amber-800 font-semibold text-sm">Lesehilfe aktiv</p>
-                <p className="text-amber-700 text-xs">Die gelb markierten Bereiche enthalten wichtige Informationen, die Sie lesen sollten.</p>
+            <div className="bg-amber-100 border border-amber-300 rounded-xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Glasses className="h-6 w-6 text-amber-600 flex-shrink-0" />
+                <div>
+                  <p className="text-amber-800 font-semibold text-sm flex items-center gap-2">
+                    Lesehilfe aktiv
+                    <span className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full">
+                      {currentReadingIndex + 1}/{READING_TARGETS.length}
+                    </span>
+                  </p>
+                  <p className="text-amber-700 text-xs">
+                    Aktuell: <strong>{READING_TARGETS[currentReadingIndex]?.label}</strong> — Klicken Sie auf den Button rechts für den nächsten Bereich
+                  </p>
+                </div>
               </div>
+              <button
+                onClick={closeReadingHelp}
+                className="text-amber-600 hover:text-amber-800 p-1"
+                title="Lesehilfe beenden"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
           )}
 
           {/* Intro Text */}
           <div
-            className={`bg-white rounded-xl p-6 shadow-sm transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
+            id="intro-text"
+            className={`bg-white rounded-xl p-6 shadow-sm transition-all ${readingHelpActive && currentReadingIndex === 0 ? 'reading-highlight-box' : ''}`}
             data-reading-label="📖 Infotext"
           >
             <p className="text-gray-700 mb-3">
@@ -555,7 +684,8 @@ export default function AusgangslagePage() {
           >
           {/* Info-Box: Indirekter Gegenvorschlag */}
           <div
-            className={`bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 shadow-sm border border-blue-200 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
+            id="info-gegenvorschlag"
+            className={`bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 shadow-sm border border-blue-200 transition-all ${readingHelpActive && currentReadingIndex === 1 ? 'reading-highlight-box' : ''}`}
             data-reading-label="📰 Hintergrundinfo"
           >
             <div className="flex items-start gap-3">
@@ -586,7 +716,8 @@ export default function AusgangslagePage() {
 
           {/* Info-Box: Wer profitiert? */}
           <div
-            className={`bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-5 shadow-sm border border-emerald-200 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
+            id="info-profitiert"
+            className={`bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-5 shadow-sm border border-emerald-200 transition-all ${readingHelpActive && currentReadingIndex === 2 ? 'reading-highlight-box' : ''}`}
             data-reading-label="📊 Fakten & Zahlen"
           >
             <div className="flex items-start gap-3">

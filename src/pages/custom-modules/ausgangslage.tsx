@@ -8,7 +8,7 @@ import {
   Users, Calendar, Sparkles, Star, Lightbulb, ArrowRight, Info
 } from 'lucide-react'
 
-// Tutorial Steps für das Ausgangslage-Modul
+// Tutorial Steps für das Ausgangslage-Modul (Übersicht)
 const TUTORIAL_STEPS = [
   {
     id: 'welcome',
@@ -22,28 +22,35 @@ const TUTORIAL_STEPS = [
     title: '📊 Kapitel 1: Ihre Ausgangslage',
     description: 'Zuerst füllen Sie eine kurze Umfrage aus und reflektieren Ihre persönliche Situation. Wie werden Sie heute besteuert? Würde sich für Sie etwas ändern?',
     highlight: 'chapter-survey',
-    position: 'bottom'
+    position: 'center'
   },
   {
     id: 'chapter2',
     title: '🗳️ Kapitel 2: Referendum verstehen',
     description: 'Im zweiten Kapitel lernen Sie, wie ein Referendum funktioniert. Sie entdecken den Zeitstrahl der Gesetzgebung und verstehen, warum diese Abstimmung so lange gedauert hat.',
     highlight: 'chapter-referendum',
-    position: 'bottom'
+    position: 'center'
   },
   {
     id: 'chapter3',
     title: '🎬 Kapitel 3: Geschichte im Video',
     description: 'Im dritten Kapitel sehen Sie ein Erklärvideo zur Geschichte der Heiratsstrafe und bearbeiten interaktive Übungen dazu.',
     highlight: 'chapter-video',
-    position: 'bottom'
+    position: 'center'
+  },
+  {
+    id: 'infoboxes',
+    title: '📰 Wichtige Hintergrundinformationen',
+    description: 'In den blauen und grünen Info-Boxen finden Sie aktuelle Zitate und Fakten aus Qualitätsmedien. Diese helfen Ihnen, die Abstimmung besser einzuordnen.',
+    highlight: 'info-boxes',
+    position: 'center'
   },
   {
     id: 'points',
     title: '⭐ Punkte sammeln',
     description: 'Für jede abgeschlossene Aufgabe erhalten Sie Punkte. Oben rechts sehen Sie Ihren aktuellen Punktestand. Ziel: Sammeln Sie möglichst viele Punkte!',
     highlight: 'points-display',
-    position: 'bottom-left'
+    position: 'center'
   },
   {
     id: 'start',
@@ -51,6 +58,73 @@ const TUTORIAL_STEPS = [
     description: 'Klicken Sie auf Kapitel 1, um zu beginnen. Sie können jederzeit zwischen den Kapiteln wechseln. Viel Erfolg!',
     highlight: null,
     position: 'center'
+  }
+]
+
+// Tutorial Steps für Kapitel 1 (Survey)
+const CHAPTER1_TUTORIAL = [
+  {
+    id: 'intro',
+    title: '📊 Kapitel 1: Umfrage & Ergebnisse',
+    description: 'In diesem Kapitel füllen Sie zuerst eine kurze Umfrage aus und können anschliessend die Ergebnisse aller Teilnehmer:innen vergleichen.',
+  },
+  {
+    id: 'survey',
+    title: '📝 Aufgabe 1: Umfrage',
+    description: 'Beantworten Sie die Fragen zur Individualbesteuerung. So reflektieren Sie Ihre eigene Ausgangslage und sammeln 15 Punkte.',
+  },
+  {
+    id: 'results',
+    title: '📈 Aufgabe 2: Ergebnisse',
+    description: 'Nach der Umfrage können Sie die Ergebnisse aller Teilnehmer:innen einsehen. Tipp: Klicken Sie auf die Filter, um nach Gruppen zu filtern!',
+  }
+]
+
+// Tutorial Steps für Kapitel 2 (Referendum)
+const CHAPTER2_TUTORIAL = [
+  {
+    id: 'intro',
+    title: '🗳️ Kapitel 2: Referendum & Gesetzgebung',
+    description: 'Lernen Sie, wie das Referendum als Instrument der direkten Demokratie funktioniert.',
+  },
+  {
+    id: 'cards',
+    title: '🎴 Aufgabe 1: Referendum-Arten',
+    description: 'Klicken Sie auf alle vier Karten, um die verschiedenen Arten von Referenden kennenzulernen.',
+  },
+  {
+    id: 'timeline',
+    title: '📅 Aufgabe 2: Zeitstrahl',
+    description: 'Entdecken Sie, wie lange der Weg zur Abstimmung gedauert hat – von 1984 bis 2026!',
+  },
+  {
+    id: 'matching',
+    title: '🔗 Aufgabe 3: Begriffe zuordnen',
+    description: 'Testen Sie Ihr Wissen und ordnen Sie die Begriffe den richtigen Referendum-Arten zu.',
+  }
+]
+
+// Tutorial Steps für Kapitel 3 (Video)
+const CHAPTER3_TUTORIAL = [
+  {
+    id: 'intro',
+    title: '🎬 Kapitel 3: Geschichte der Heiratsstrafe',
+    description: 'In diesem Kapitel erfahren Sie die bewegte Geschichte der Heiratsstrafe durch ein Video und interaktive Übungen.',
+  },
+  {
+    id: 'video',
+    title: '📺 Video anschauen',
+    description: 'Schauen Sie das Erklärvideo zur Geschichte der Heiratsstrafe. Es zeigt, warum es über 40 Jahre gedauert hat, bis eine Lösung zur Abstimmung kommt.',
+  },
+  {
+    id: 'flipcards',
+    title: '🎴 Aufgabe 1: Schlüsselbegriffe',
+    description: 'Drehen Sie alle Flipcards um, um die wichtigsten Begriffe zu lernen.',
+  },
+  {
+    id: 'quiz',
+    title: '❓ Aufgabe 2: Verständnisfragen',
+    description: 'Beantworten Sie die Fragen zum Video. Die Fragen folgen der chronologischen Reihenfolge des Videos.',
   }
 ]
 
@@ -83,9 +157,17 @@ export default function AusgangslagePage() {
   const [videoQuizAnswers, setVideoQuizAnswers] = useState<{[key: string]: string}>({})
   const [videoQuizSubmitted, setVideoQuizSubmitted] = useState(false)
 
-  // Tutorial states
+  // Tutorial states (Übersicht)
   const [showTutorial, setShowTutorial] = useState(false)
   const [tutorialStep, setTutorialStep] = useState(0)
+
+  // Tutorial states für Kapitel
+  const [showChapter1Tutorial, setShowChapter1Tutorial] = useState(false)
+  const [chapter1TutorialStep, setChapter1TutorialStep] = useState(0)
+  const [showChapter2Tutorial, setShowChapter2Tutorial] = useState(false)
+  const [chapter2TutorialStep, setChapter2TutorialStep] = useState(0)
+  const [showChapter3Tutorial, setShowChapter3Tutorial] = useState(false)
+  const [chapter3TutorialStep, setChapter3TutorialStep] = useState(0)
 
   const maxPoints = 150
 
@@ -314,13 +396,7 @@ export default function AusgangslagePage() {
             />
 
             <div
-              className={`fixed z-50 max-w-md w-full pointer-events-auto transition-all duration-300 ${
-                currentTutorialStep.position === 'bottom-left'
-                  ? 'top-24 right-4'
-                  : currentTutorialStep.position === 'bottom'
-                  ? 'top-[50%] left-1/2 -translate-x-1/2'
-                  : 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4'
-              }`}
+              className="fixed z-50 max-w-md w-full pointer-events-auto transition-all duration-300 bottom-8 left-1/2 -translate-x-1/2 px-4"
             >
               <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
                 <div className="h-1.5 bg-gray-200">
@@ -481,6 +557,11 @@ export default function AusgangslagePage() {
             </p>
           </div>
 
+          {/* Info-Boxen mit Zitaten */}
+          <div
+            id="info-boxes"
+            className={`space-y-4 ${showTutorial && currentTutorialStep.highlight === 'info-boxes' ? 'tutorial-highlight p-2 -m-2' : ''}`}
+          >
           {/* Info-Box: Indirekter Gegenvorschlag */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 shadow-sm border border-blue-200">
             <div className="flex items-start gap-3">
@@ -535,6 +616,7 @@ export default function AusgangslagePage() {
                 </p>
               </div>
             </div>
+          </div>
           </div>
 
           {/* Chapter Cards */}
@@ -651,10 +733,83 @@ export default function AusgangslagePage() {
 
   // ========== CHAPTER: SURVEY ==========
   if (activeChapter === 'survey') {
+    // Tutorial beim ersten Öffnen anzeigen
+    const chapter1TutorialSeen = typeof window !== 'undefined' && localStorage.getItem('ausgangslage_chapter1_tutorial_seen')
+    if (!chapter1TutorialSeen && !showChapter1Tutorial && completedSections.size === 0) {
+      setShowChapter1Tutorial(true)
+    }
+
+    const closeChapter1Tutorial = () => {
+      setShowChapter1Tutorial(false)
+      setChapter1TutorialStep(0)
+      localStorage.setItem('ausgangslage_chapter1_tutorial_seen', 'true')
+    }
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50">
         <style dangerouslySetInnerHTML={{ __html: styles }} />
-        
+
+        {/* Chapter 1 Tutorial Overlay */}
+        {showChapter1Tutorial && (
+          <>
+            <div className="fixed inset-0 z-40 bg-black/50" onClick={closeChapter1Tutorial} />
+            <div className="fixed z-50 bottom-8 left-1/2 -translate-x-1/2 max-w-md w-full px-4">
+              <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+                <div className="h-1.5 bg-gray-200">
+                  <div
+                    className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-300"
+                    style={{ width: `${((chapter1TutorialStep + 1) / CHAPTER1_TUTORIAL.length) * 100}%` }}
+                  />
+                </div>
+                <div className="p-6">
+                  <button onClick={closeChapter1Tutorial} className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600">
+                    <X className="h-5 w-5" />
+                  </button>
+                  <div className="absolute top-4 left-4 bg-purple-100 text-purple-700 text-xs font-bold px-2 py-1 rounded-full">
+                    {chapter1TutorialStep + 1} / {CHAPTER1_TUTORIAL.length}
+                  </div>
+                  <div className="flex justify-center mb-4 mt-2">
+                    <div className="bg-gradient-to-br from-purple-100 to-indigo-100 p-4 rounded-full">
+                      <Sparkles className="h-8 w-8 text-purple-600" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 text-center mb-3">
+                    {CHAPTER1_TUTORIAL[chapter1TutorialStep]?.title}
+                  </h3>
+                  <p className="text-gray-600 text-center mb-6">
+                    {CHAPTER1_TUTORIAL[chapter1TutorialStep]?.description}
+                  </p>
+                  <div className="flex gap-3">
+                    {chapter1TutorialStep > 0 && (
+                      <button
+                        onClick={() => setChapter1TutorialStep(chapter1TutorialStep - 1)}
+                        className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg"
+                      >
+                        Zurück
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (chapter1TutorialStep < CHAPTER1_TUTORIAL.length - 1) {
+                          setChapter1TutorialStep(chapter1TutorialStep + 1)
+                        } else {
+                          closeChapter1Tutorial()
+                        }
+                      }}
+                      className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-semibold rounded-lg flex items-center justify-center gap-2"
+                    >
+                      {chapter1TutorialStep === CHAPTER1_TUTORIAL.length - 1 ? 'Los geht\'s!' : <>Weiter <ArrowRight className="h-4 w-4" /></>}
+                    </button>
+                  </div>
+                  <button onClick={closeChapter1Tutorial} className="w-full mt-3 py-2 text-sm text-gray-500 hover:text-gray-700">
+                    Überspringen
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
         <header className="bg-gradient-to-r from-purple-600 to-purple-700 text-white sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
@@ -782,10 +937,83 @@ export default function AusgangslagePage() {
 
   // ========== CHAPTER: REFERENDUM ==========
   if (activeChapter === 'referendum') {
+    // Tutorial beim ersten Öffnen anzeigen
+    const chapter2TutorialSeen = typeof window !== 'undefined' && localStorage.getItem('ausgangslage_chapter2_tutorial_seen')
+    if (!chapter2TutorialSeen && !showChapter2Tutorial && !completedSections.has('referendum_info')) {
+      setShowChapter2Tutorial(true)
+    }
+
+    const closeChapter2Tutorial = () => {
+      setShowChapter2Tutorial(false)
+      setChapter2TutorialStep(0)
+      localStorage.setItem('ausgangslage_chapter2_tutorial_seen', 'true')
+    }
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50">
         <style dangerouslySetInnerHTML={{ __html: styles }} />
-        
+
+        {/* Chapter 2 Tutorial Overlay */}
+        {showChapter2Tutorial && (
+          <>
+            <div className="fixed inset-0 z-40 bg-black/50" onClick={closeChapter2Tutorial} />
+            <div className="fixed z-50 bottom-8 left-1/2 -translate-x-1/2 max-w-md w-full px-4">
+              <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+                <div className="h-1.5 bg-gray-200">
+                  <div
+                    className="h-full bg-gradient-to-r from-indigo-500 to-blue-500 transition-all duration-300"
+                    style={{ width: `${((chapter2TutorialStep + 1) / CHAPTER2_TUTORIAL.length) * 100}%` }}
+                  />
+                </div>
+                <div className="p-6">
+                  <button onClick={closeChapter2Tutorial} className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600">
+                    <X className="h-5 w-5" />
+                  </button>
+                  <div className="absolute top-4 left-4 bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-1 rounded-full">
+                    {chapter2TutorialStep + 1} / {CHAPTER2_TUTORIAL.length}
+                  </div>
+                  <div className="flex justify-center mb-4 mt-2">
+                    <div className="bg-gradient-to-br from-indigo-100 to-blue-100 p-4 rounded-full">
+                      <Vote className="h-8 w-8 text-indigo-600" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 text-center mb-3">
+                    {CHAPTER2_TUTORIAL[chapter2TutorialStep]?.title}
+                  </h3>
+                  <p className="text-gray-600 text-center mb-6">
+                    {CHAPTER2_TUTORIAL[chapter2TutorialStep]?.description}
+                  </p>
+                  <div className="flex gap-3">
+                    {chapter2TutorialStep > 0 && (
+                      <button
+                        onClick={() => setChapter2TutorialStep(chapter2TutorialStep - 1)}
+                        className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg"
+                      >
+                        Zurück
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (chapter2TutorialStep < CHAPTER2_TUTORIAL.length - 1) {
+                          setChapter2TutorialStep(chapter2TutorialStep + 1)
+                        } else {
+                          closeChapter2Tutorial()
+                        }
+                      }}
+                      className="flex-1 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-semibold rounded-lg flex items-center justify-center gap-2"
+                    >
+                      {chapter2TutorialStep === CHAPTER2_TUTORIAL.length - 1 ? 'Los geht\'s!' : <>Weiter <ArrowRight className="h-4 w-4" /></>}
+                    </button>
+                  </div>
+                  <button onClick={closeChapter2Tutorial} className="w-full mt-3 py-2 text-sm text-gray-500 hover:text-gray-700">
+                    Überspringen
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
         <header className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
@@ -1079,10 +1307,83 @@ export default function AusgangslagePage() {
 
   // ========== CHAPTER: VIDEO ==========
   if (activeChapter === 'video') {
+    // Tutorial beim ersten Öffnen anzeigen
+    const chapter3TutorialSeen = typeof window !== 'undefined' && localStorage.getItem('ausgangslage_chapter3_tutorial_seen')
+    if (!chapter3TutorialSeen && !showChapter3Tutorial && !completedSections.has('flipcards')) {
+      setShowChapter3Tutorial(true)
+    }
+
+    const closeChapter3Tutorial = () => {
+      setShowChapter3Tutorial(false)
+      setChapter3TutorialStep(0)
+      localStorage.setItem('ausgangslage_chapter3_tutorial_seen', 'true')
+    }
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50">
         <style dangerouslySetInnerHTML={{ __html: styles }} />
-        
+
+        {/* Chapter 3 Tutorial Overlay */}
+        {showChapter3Tutorial && (
+          <>
+            <div className="fixed inset-0 z-40 bg-black/50" onClick={closeChapter3Tutorial} />
+            <div className="fixed z-50 bottom-8 left-1/2 -translate-x-1/2 max-w-md w-full px-4">
+              <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+                <div className="h-1.5 bg-gray-200">
+                  <div
+                    className="h-full bg-gradient-to-r from-rose-500 to-pink-500 transition-all duration-300"
+                    style={{ width: `${((chapter3TutorialStep + 1) / CHAPTER3_TUTORIAL.length) * 100}%` }}
+                  />
+                </div>
+                <div className="p-6">
+                  <button onClick={closeChapter3Tutorial} className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600">
+                    <X className="h-5 w-5" />
+                  </button>
+                  <div className="absolute top-4 left-4 bg-rose-100 text-rose-700 text-xs font-bold px-2 py-1 rounded-full">
+                    {chapter3TutorialStep + 1} / {CHAPTER3_TUTORIAL.length}
+                  </div>
+                  <div className="flex justify-center mb-4 mt-2">
+                    <div className="bg-gradient-to-br from-rose-100 to-pink-100 p-4 rounded-full">
+                      <Film className="h-8 w-8 text-rose-600" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 text-center mb-3">
+                    {CHAPTER3_TUTORIAL[chapter3TutorialStep]?.title}
+                  </h3>
+                  <p className="text-gray-600 text-center mb-6">
+                    {CHAPTER3_TUTORIAL[chapter3TutorialStep]?.description}
+                  </p>
+                  <div className="flex gap-3">
+                    {chapter3TutorialStep > 0 && (
+                      <button
+                        onClick={() => setChapter3TutorialStep(chapter3TutorialStep - 1)}
+                        className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg"
+                      >
+                        Zurück
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (chapter3TutorialStep < CHAPTER3_TUTORIAL.length - 1) {
+                          setChapter3TutorialStep(chapter3TutorialStep + 1)
+                        } else {
+                          closeChapter3Tutorial()
+                        }
+                      }}
+                      className="flex-1 py-3 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-semibold rounded-lg flex items-center justify-center gap-2"
+                    >
+                      {chapter3TutorialStep === CHAPTER3_TUTORIAL.length - 1 ? 'Los geht\'s!' : <>Weiter <ArrowRight className="h-4 w-4" /></>}
+                    </button>
+                  </div>
+                  <button onClick={closeChapter3Tutorial} className="w-full mt-3 py-2 text-sm text-gray-500 hover:text-gray-700">
+                    Überspringen
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
         <header className="bg-gradient-to-r from-rose-600 to-rose-700 text-white sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between">

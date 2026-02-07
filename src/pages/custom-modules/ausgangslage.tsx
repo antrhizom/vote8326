@@ -2,11 +2,57 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { doc, updateDoc, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
-import { 
+import {
   ArrowLeft, CheckCircle2, Award, ChevronDown, ChevronUp, X,
-  Vote, Film, ExternalLink, BarChart3, Scale, Building2, 
-  Users, Calendar, Sparkles, Star
+  Vote, Film, ExternalLink, BarChart3, Scale, Building2,
+  Users, Calendar, Sparkles, Star, Lightbulb, ArrowRight, Info
 } from 'lucide-react'
+
+// Tutorial Steps für das Ausgangslage-Modul
+const TUTORIAL_STEPS = [
+  {
+    id: 'welcome',
+    title: 'Willkommen zum ersten Modul! 👋',
+    description: 'Dieses Modul führt Sie Schritt für Schritt in die Abstimmung vom 8. März 2026 ein. Sie werden drei Kapitel durcharbeiten, die aufeinander aufbauen.',
+    highlight: null,
+    position: 'center'
+  },
+  {
+    id: 'chapter1',
+    title: '📊 Kapitel 1: Ihre Ausgangslage',
+    description: 'Zuerst füllen Sie eine kurze Umfrage aus und reflektieren Ihre persönliche Situation. Wie werden Sie heute besteuert? Würde sich für Sie etwas ändern?',
+    highlight: 'chapter-survey',
+    position: 'bottom'
+  },
+  {
+    id: 'chapter2',
+    title: '🗳️ Kapitel 2: Referendum verstehen',
+    description: 'Im zweiten Kapitel lernen Sie, wie ein Referendum funktioniert. Sie entdecken den Zeitstrahl der Gesetzgebung und verstehen, warum diese Abstimmung so lange gedauert hat.',
+    highlight: 'chapter-referendum',
+    position: 'bottom'
+  },
+  {
+    id: 'chapter3',
+    title: '🎬 Kapitel 3: Geschichte im Video',
+    description: 'Im dritten Kapitel sehen Sie ein Erklärvideo zur Geschichte der Heiratsstrafe und bearbeiten interaktive Übungen dazu.',
+    highlight: 'chapter-video',
+    position: 'bottom'
+  },
+  {
+    id: 'points',
+    title: '⭐ Punkte sammeln',
+    description: 'Für jede abgeschlossene Aufgabe erhalten Sie Punkte. Oben rechts sehen Sie Ihren aktuellen Punktestand. Ziel: Sammeln Sie möglichst viele Punkte!',
+    highlight: 'points-display',
+    position: 'bottom-left'
+  },
+  {
+    id: 'start',
+    title: 'Los geht\'s! 🚀',
+    description: 'Klicken Sie auf Kapitel 1, um zu beginnen. Sie können jederzeit zwischen den Kapiteln wechseln. Viel Erfolg!',
+    highlight: null,
+    position: 'center'
+  }
+]
 
 // ===========================================
 // AUSGANGSLAGE MODULE - KAPITEL-STRUKTUR
@@ -36,7 +82,11 @@ export default function AusgangslagePage() {
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set())
   const [videoQuizAnswers, setVideoQuizAnswers] = useState<{[key: string]: string}>({})
   const [videoQuizSubmitted, setVideoQuizSubmitted] = useState(false)
-  
+
+  // Tutorial states
+  const [showTutorial, setShowTutorial] = useState(false)
+  const [tutorialStep, setTutorialStep] = useState(0)
+
   const maxPoints = 150
 
   useEffect(() => {
@@ -52,6 +102,18 @@ export default function AusgangslagePage() {
             setTotalScore(data.score || 0)
             setBonusScore(data.bonusScore || 0)
             setCompletedSections(new Set(data.completedSections || []))
+          } else {
+            // Neuer User - Tutorial anzeigen
+            const tutorialSeen = localStorage.getItem('ausgangslage_tutorial_seen')
+            if (!tutorialSeen) {
+              setShowTutorial(true)
+            }
+          }
+        } else {
+          // Neuer User - Tutorial anzeigen
+          const tutorialSeen = localStorage.getItem('ausgangslage_tutorial_seen')
+          if (!tutorialSeen) {
+            setShowTutorial(true)
           }
         }
       } catch (e) { console.error(e) }
@@ -192,6 +254,29 @@ export default function AusgangslagePage() {
     }
   `
 
+  // Tutorial-Funktionen
+  const closeTutorial = () => {
+    setShowTutorial(false)
+    setTutorialStep(0)
+    localStorage.setItem('ausgangslage_tutorial_seen', 'true')
+  }
+
+  const nextTutorialStep = () => {
+    if (tutorialStep < TUTORIAL_STEPS.length - 1) {
+      setTutorialStep(tutorialStep + 1)
+    } else {
+      closeTutorial()
+    }
+  }
+
+  const prevTutorialStep = () => {
+    if (tutorialStep > 0) {
+      setTutorialStep(tutorialStep - 1)
+    }
+  }
+
+  const currentTutorialStep = TUTORIAL_STEPS[tutorialStep] || TUTORIAL_STEPS[0]
+
   // ========== CHAPTER OVERVIEW ==========
   if (!activeChapter) {
     const surveyProgress = getChapterProgress('survey')
@@ -202,7 +287,150 @@ export default function AusgangslagePage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
         <style dangerouslySetInnerHTML={{ __html: styles }} />
-        
+
+        {/* Tutorial Styles */}
+        {showTutorial && (
+          <style dangerouslySetInnerHTML={{ __html: `
+            .tutorial-highlight {
+              position: relative;
+              z-index: 45;
+              box-shadow: 0 0 0 4px #8b5cf6, 0 0 0 8px rgba(139, 92, 246, 0.3), 0 0 30px rgba(139, 92, 246, 0.4);
+              border-radius: 12px;
+              animation: pulse-highlight 2s ease-in-out infinite;
+            }
+            @keyframes pulse-highlight {
+              0%, 100% { box-shadow: 0 0 0 4px #8b5cf6, 0 0 0 8px rgba(139, 92, 246, 0.3), 0 0 30px rgba(139, 92, 246, 0.4); }
+              50% { box-shadow: 0 0 0 4px #8b5cf6, 0 0 0 12px rgba(139, 92, 246, 0.2), 0 0 40px rgba(139, 92, 246, 0.5); }
+            }
+          `}} />
+        )}
+
+        {/* Tutorial Overlay */}
+        {showTutorial && (
+          <div className="fixed inset-0 z-40 pointer-events-none">
+            <div
+              className="absolute inset-0 bg-black/50 pointer-events-auto"
+              onClick={closeTutorial}
+            />
+
+            <div
+              className={`fixed z-50 max-w-md w-full pointer-events-auto transition-all duration-300 ${
+                currentTutorialStep.position === 'bottom-left'
+                  ? 'top-24 right-4'
+                  : currentTutorialStep.position === 'bottom'
+                  ? 'top-[50%] left-1/2 -translate-x-1/2'
+                  : 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4'
+              }`}
+            >
+              <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+                <div className="h-1.5 bg-gray-200">
+                  <div
+                    className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-300"
+                    style={{ width: `${((tutorialStep + 1) / TUTORIAL_STEPS.length) * 100}%` }}
+                  />
+                </div>
+
+                <div className="p-6">
+                  <button
+                    onClick={closeTutorial}
+                    className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600 z-10"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+
+                  <div className="absolute top-4 left-4 bg-purple-100 text-purple-700 text-xs font-bold px-2 py-1 rounded-full">
+                    {tutorialStep + 1} / {TUTORIAL_STEPS.length}
+                  </div>
+
+                  <div className="flex justify-center mb-4 mt-2">
+                    <div className="bg-gradient-to-br from-purple-100 to-indigo-100 p-4 rounded-full">
+                      <Lightbulb className="h-8 w-8 text-purple-600" />
+                    </div>
+                  </div>
+
+                  <h3 className="text-xl font-bold text-gray-900 text-center mb-3">
+                    {currentTutorialStep.title}
+                  </h3>
+                  <p className="text-gray-600 text-center mb-6">
+                    {currentTutorialStep.description}
+                  </p>
+
+                  {currentTutorialStep.highlight && (
+                    <div className="flex justify-center mb-4">
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg px-3 py-2 text-sm text-purple-700 flex items-center gap-2">
+                        <span>👆</span>
+                        <span>Schauen Sie auf den markierten Bereich</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-center gap-2 mb-6">
+                    {TUTORIAL_STEPS.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setTutorialStep(index)}
+                        className={`h-2 rounded-full transition-all ${
+                          index === tutorialStep
+                            ? 'bg-purple-500 w-6'
+                            : index < tutorialStep
+                            ? 'bg-purple-300 w-2'
+                            : 'bg-gray-300 w-2'
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="flex gap-3">
+                    {tutorialStep > 0 && (
+                      <button
+                        onClick={prevTutorialStep}
+                        className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors"
+                      >
+                        Zurück
+                      </button>
+                    )}
+                    <button
+                      onClick={nextTutorialStep}
+                      className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2"
+                    >
+                      {tutorialStep === TUTORIAL_STEPS.length - 1 ? (
+                        <>Los geht's!</>
+                      ) : (
+                        <>
+                          Weiter
+                          <ArrowRight className="h-4 w-4" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={closeTutorial}
+                    className="w-full mt-3 py-2 text-sm text-gray-500 hover:text-gray-700"
+                  >
+                    Tutorial überspringen
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Help Button */}
+        <button
+          onClick={() => {
+            setTutorialStep(0)
+            setShowTutorial(true)
+          }}
+          className="fixed bottom-6 right-6 z-30 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all group"
+          title="Hilfe & Tutorial"
+        >
+          <Info className="h-6 w-6" />
+          <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+            Hilfe anzeigen
+          </span>
+        </button>
+
         {/* Header */}
         <header className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
           <div className="max-w-4xl mx-auto px-4 py-4">
@@ -210,7 +438,10 @@ export default function AusgangslagePage() {
               <button onClick={() => router.push('/dashboard')} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
                 <ArrowLeft className="h-5 w-5" /><span>Dashboard</span>
               </button>
-              <div className="flex items-center gap-3">
+              <div
+                id="points-display"
+                className={`flex items-center gap-3 ${showTutorial && currentTutorialStep.highlight === 'points-display' ? 'tutorial-highlight' : ''}`}
+              >
                 <div className="flex items-center gap-2 text-sm bg-white/20 px-3 py-1 rounded-full">
                   <Award className="h-4 w-4" />
                   <span className="font-semibold">{totalScore} / {maxPoints}</span>
@@ -310,8 +541,9 @@ export default function AusgangslagePage() {
           <div className="space-y-3">
             {/* Kapitel 1: Umfrage */}
             <button
+              id="chapter-survey"
               onClick={() => setActiveChapter('survey')}
-              className="w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-purple-200"
+              className={`w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-purple-200 ${showTutorial && currentTutorialStep.highlight === 'chapter-survey' ? 'tutorial-highlight' : ''}`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -338,8 +570,9 @@ export default function AusgangslagePage() {
 
             {/* Kapitel 2: Referendum */}
             <button
+              id="chapter-referendum"
               onClick={() => setActiveChapter('referendum')}
-              className="w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-purple-200"
+              className={`w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-purple-200 ${showTutorial && currentTutorialStep.highlight === 'chapter-referendum' ? 'tutorial-highlight' : ''}`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -366,8 +599,9 @@ export default function AusgangslagePage() {
 
             {/* Kapitel 3: Video */}
             <button
+              id="chapter-video"
               onClick={() => setActiveChapter('video')}
-              className="w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-purple-200"
+              className={`w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-purple-200 ${showTutorial && currentTutorialStep.highlight === 'chapter-video' ? 'tutorial-highlight' : ''}`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">

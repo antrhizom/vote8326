@@ -6,7 +6,7 @@ import {
   ArrowLeft, CheckCircle2, Award,
   History, Scale, Film, ChevronRight, ChevronDown,
   AlertTriangle, Calendar, Users, Star, BookOpen,
-  HelpCircle, Lightbulb, Newspaper, ExternalLink, Lock, ThumbsUp, ThumbsDown
+  HelpCircle, Lightbulb, Newspaper, ExternalLink, Lock, ThumbsUp, ThumbsDown, Glasses
 } from 'lucide-react'
 
 // ===========================================
@@ -279,6 +279,9 @@ export default function VertiefungPage() {
   const [articleRatings, setArticleRatings] = useState<{[key: string]: {lesefreundlichkeit: number, inhalt: number}}>({})
   const [articleClicks, setArticleClicks] = useState<{[key: string]: number}>({})
 
+  // Lesehilfe state
+  const [readingHelpActive, setReadingHelpActive] = useState(false)
+
   const maxPoints = 100
 
   useEffect(() => {
@@ -480,10 +483,59 @@ export default function VertiefungPage() {
   const partyDone = completedSections.has('party_bonus')
   const isComplete = geschichteDone && steuerzieleDone
 
+  // Lesehilfe CSS Styles
+  const readingHelpStyles = `
+    .reading-highlight-box {
+      position: relative;
+      box-shadow: 0 0 0 3px #f59e0b, 0 0 15px rgba(245, 158, 11, 0.25) !important;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+    .reading-highlight-box::before {
+      content: attr(data-reading-label);
+      position: absolute;
+      top: -10px;
+      left: 12px;
+      background: #f59e0b;
+      color: white;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      z-index: 10;
+      white-space: nowrap;
+    }
+    @keyframes reading-pulse {
+      0%, 100% { box-shadow: 0 0 0 3px #f59e0b, 0 0 15px rgba(245, 158, 11, 0.25); }
+      50% { box-shadow: 0 0 0 4px #f59e0b, 0 0 25px rgba(245, 158, 11, 0.35); }
+    }
+    .reading-active .reading-highlight-box {
+      animation: reading-pulse 2s ease-in-out infinite;
+    }
+  `
+
   // ========== CHAPTER OVERVIEW ==========
   if (!activeChapter) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+      <div className={`min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 ${readingHelpActive ? 'reading-active' : ''}`}>
+        <style dangerouslySetInnerHTML={{ __html: readingHelpStyles }} />
+
+        {/* Lesehilfe Button */}
+        <button
+          onClick={() => setReadingHelpActive(!readingHelpActive)}
+          className={`fixed bottom-6 right-6 z-30 p-4 rounded-full shadow-lg hover:shadow-xl transition-all group ${
+            readingHelpActive
+              ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
+              : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
+          }`}
+          title={readingHelpActive ? 'Lesehilfe deaktivieren' : 'Lesehilfe aktivieren'}
+        >
+          <Glasses className="h-6 w-6" />
+          <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+            {readingHelpActive ? 'Lesehilfe aus' : 'Lesehilfe an'}
+          </span>
+        </button>
+
         <header className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
           <div className="max-w-4xl mx-auto px-4 py-4">
             <div className="flex items-center justify-between mb-2">
@@ -509,7 +561,21 @@ export default function VertiefungPage() {
         </header>
 
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          {/* Lesehilfe Info-Banner */}
+          {readingHelpActive && (
+            <div className="bg-amber-100 border border-amber-300 rounded-xl p-4 flex items-center gap-3">
+              <Glasses className="h-6 w-6 text-amber-600 flex-shrink-0" />
+              <div>
+                <p className="text-amber-800 font-semibold text-sm">Lesehilfe aktiv</p>
+                <p className="text-amber-700 text-xs">Die gelb markierten Bereiche enthalten wichtige Informationen, die Sie lesen sollten.</p>
+              </div>
+            </div>
+          )}
+
+          <div
+            className={`bg-white rounded-xl p-6 shadow-sm transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
+            data-reading-label="📖 Infotext"
+          >
             <p className="text-gray-700 mb-3">
               Tauchen Sie tiefer ein in die <strong>Hintergründe der Abstimmung</strong>. Im ersten Kapitel erfahren Sie,
               welche politischen Ereignisse zur heutigen Abstimmung geführt haben. Eine interaktive Zeitachse zeigt die
@@ -682,15 +748,27 @@ export default function VertiefungPage() {
                           </a>
                         </div>
 
-                        <div className="flex flex-col items-center gap-2">
+                        <div className="flex flex-col items-center gap-2 min-w-[140px]">
                           <button
                             onClick={() => toggleArticleRead(article.id)}
-                            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                              isRead ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            className={`w-full px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+                              isRead
+                                ? 'bg-green-500 text-white shadow-md'
+                                : 'bg-amber-100 text-amber-800 border-2 border-amber-400 hover:bg-amber-200 animate-pulse'
                             }`}
                           >
-                            {isRead ? '✓ Gelesen' : 'Als gelesen markieren'}
+                            {isRead ? (
+                              <>✓ Gelesen</>
+                            ) : (
+                              <>
+                                <span className="text-lg">👆</span>
+                                <span>Hier klicken wenn gelesen</span>
+                              </>
+                            )}
                           </button>
+                          {!isRead && (
+                            <p className="text-xs text-gray-500 text-center">Nach dem Lesen hier bestätigen</p>
+                          )}
                         </div>
                       </div>
 
@@ -770,7 +848,22 @@ export default function VertiefungPage() {
   // ========== CHAPTER 1: GESCHICHTE ==========
   if (activeChapter === 'geschichte') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+      <div className={`min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 ${readingHelpActive ? 'reading-active' : ''}`}>
+        <style dangerouslySetInnerHTML={{ __html: readingHelpStyles }} />
+
+        {/* Lesehilfe Button */}
+        <button
+          onClick={() => setReadingHelpActive(!readingHelpActive)}
+          className={`fixed bottom-6 right-6 z-30 p-4 rounded-full shadow-lg hover:shadow-xl transition-all ${
+            readingHelpActive
+              ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
+              : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
+          }`}
+          title={readingHelpActive ? 'Lesehilfe deaktivieren' : 'Lesehilfe aktivieren'}
+        >
+          <Glasses className="h-6 w-6" />
+        </button>
+
         <header className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
@@ -932,7 +1025,22 @@ export default function VertiefungPage() {
   // ========== CHAPTER 2: STEUERZIELE ==========
   if (activeChapter === 'steuerziele') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-indigo-50">
+      <div className={`min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-indigo-50 ${readingHelpActive ? 'reading-active' : ''}`}>
+        <style dangerouslySetInnerHTML={{ __html: readingHelpStyles }} />
+
+        {/* Lesehilfe Button */}
+        <button
+          onClick={() => setReadingHelpActive(!readingHelpActive)}
+          className={`fixed bottom-6 right-6 z-30 p-4 rounded-full shadow-lg hover:shadow-xl transition-all ${
+            readingHelpActive
+              ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
+              : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
+          }`}
+          title={readingHelpActive ? 'Lesehilfe deaktivieren' : 'Lesehilfe aktivieren'}
+        >
+          <Glasses className="h-6 w-6" />
+        </button>
+
         <header className="bg-gradient-to-r from-cyan-600 to-blue-600 text-white sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between">

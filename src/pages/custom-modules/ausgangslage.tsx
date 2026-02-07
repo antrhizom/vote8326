@@ -263,19 +263,29 @@ export default function AusgangslagePage() {
       animation: fadeIn 0.3s ease-out;
     }
     /* Lesehilfe Styles */
-    .reading-highlight {
-      background: linear-gradient(120deg, #fef08a 0%, #fde047 100%) !important;
-      box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.4);
-      border-radius: 8px;
+    .reading-highlight-box {
+      position: relative;
+      box-shadow: 0 0 0 3px #f59e0b, 0 0 15px rgba(245, 158, 11, 0.25) !important;
+      border-radius: 12px;
       transition: all 0.3s ease;
     }
-    .reading-highlight-box {
-      box-shadow: 0 0 0 4px #f59e0b, 0 0 20px rgba(245, 158, 11, 0.3) !important;
-      transform: scale(1.01);
+    .reading-highlight-box::before {
+      content: attr(data-reading-label);
+      position: absolute;
+      top: -10px;
+      left: 12px;
+      background: #f59e0b;
+      color: white;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      z-index: 10;
+      white-space: nowrap;
     }
     @keyframes reading-pulse {
-      0%, 100% { box-shadow: 0 0 0 4px #f59e0b, 0 0 20px rgba(245, 158, 11, 0.3); }
-      50% { box-shadow: 0 0 0 6px #f59e0b, 0 0 30px rgba(245, 158, 11, 0.4); }
+      0%, 100% { box-shadow: 0 0 0 3px #f59e0b, 0 0 15px rgba(245, 158, 11, 0.25); }
+      50% { box-shadow: 0 0 0 4px #f59e0b, 0 0 25px rgba(245, 158, 11, 0.35); }
     }
     .reading-active .reading-highlight-box {
       animation: reading-pulse 2s ease-in-out infinite;
@@ -333,104 +343,105 @@ export default function AusgangslagePage() {
           `}} />
         )}
 
-        {/* Tutorial Overlay */}
+        {/* Tutorial Overlay - Seitlich positioniert */}
         {showTutorial && (
           <div className="fixed inset-0 z-40 pointer-events-none">
             <div
-              className="absolute inset-0 bg-black/50 pointer-events-auto"
+              className="absolute inset-0 bg-black/40 pointer-events-auto"
               onClick={closeTutorial}
             />
 
-            <div
-              className="fixed z-50 max-w-md w-full pointer-events-auto transition-all duration-300 bottom-8 left-1/2 -translate-x-1/2 px-4"
-            >
-              <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-                <div className="h-1.5 bg-gray-200">
+            {/* Tutorial Panel - links am Rand, vertikal gestreckt */}
+            <div className="fixed z-50 left-4 top-1/2 -translate-y-1/2 w-72 max-h-[85vh] pointer-events-auto">
+              <div className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+                {/* Progress Bar */}
+                <div className="h-1.5 bg-gray-200 flex-shrink-0">
                   <div
                     className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-300"
                     style={{ width: `${((tutorialStep + 1) / TUTORIAL_STEPS.length) * 100}%` }}
                   />
                 </div>
 
-                <div className="p-6">
-                  <button
-                    onClick={closeTutorial}
-                    className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600 z-10"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-
-                  <div className="absolute top-4 left-4 bg-purple-100 text-purple-700 text-xs font-bold px-2 py-1 rounded-full">
-                    {tutorialStep + 1} / {TUTORIAL_STEPS.length}
+                {/* Header */}
+                <div className="bg-gradient-to-r from-purple-500 to-indigo-600 px-4 py-3 flex items-center justify-between flex-shrink-0">
+                  <div className="flex items-center gap-2">
+                    <Lightbulb className="h-5 w-5 text-white" />
+                    <span className="text-white font-semibold text-sm">Tutorial</span>
                   </div>
-
-                  <div className="flex justify-center mb-4 mt-2">
-                    <div className="bg-gradient-to-br from-purple-100 to-indigo-100 p-4 rounded-full">
-                      <Lightbulb className="h-8 w-8 text-purple-600" />
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                      {tutorialStep + 1}/{TUTORIAL_STEPS.length}
+                    </span>
+                    <button
+                      onClick={closeTutorial}
+                      className="p-1 text-white/70 hover:text-white"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                   </div>
+                </div>
 
-                  <h3 className="text-xl font-bold text-gray-900 text-center mb-3">
+                {/* Content */}
+                <div className="p-4 flex-1 overflow-y-auto">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">
                     {currentTutorialStep.title}
                   </h3>
-                  <p className="text-gray-600 text-center mb-6">
+                  <p className="text-gray-600 text-sm mb-4">
                     {currentTutorialStep.description}
                   </p>
 
                   {currentTutorialStep.highlight && (
-                    <div className="flex justify-center mb-4">
-                      <div className="bg-purple-50 border border-purple-200 rounded-lg px-3 py-2 text-sm text-purple-700 flex items-center gap-2">
-                        <span>👆</span>
-                        <span>Schauen Sie auf den markierten Bereich</span>
-                      </div>
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg px-3 py-2 text-xs text-purple-700 flex items-center gap-2 mb-4">
+                      <span>👉</span>
+                      <span>Markierter Bereich rechts</span>
                     </div>
                   )}
 
-                  <div className="flex justify-center gap-2 mb-6">
+                  {/* Step indicators */}
+                  <div className="flex justify-center gap-1.5 mb-4">
                     {TUTORIAL_STEPS.map((_, index) => (
                       <button
                         key={index}
                         onClick={() => setTutorialStep(index)}
-                        className={`h-2 rounded-full transition-all ${
+                        className={`h-1.5 rounded-full transition-all ${
                           index === tutorialStep
-                            ? 'bg-purple-500 w-6'
+                            ? 'bg-purple-500 w-4'
                             : index < tutorialStep
-                            ? 'bg-purple-300 w-2'
-                            : 'bg-gray-300 w-2'
+                            ? 'bg-purple-300 w-1.5'
+                            : 'bg-gray-300 w-1.5'
                         }`}
                       />
                     ))}
                   </div>
+                </div>
 
-                  <div className="flex gap-3">
+                {/* Footer Buttons */}
+                <div className="p-3 border-t bg-gray-50 flex-shrink-0">
+                  <div className="flex gap-2">
                     {tutorialStep > 0 && (
                       <button
                         onClick={prevTutorialStep}
-                        className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors"
+                        className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg text-sm"
                       >
                         Zurück
                       </button>
                     )}
                     <button
                       onClick={nextTutorialStep}
-                      className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2"
+                      className="flex-1 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-medium rounded-lg text-sm flex items-center justify-center gap-1"
                     >
                       {tutorialStep === TUTORIAL_STEPS.length - 1 ? (
                         <>Los geht's!</>
                       ) : (
-                        <>
-                          Weiter
-                          <ArrowRight className="h-4 w-4" />
-                        </>
+                        <>Weiter <ArrowRight className="h-3 w-3" /></>
                       )}
                     </button>
                   </div>
-
                   <button
                     onClick={closeTutorial}
-                    className="w-full mt-3 py-2 text-sm text-gray-500 hover:text-gray-700"
+                    className="w-full mt-2 py-1.5 text-xs text-gray-500 hover:text-gray-700"
                   >
-                    Tutorial überspringen
+                    Überspringen
                   </button>
                 </div>
               </div>
@@ -514,7 +525,10 @@ export default function AusgangslagePage() {
           )}
 
           {/* Intro Text */}
-          <div className={`bg-white rounded-xl p-6 shadow-sm transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}>
+          <div
+            className={`bg-white rounded-xl p-6 shadow-sm transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
+            data-reading-label="📖 Infotext"
+          >
             <p className="text-gray-700 mb-3">
               Bevor Sie in die Details der Abstimmung eintauchen, erkunden Sie Ihre <strong>persönliche Ausgangslage</strong>.
               In einer kurzen Umfrage reflektieren Sie Ihre eigene Situation – zum Beispiel: Wie werden Sie heute besteuert?
@@ -540,7 +554,10 @@ export default function AusgangslagePage() {
             className={`space-y-4 ${showTutorial && currentTutorialStep.highlight === 'info-boxes' ? 'tutorial-highlight p-2 -m-2' : ''}`}
           >
           {/* Info-Box: Indirekter Gegenvorschlag */}
-          <div className={`bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 shadow-sm border border-blue-200 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}>
+          <div
+            className={`bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 shadow-sm border border-blue-200 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
+            data-reading-label="📰 Hintergrundinfo"
+          >
             <div className="flex items-start gap-3">
               <div className="bg-blue-500 p-2 rounded-lg text-white">
                 <Scale className="h-5 w-5" />
@@ -568,7 +585,10 @@ export default function AusgangslagePage() {
           </div>
 
           {/* Info-Box: Wer profitiert? */}
-          <div className={`bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-5 shadow-sm border border-emerald-200 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}>
+          <div
+            className={`bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-5 shadow-sm border border-emerald-200 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
+            data-reading-label="📊 Fakten & Zahlen"
+          >
             <div className="flex items-start gap-3">
               <div className="bg-emerald-500 p-2 rounded-lg text-white">
                 <BarChart3 className="h-5 w-5" />
@@ -770,7 +790,10 @@ export default function AusgangslagePage() {
             </div>
             
             <div className="p-6">
-              <div className={`bg-purple-50 border-l-4 border-purple-500 p-4 mb-4 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}>
+              <div
+                className={`bg-purple-50 border-l-4 border-purple-500 p-4 mb-4 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
+                data-reading-label="📝 Aufgabenstellung"
+              >
                 <p className="text-purple-800 text-sm">
                   <strong>🎯 Warum diese Umfrage?</strong> Bevor Sie in die Inhalte eintauchen, interessiert uns Ihre
                   persönliche Ausgangslage. Die Umfrage hilft Ihnen, Ihre eigene Position zu reflektieren.
@@ -786,12 +809,17 @@ export default function AusgangslagePage() {
               </div>
               
               {!completedSections.has('survey') && (
-                <button 
-                  onClick={() => completeSection('survey', 15)}
-                  className="mt-4 w-full py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-semibold"
+                <div
+                  className={`mt-4 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
+                  data-reading-label="✅ Bestätigung"
                 >
-                  ✓ Umfrage abgeschlossen (+15 Punkte)
-                </button>
+                  <button
+                    onClick={() => completeSection('survey', 15)}
+                    className="w-full py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-semibold"
+                  >
+                    ✓ Umfrage abgeschlossen (+15 Punkte)
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -812,7 +840,10 @@ export default function AusgangslagePage() {
             </div>
             
             <div className="p-6">
-              <div className={`bg-amber-50 border-l-4 border-amber-400 p-4 mb-4 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}>
+              <div
+                className={`bg-amber-50 border-l-4 border-amber-400 p-4 mb-4 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
+                data-reading-label="💡 Tipp"
+              >
                 <p className="text-amber-800 text-sm">
                   <strong>💡 Tipp:</strong> In der Ergebnisansicht können Sie auf die <strong>Antwortbezeichnungen</strong> klicken,
                   um die Ergebnisse entsprechend zu filtern. So sehen Sie z.B. nur die Antworten von Personen,
@@ -833,12 +864,17 @@ export default function AusgangslagePage() {
               </p>
               
               {!completedSections.has('results') && (
-                <button 
-                  onClick={() => completeSection('results', 15)}
-                  className="mt-4 w-full py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-semibold"
+                <div
+                  className={`mt-4 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
+                  data-reading-label="✅ Bestätigung"
                 >
-                  ✓ Ergebnisse angeschaut (+15 Punkte)
-                </button>
+                  <button
+                    onClick={() => completeSection('results', 15)}
+                    className="w-full py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-semibold"
+                  >
+                    ✓ Ergebnisse angeschaut (+15 Punkte)
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -910,7 +946,10 @@ export default function AusgangslagePage() {
           )}
 
           {/* Einführung */}
-          <div className={`bg-white rounded-xl p-6 shadow-sm transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}>
+          <div
+            className={`bg-white rounded-xl p-6 shadow-sm transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
+            data-reading-label="📖 Infotext"
+          >
             <p className="text-gray-700 mb-3">
               Das Referendum ist ein zentrales Instrument der <strong>direkten Demokratie</strong> in der Schweiz.
               Es ermöglicht den Stimmberechtigten, über Entscheide des Parlaments das letzte Wort zu haben.
@@ -1243,7 +1282,10 @@ export default function AusgangslagePage() {
             </div>
 
             <div className="p-6">
-              <div className={`bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-4 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}>
+              <div
+                className={`bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-4 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
+                data-reading-label="📖 Infotext"
+              >
                 <p className="text-amber-800 text-sm mb-2">
                   <strong>📖 Worum geht es?</strong> Dieses Video erklärt die bewegte Geschichte der Heiratsstrafe in der Schweiz.
                 </p>

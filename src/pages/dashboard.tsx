@@ -623,7 +623,7 @@ export default function AbstimmungDashboard() {
                 <Users className="h-6 w-6 text-teal-600" />
               </div>
               <div className="text-4xl font-bold text-teal-600 mb-2">{registrationStats.totalRegistered}</div>
-              <p className="text-sm text-gray-600">Teilnehmer:innen</p>
+              <p className="text-sm text-gray-600">Teilnehmende</p>
               <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
                 🏆 {registrationStats.totalBadges} Badges vergeben
               </div>
@@ -639,8 +639,8 @@ export default function AbstimmungDashboard() {
               <h2 className="text-2xl font-bold">Ihr Feedback im Vergleich</h2>
             </div>
             <p className="text-teal-100 mb-6">
-              Sie haben Feedback abgegeben! Hier sehen Sie, wie Ihre Bewertung im Vergleich zu anderen Teilnehmer:innen steht.
-              <span className="text-xs ml-2 opacity-80">({statistics.totalUsers} Teilnehmer:innen haben Feedback abgegeben)</span>
+              Sie haben Feedback abgegeben! Hier sehen Sie, wie Ihre Bewertung im Vergleich zu anderen Teilnehmenden steht.
+              <span className="text-xs ml-2 opacity-80">({statistics.totalUsers} Teilnehmende haben Feedback abgegeben)</span>
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

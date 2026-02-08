@@ -820,7 +820,7 @@ export default function VertiefungPage() {
               <div className="bg-amber-50 border-l-4 border-amber-400 p-3 rounded-r-lg mb-4">
                 <p className="text-amber-800 text-sm">
                   <strong>💡 Hinweis:</strong> Diese Artikel sind z.T. hinter einer <strong>Paywall</strong>.
-                  Als Schüler:in können Sie diese über <strong>Swissdox</strong> kostenlos lesen.
+                  Als Lernende können Sie diese über <strong>Swissdox</strong> kostenlos lesen.
                   Fragen Sie Ihre Lehrperson nach dem Zugang.
                 </p>
               </div>

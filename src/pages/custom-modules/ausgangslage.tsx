@@ -1118,7 +1118,7 @@ export default function AusgangslagePage() {
                 <BarChart3 className="h-6 w-6 text-purple-600" />
                 <div>
                   <h3 className="font-bold text-gray-900">Aufgabe 2: Ergebnisse erkunden</h3>
-                  <p className="text-sm text-gray-500">Vergleichen Sie mit anderen Teilnehmer:innen</p>
+                  <p className="text-sm text-gray-500">Vergleichen Sie mit anderen Teilnehmenden</p>
                 </div>
               </div>
               {completedSections.has('results') && (

@@ -182,14 +182,14 @@ const SECTIONS: Section[] = [
   // 2. KOMITEE BEFÜRWORTER:INNEN
   {
     id: 'befuerworter',
-    title: 'Komitee Befürworter:innen',
-    shortTitle: 'Befürworter:innen',
+    title: 'Komitee Befürworter*innen',
+    shortTitle: 'Befürworter*innen',
     icon: 'ThumbsUp',
     colorClass: 'from-green-500 to-green-600',
     bgColor: 'bg-green-500',
     intro: 'Ein breites Komitee unterstützt die Individualbesteuerung als Schritt zur Gleichstellung.',
     videoUrl: 'https://www.srf.ch/play/embed?urn=urn:srf:video:234b56bb-fbf4-4a3c-a13b-7c04ea154f4f',
-    videoTitle: 'Befürworter:innen präsentieren Argumente',
+    videoTitle: 'Befürworter*innen präsentieren Argumente',
     totalPoints: 45,
     slides: [
       // NEU: Timeline
@@ -219,12 +219,12 @@ const SECTIONS: Section[] = [
       {
         type: 'quiz',
         title: 'Verständnisfrage',
-        question: 'Wer profitiert laut Befürworter:innen am meisten?',
+        question: 'Wer profitiert laut Befürworter*innen am meisten?',
         options: [
           { text: 'Einverdiener-Ehepaare', correct: false },
           { text: 'Unverheiratete Singles', correct: false },
           { text: 'Doppelverdiener-Ehepaare', correct: true },
-          { text: 'Rentner:innen', correct: false }
+          { text: 'Rentner*innen', correct: false }
         ],
         explanation: 'Die Mehrbelastung durch gemeinsame Veranlagung fällt weg.',
         points: 15
@@ -235,8 +235,8 @@ const SECTIONS: Section[] = [
   // 3. KOMITEE GEGNER:INNEN
   {
     id: 'gegner',
-    title: 'Komitee Gegner:innen',
-    shortTitle: 'Gegner:innen',
+    title: 'Komitee Gegner*innen',
+    shortTitle: 'Gegner*innen',
     icon: 'ThumbsDown',
     colorClass: 'from-red-500 to-red-600',
     bgColor: 'bg-red-500',
@@ -1464,14 +1464,14 @@ export default function ProContraPage() {
             <strong>📣 Bei Abstimmungen gehen die Meinungen auseinander.</strong>
           </p>
           <p className="text-amber-800 mb-2">
-            In diesem Modul lernen Sie die verschiedenen <strong>Akteur:innen</strong> und ihre Argumente kennen.
-            Sie sehen Video-Statements von Befürworter:innen und Gegner:innen und lösen interaktive Aufgaben wie
+            In diesem Modul lernen Sie die verschiedenen <strong>Akteur*innen</strong> und ihre Argumente kennen.
+            Sie sehen Video-Statements von Befürworter*innen und Gegner*innen und lösen interaktive Aufgaben wie
             Flipcards, Swipe-Karten und Zuordnungsübungen. Vier Perspektiven stehen im Fokus: Der Bundesrat, das
-            Komitee der Befürworter:innen, das Komitee der Gegner:innen und die Kantone.
+            Komitee der Befürworter*innen, das Komitee der Gegner*innen und die Kantone.
           </p>
           <p className="text-amber-800 mb-2">
             <strong>Beispiel:</strong> Der Bundesrat argumentiert, dass bis zu 44'000 neue Vollzeitstellen entstehen könnten,
-            weil sich Mehrarbeit für verheiratete Personen mehr lohnen würde. Die Gegner:innen warnen hingegen vor
+            weil sich Mehrarbeit für verheiratete Personen mehr lohnen würde. Die Gegner*innen warnen hingegen vor
             630 Millionen Franken Steuerausfällen pro Jahr und kritisieren, dass vor allem Gutverdienende profitieren würden.
           </p>
           <p className="text-amber-800">

@@ -1243,6 +1243,25 @@ export default function ProContraPage() {
     setReadingHelpPosition(null)
   }
 
+  // Navigation mit Lesehilfe-Check
+  const handleNavigate = (path: string) => {
+    if (readingHelpActive) {
+      closeReadingHelp()
+      alert('Lesehilfe wurde geschlossen. Klicken Sie erneut, um zu navigieren.')
+      return
+    }
+    router.push(path)
+  }
+
+  const handleSectionChange = (section: Section) => {
+    if (readingHelpActive) {
+      closeReadingHelp()
+      alert('Lesehilfe wurde geschlossen. Klicken Sie erneut, um die Sektion zu wechseln.')
+      return
+    }
+    setActiveSection(section)
+  }
+
   useEffect(() => {
     setReadingHelpActive(false)
     setCurrentReadingIndex(0)
@@ -1370,7 +1389,7 @@ export default function ProContraPage() {
   if (activeSection) {
     const section = SECTIONS.find(s => s.id === activeSection)!
     const data = sectionData[activeSection]
-    return <SectionView section={section} onClose={() => setActiveSection(null)} onComplete={(c) => handleSectionComplete(activeSection, c)} initialCompletedSlides={new Set(data?.completedSlides || [])} />
+    return <SectionView section={section} onClose={() => handleSectionChange(null)} onComplete={(c) => handleSectionComplete(activeSection, c)} initialCompletedSlides={new Set(data?.completedSlides || [])} />
   }
 
   const isComplete = SECTIONS.every(s => getSectionProgress(s.id).complete)
@@ -1421,7 +1440,7 @@ export default function ProContraPage() {
 
       <header className="bg-white shadow-md sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
+          <button onClick={() => handleNavigate('/dashboard')} className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
             <ArrowLeft className="h-5 w-5" /><span>Dashboard</span>
           </button>
           <div className={`flex items-center gap-2 font-semibold px-3 py-1 rounded-full ${isComplete ? 'bg-green-100 text-green-700' : 'bg-teal-100 text-teal-700'}`}>
@@ -1469,7 +1488,7 @@ export default function ProContraPage() {
               <button
                 key={section.id}
                 id={`section-${section.id}`}
-                onClick={() => setActiveSection(section.id)}
+                onClick={() => handleSectionChange(section.id)}
                 className={`p-4 rounded-xl border-2 transition-all text-left hover:shadow-lg hover:scale-[1.02] ${
                   progress.complete ? 'bg-green-50 border-green-300' : 'bg-white border-gray-200 hover:border-gray-300'
                 } ${isHighlighted ? 'reading-highlight-box' : ''}`}

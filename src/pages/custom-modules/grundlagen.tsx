@@ -137,6 +137,25 @@ export default function GrundlagenPage() {
     setReadingHelpPosition(null)
   }
 
+  // Navigation mit Lesehilfe-Check
+  const handleNavigate = (path: string) => {
+    if (readingHelpActive) {
+      closeReadingHelp()
+      alert('Lesehilfe wurde geschlossen. Klicken Sie erneut, um zu navigieren.')
+      return
+    }
+    router.push(path)
+  }
+
+  const handleChapterChange = (chapter: Chapter) => {
+    if (readingHelpActive) {
+      closeReadingHelp()
+      alert('Lesehilfe wurde geschlossen. Klicken Sie erneut, um das Kapitel zu wechseln.')
+      return
+    }
+    setActiveChapter(chapter)
+  }
+
   // Reset reading help when chapter changes
   useEffect(() => {
     setReadingHelpActive(false)
@@ -372,7 +391,7 @@ export default function GrundlagenPage() {
         <header className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
           <div className="max-w-4xl mx-auto px-4 py-4">
             <div className="flex items-center justify-between mb-2">
-              <button onClick={() => router.push('/dashboard')} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
+              <button onClick={() => handleNavigate('/dashboard')} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
                 <ArrowLeft className="h-5 w-5" /><span>Dashboard</span>
               </button>
               <div className="flex items-center gap-3">
@@ -452,7 +471,7 @@ export default function GrundlagenPage() {
             {/* Kapitel 1: Video */}
             <button
               id="chapter-video"
-              onClick={() => setActiveChapter('video')}
+              onClick={() => handleChapterChange('video')}
               className={`w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-blue-200 ${readingHelpActive && currentReadingIndex === 1 ? 'reading-highlight-box' : ''}`}
               data-reading-label="🎬 Kapitel 1: Video"
             >
@@ -482,7 +501,7 @@ export default function GrundlagenPage() {
             {/* Kapitel 2: Audio */}
             <button
               id="chapter-audio"
-              onClick={() => setActiveChapter('audio')}
+              onClick={() => handleChapterChange('audio')}
               className={`w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-blue-200 ${readingHelpActive && currentReadingIndex === 2 ? 'reading-highlight-box' : ''}`}
               data-reading-label="🎧 Kapitel 2: Audio"
             >
@@ -523,7 +542,7 @@ export default function GrundlagenPage() {
               <p className="text-blue-100 mb-4">
                 Sie haben {totalScore} Punkte erreicht{bonusScore > 0 && <span> (+{bonusScore} Bonus)</span>}
               </p>
-              <button onClick={() => router.push('/dashboard')} className="px-6 py-2 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50">
+              <button onClick={() => handleNavigate('/dashboard')} className="px-6 py-2 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50">
                 Weiter zum nächsten Modul
               </button>
             </div>
@@ -581,7 +600,7 @@ export default function GrundlagenPage() {
         <header className="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
-              <button onClick={() => setActiveChapter(null)} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
+              <button onClick={() => handleChapterChange(null)} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
                 <ArrowLeft className="h-5 w-5" /><span>Übersicht</span>
               </button>
               <div className="flex items-center gap-2 text-sm bg-white/20 px-3 py-1 rounded-full">
@@ -749,8 +768,8 @@ export default function GrundlagenPage() {
           </div>
 
           <div className="flex justify-between">
-            <button onClick={() => setActiveChapter(null)} className="px-4 py-2 text-gray-600 hover:text-gray-800">← Übersicht</button>
-            <button onClick={() => setActiveChapter('audio')} className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold flex items-center gap-2">
+            <button onClick={() => handleChapterChange(null)} className="px-4 py-2 text-gray-600 hover:text-gray-800">← Übersicht</button>
+            <button onClick={() => handleChapterChange('audio')} className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold flex items-center gap-2">
               <Radio className="h-4 w-4" /> Kapitel 2: Audio →
             </button>
           </div>
@@ -768,7 +787,7 @@ export default function GrundlagenPage() {
         <header className="bg-gradient-to-r from-red-600 to-red-700 text-white sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
-              <button onClick={() => setActiveChapter(null)} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
+              <button onClick={() => handleChapterChange(null)} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
                 <ArrowLeft className="h-5 w-5" /><span>Übersicht</span>
               </button>
               <div className="flex items-center gap-3">
@@ -1232,8 +1251,8 @@ export default function GrundlagenPage() {
           )}
 
           <div className="flex justify-between">
-            <button onClick={() => setActiveChapter('video')} className="px-4 py-2 text-gray-600 hover:text-gray-800">← Kapitel 1</button>
-            <button onClick={() => setActiveChapter(null)} className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold">Zur Übersicht →</button>
+            <button onClick={() => handleChapterChange('video')} className="px-4 py-2 text-gray-600 hover:text-gray-800">← Kapitel 1</button>
+            <button onClick={() => handleChapterChange(null)} className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold">Zur Übersicht →</button>
           </div>
         </main>
       </div>

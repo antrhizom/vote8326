@@ -338,6 +338,25 @@ export default function VertiefungPage() {
     setReadingHelpPosition(null)
   }
 
+  // Navigation mit Lesehilfe-Check
+  const handleNavigate = (path: string) => {
+    if (readingHelpActive) {
+      closeReadingHelp()
+      alert('Lesehilfe wurde geschlossen. Klicken Sie erneut, um zu navigieren.')
+      return
+    }
+    router.push(path)
+  }
+
+  const handleChapterChange = (chapter: Chapter) => {
+    if (readingHelpActive) {
+      closeReadingHelp()
+      alert('Lesehilfe wurde geschlossen. Klicken Sie erneut, um das Kapitel zu wechseln.')
+      return
+    }
+    setActiveChapter(chapter)
+  }
+
   useEffect(() => {
     setReadingHelpActive(false)
     setCurrentReadingIndex(0)
@@ -640,7 +659,7 @@ export default function VertiefungPage() {
         <header className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
           <div className="max-w-4xl mx-auto px-4 py-4">
             <div className="flex items-center justify-between mb-2">
-              <button onClick={() => router.push('/dashboard')} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
+              <button onClick={() => handleNavigate('/dashboard')} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
                 <ArrowLeft className="h-5 w-5" /><span>Dashboard</span>
               </button>
               <div className="flex items-center gap-3">
@@ -706,7 +725,7 @@ export default function VertiefungPage() {
             {/* Kapitel 1: Geschichte */}
             <button
               id="chapter-geschichte"
-              onClick={() => setActiveChapter('geschichte')}
+              onClick={() => handleChapterChange('geschichte')}
               className={`w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-emerald-200 ${readingHelpActive && currentReadingIndex === 1 ? 'reading-highlight-box' : ''}`}
               data-reading-label="📅 Kapitel 1"
             >
@@ -736,7 +755,7 @@ export default function VertiefungPage() {
             {/* Kapitel 2: Steuerziele */}
             <button
               id="chapter-steuern"
-              onClick={() => setActiveChapter('steuerziele')}
+              onClick={() => handleChapterChange('steuerziele')}
               className={`w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-emerald-200 ${readingHelpActive && currentReadingIndex === 2 ? 'reading-highlight-box' : ''}`}
               data-reading-label="⚖️ Kapitel 2"
             >
@@ -946,7 +965,7 @@ export default function VertiefungPage() {
               <p className="text-emerald-100 mb-4">
                 Sie haben {totalScore} Punkte erreicht{bonusScore > 0 && <span> (+{bonusScore} Bonus)</span>}
               </p>
-              <button onClick={() => router.push('/dashboard')} className="px-6 py-2 bg-white text-emerald-600 rounded-lg font-semibold hover:bg-emerald-50">
+              <button onClick={() => handleNavigate('/dashboard')} className="px-6 py-2 bg-white text-emerald-600 rounded-lg font-semibold hover:bg-emerald-50">
                 Weiter zum nächsten Modul
               </button>
             </div>
@@ -978,7 +997,7 @@ export default function VertiefungPage() {
         <header className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
-              <button onClick={() => setActiveChapter(null)} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
+              <button onClick={() => handleChapterChange(null)} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
                 <ArrowLeft className="h-5 w-5" /><span>Übersicht</span>
               </button>
               <div className="flex items-center gap-2 text-sm bg-white/20 px-3 py-1 rounded-full">
@@ -1123,8 +1142,8 @@ export default function VertiefungPage() {
           </div>
 
           <div className="flex justify-between">
-            <button onClick={() => setActiveChapter(null)} className="px-4 py-2 text-gray-600 hover:text-gray-800">← Übersicht</button>
-            <button onClick={() => setActiveChapter('steuerziele')} className="px-6 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold flex items-center gap-2">
+            <button onClick={() => handleChapterChange(null)} className="px-4 py-2 text-gray-600 hover:text-gray-800">← Übersicht</button>
+            <button onClick={() => handleChapterChange('steuerziele')} className="px-6 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold flex items-center gap-2">
               <Scale className="h-4 w-4" /> Kapitel 2: Steuerziele →
             </button>
           </div>
@@ -1155,7 +1174,7 @@ export default function VertiefungPage() {
         <header className="bg-gradient-to-r from-cyan-600 to-blue-600 text-white sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
-              <button onClick={() => setActiveChapter(null)} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
+              <button onClick={() => handleChapterChange(null)} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
                 <ArrowLeft className="h-5 w-5" /><span>Übersicht</span>
               </button>
               <div className="flex items-center gap-3">
@@ -1393,10 +1412,10 @@ export default function VertiefungPage() {
           </div>
 
           <div className="flex justify-between">
-            <button onClick={() => setActiveChapter('geschichte')} className="px-4 py-2 text-gray-600 hover:text-gray-800 flex items-center gap-2">
+            <button onClick={() => handleChapterChange('geschichte')} className="px-4 py-2 text-gray-600 hover:text-gray-800 flex items-center gap-2">
               <History className="h-4 w-4" /> ← Kapitel 1
             </button>
-            <button onClick={() => setActiveChapter(null)} className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-semibold">
+            <button onClick={() => handleChapterChange(null)} className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-semibold">
               Zur Übersicht →
             </button>
           </div>

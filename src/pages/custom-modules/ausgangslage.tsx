@@ -206,6 +206,26 @@ export default function AusgangslagePage() {
     setReadingHelpPosition(null)
   }
 
+  // Navigation mit Lesehilfe-Check
+  const handleNavigate = (path: string) => {
+    if (readingHelpActive) {
+      // Zeige Hinweis und schliesse Lesehilfe
+      closeReadingHelp()
+      alert('Lesehilfe wurde geschlossen. Klicken Sie erneut, um zu navigieren.')
+      return
+    }
+    router.push(path)
+  }
+
+  const handleChapterChange = (chapter: Chapter) => {
+    if (readingHelpActive) {
+      closeReadingHelp()
+      alert('Lesehilfe wurde geschlossen. Klicken Sie erneut, um das Kapitel zu wechseln.')
+      return
+    }
+    setActiveChapter(chapter)
+  }
+
   // Reset reading help when chapter changes
   useEffect(() => {
     setReadingHelpActive(false)
@@ -444,9 +464,24 @@ export default function AusgangslagePage() {
     localStorage.setItem('ausgangslage_tutorial_seen', 'true')
   }
 
+  // Scrollt zum hervorgehobenen Element eines Tutorial-Steps
+  const scrollToTutorialElement = (stepIndex: number) => {
+    const step = TUTORIAL_STEPS[stepIndex]
+    if (step?.highlight) {
+      setTimeout(() => {
+        const element = document.getElementById(step.highlight!)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }, 100)
+    }
+  }
+
   const nextTutorialStep = () => {
     if (tutorialStep < TUTORIAL_STEPS.length - 1) {
-      setTutorialStep(tutorialStep + 1)
+      const nextStep = tutorialStep + 1
+      setTutorialStep(nextStep)
+      scrollToTutorialElement(nextStep)
     } else {
       closeTutorial()
     }
@@ -454,7 +489,9 @@ export default function AusgangslagePage() {
 
   const prevTutorialStep = () => {
     if (tutorialStep > 0) {
-      setTutorialStep(tutorialStep - 1)
+      const prevStep = tutorialStep - 1
+      setTutorialStep(prevStep)
+      scrollToTutorialElement(prevStep)
     }
   }
 
@@ -655,7 +692,7 @@ export default function AusgangslagePage() {
         <header className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
           <div className="max-w-4xl mx-auto px-4 py-4">
             <div className="flex items-center justify-between mb-2">
-              <button onClick={() => router.push('/dashboard')} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
+              <button onClick={() => handleNavigate('/dashboard')} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
                 <ArrowLeft className="h-5 w-5" /><span>Dashboard</span>
               </button>
               <div
@@ -807,7 +844,7 @@ export default function AusgangslagePage() {
             {/* Kapitel 1: Umfrage */}
             <button
               id="chapter-survey"
-              onClick={() => setActiveChapter('survey')}
+              onClick={() => handleChapterChange('survey')}
               className={`w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-purple-200 ${showTutorial && currentTutorialStep.highlight === 'chapter-survey' ? 'tutorial-highlight' : ''}`}
             >
               <div className="flex items-center justify-between">
@@ -836,7 +873,7 @@ export default function AusgangslagePage() {
             {/* Kapitel 2: Referendum */}
             <button
               id="chapter-referendum"
-              onClick={() => setActiveChapter('referendum')}
+              onClick={() => handleChapterChange('referendum')}
               className={`w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-purple-200 ${showTutorial && currentTutorialStep.highlight === 'chapter-referendum' ? 'tutorial-highlight' : ''}`}
             >
               <div className="flex items-center justify-between">
@@ -865,7 +902,7 @@ export default function AusgangslagePage() {
             {/* Kapitel 3: Video */}
             <button
               id="chapter-video"
-              onClick={() => setActiveChapter('video')}
+              onClick={() => handleChapterChange('video')}
               className={`w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-purple-200 ${showTutorial && currentTutorialStep.highlight === 'chapter-video' ? 'tutorial-highlight' : ''}`}
             >
               <div className="flex items-center justify-between">
@@ -901,8 +938,8 @@ export default function AusgangslagePage() {
                 Sie haben {totalScore} Punkte erreicht
                 {bonusScore > 0 && <span> (+{bonusScore} Bonus)</span>}
               </p>
-              <button 
-                onClick={() => router.push('/dashboard')}
+              <button
+                onClick={() => handleNavigate('/dashboard')}
                 className="px-6 py-2 bg-white text-purple-600 rounded-lg font-semibold hover:bg-purple-50"
               >
                 Weiter zum nächsten Modul
@@ -979,7 +1016,7 @@ export default function AusgangslagePage() {
         <header className="bg-gradient-to-r from-purple-600 to-purple-700 text-white sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
-              <button onClick={() => setActiveChapter(null)} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
+              <button onClick={() => handleChapterChange(null)} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
                 <ArrowLeft className="h-5 w-5" /><span>Übersicht</span>
               </button>
               <div className="flex items-center gap-2 text-sm bg-white/20 px-3 py-1 rounded-full">
@@ -1128,13 +1165,13 @@ export default function AusgangslagePage() {
           {/* Navigation */}
           <div className="flex justify-between">
             <button 
-              onClick={() => setActiveChapter(null)}
+              onClick={() => handleChapterChange(null)}
               className="px-4 py-2 text-gray-600 hover:text-gray-800"
             >
               ← Zurück zur Übersicht
             </button>
             <button 
-              onClick={() => setActiveChapter('referendum')}
+              onClick={() => handleChapterChange('referendum')}
               className="px-6 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg font-semibold"
             >
               Weiter zu Kapitel 2 →
@@ -1210,7 +1247,7 @@ export default function AusgangslagePage() {
         <header className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
-              <button onClick={() => setActiveChapter(null)} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
+              <button onClick={() => handleChapterChange(null)} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
                 <ArrowLeft className="h-5 w-5" /><span>Übersicht</span>
               </button>
               <div className="flex items-center gap-2 text-sm bg-white/20 px-3 py-1 rounded-full">
@@ -1551,13 +1588,13 @@ export default function AusgangslagePage() {
           {/* Navigation */}
           <div className="flex justify-between">
             <button 
-              onClick={() => setActiveChapter('survey')}
+              onClick={() => handleChapterChange('survey')}
               className="px-4 py-2 text-gray-600 hover:text-gray-800"
             >
               ← Kapitel 1
             </button>
             <button 
-              onClick={() => setActiveChapter('video')}
+              onClick={() => handleChapterChange('video')}
               className="px-6 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg font-semibold"
             >
               Weiter zu Kapitel 3 →
@@ -1633,7 +1670,7 @@ export default function AusgangslagePage() {
         <header className="bg-gradient-to-r from-rose-600 to-rose-700 text-white sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
-              <button onClick={() => setActiveChapter(null)} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
+              <button onClick={() => handleChapterChange(null)} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
                 <ArrowLeft className="h-5 w-5" /><span>Übersicht</span>
               </button>
               <div className="flex items-center gap-2 text-sm bg-white/20 px-3 py-1 rounded-full">
@@ -1935,13 +1972,13 @@ export default function AusgangslagePage() {
           {/* Navigation */}
           <div className="flex justify-between">
             <button 
-              onClick={() => setActiveChapter('referendum')}
+              onClick={() => handleChapterChange('referendum')}
               className="px-4 py-2 text-gray-600 hover:text-gray-800"
             >
               ← Kapitel 2
             </button>
             <button 
-              onClick={() => setActiveChapter(null)}
+              onClick={() => handleChapterChange(null)}
               className="px-6 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-semibold"
             >
               Zur Übersicht →

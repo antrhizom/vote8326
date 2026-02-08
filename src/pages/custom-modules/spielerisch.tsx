@@ -73,6 +73,16 @@ export default function SpielerischPage() {
     setReadingHelpPosition(null)
   }
 
+  // Navigation mit Lesehilfe-Check
+  const handleNavigate = (path: string) => {
+    if (readingHelpActive) {
+      closeReadingHelp()
+      alert('Lesehilfe wurde geschlossen. Klicken Sie erneut, um zu navigieren.')
+      return
+    }
+    router.push(path)
+  }
+
   useEffect(() => {
     const updatePosition = () => {
       if (readingHelpActive && READING_TARGETS[currentReadingIndex]) {
@@ -397,7 +407,7 @@ export default function SpielerischPage() {
       <header className="bg-gradient-to-r from-pink-600 to-rose-600 text-white sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <button onClick={() => router.push('/dashboard')} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
+            <button onClick={() => handleNavigate('/dashboard')} className="flex items-center gap-1 text-white/80 hover:text-white text-sm">
               <ArrowLeft className="h-5 w-5" /><span>Dashboard</span>
             </button>
             <div className="flex items-center gap-3">
@@ -610,7 +620,7 @@ export default function SpielerischPage() {
               Sie haben {totalScore} von {maxPoints} Punkten erreicht.
             </p>
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => handleNavigate('/dashboard')}
               className="px-6 py-2 bg-white text-pink-600 rounded-lg font-semibold hover:bg-pink-50"
             >
               Zurück zum Dashboard

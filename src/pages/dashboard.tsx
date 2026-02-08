@@ -384,9 +384,15 @@ export default function AbstimmungDashboard() {
             onClick={closeTutorial}
           />
 
-          {/* Tutorial Panel - ganz links am Rand, schmal */}
-          <div className="fixed z-50 left-0 top-1/2 -translate-y-1/2 w-56 pointer-events-auto">
-            <div className="bg-white rounded-r-xl shadow-2xl overflow-hidden flex flex-col border-l-4 border-teal-500">
+          {/* Tutorial Panel - links oder rechts je nach Position */}
+          <div className={`fixed z-50 top-1/2 -translate-y-1/2 w-56 pointer-events-auto ${
+            currentTutorialStep.position === 'bottom-right' ? 'right-0' : 'left-0'
+          }`}>
+            <div className={`bg-white shadow-2xl overflow-hidden flex flex-col ${
+              currentTutorialStep.position === 'bottom-right'
+                ? 'rounded-l-xl border-r-4 border-teal-500'
+                : 'rounded-r-xl border-l-4 border-teal-500'
+            }`}>
               {/* Progress Bar */}
               <div className="h-1 bg-gray-200 flex-shrink-0">
                 <div

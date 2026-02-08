@@ -98,37 +98,42 @@ export default function AusgangslagePage() {
   const [readingHelpActive, setReadingHelpActive] = useState(false)
   const [currentReadingIndex, setCurrentReadingIndex] = useState(0)
 
-  // Lesehilfe Targets - unterschiedlich je nach Kapitel
+  // Lesehilfe Targets - unterschiedlich je nach Kapitel, kurze Beschreibungen
   const getReadingTargets = () => {
     if (!activeChapter) {
       // Übersichtsseite
       return [
-        { id: 'intro-text', label: '📖 Einführung', description: 'Überblick über das Modul und die Lernziele' },
-        { id: 'info-gegenvorschlag', label: '📰 Hintergrundinfo', description: 'Wichtiger Kontext zum indirekten Gegenvorschlag' },
-        { id: 'info-profitiert', label: '📊 Fakten & Zahlen', description: 'Wer profitiert von der Vorlage?' },
+        { id: 'intro-text', label: '📖 Einführung', description: 'Modul-Überblick' },
+        { id: 'info-gegenvorschlag', label: '📰 Hintergrund', description: 'Gegenvorschlag' },
+        { id: 'info-profitiert', label: '📊 Fakten', description: 'Wer profitiert?' },
       ]
     } else if (activeChapter === 'survey') {
-      // Kapitel 1: Umfrage
-      return [
-        { id: 'survey-task', label: '📝 Aufgabe 1', description: 'Umfrage: Reflektieren Sie Ihre persönliche Steuersituation' },
-        { id: 'survey-confirm', label: '✅ Bestätigung', description: 'Bestätigen Sie, dass Sie die Umfrage ausgefüllt haben' },
-        { id: 'results-tip', label: '💡 Tipp', description: 'So nutzen Sie die Filteroptionen der Ergebnisse' },
-        { id: 'results-confirm', label: '✅ Bestätigung', description: 'Bestätigen Sie, dass Sie die Ergebnisse angeschaut haben' },
+      // Kapitel 1: Umfrage - dynamisch basierend auf Abschluss-Status
+      const targets: { id: string; label: string; description: string }[] = [
+        { id: 'survey-task', label: '📝 Aufgabe 1', description: 'Umfrage ausfüllen' },
       ]
+      if (!completedSections.has('survey')) {
+        targets.push({ id: 'survey-confirm', label: '✅ Bestätigen', description: 'Abschliessen' })
+      }
+      targets.push({ id: 'results-tip', label: '💡 Aufgabe 2', description: 'Ergebnisse erkunden' })
+      if (!completedSections.has('results')) {
+        targets.push({ id: 'results-confirm', label: '✅ Bestätigen', description: 'Abschliessen' })
+      }
+      return targets
     } else if (activeChapter === 'referendum') {
       // Kapitel 2: Referendum
       return [
-        { id: 'referendum-intro', label: '📖 Einführung', description: 'Was ist ein Referendum und warum ist es wichtig?' },
-        { id: 'referendum-cards-task', label: '🎴 Aufgabe 1', description: 'Entdecken Sie die verschiedenen Referendum-Arten' },
-        { id: 'timeline-task', label: '📅 Aufgabe 2', description: 'Erkunden Sie den historischen Zeitstrahl' },
-        { id: 'matching-task', label: '🔗 Aufgabe 3', description: 'Testen Sie Ihr Wissen mit der Zuordnungsübung' },
+        { id: 'referendum-intro', label: '📖 Einführung', description: 'Was ist Referendum?' },
+        { id: 'referendum-cards-task', label: '🎴 Aufgabe 1', description: 'Referendum-Arten' },
+        { id: 'timeline-task', label: '📅 Aufgabe 2', description: 'Zeitstrahl' },
+        { id: 'matching-task', label: '🔗 Aufgabe 3', description: 'Quiz' },
       ]
     } else if (activeChapter === 'video') {
       // Kapitel 3: Video
       return [
-        { id: 'video-intro', label: '📖 Einführung', description: 'Hintergrund zum Video über die Heiratsstrafe' },
-        { id: 'flipcards-task', label: '🎴 Aufgabe 1', description: 'Lernen Sie wichtige Schlüsselbegriffe kennen' },
-        { id: 'videoquiz-task', label: '❓ Aufgabe 2', description: 'Beantworten Sie Verständnisfragen zum Video' },
+        { id: 'video-intro', label: '📖 Einführung', description: 'Video-Info' },
+        { id: 'flipcards-task', label: '🎴 Aufgabe 1', description: 'Begriffe' },
+        { id: 'videoquiz-task', label: '❓ Aufgabe 2', description: 'Quiz' },
       ]
     }
     return []
@@ -1357,7 +1362,7 @@ export default function AusgangslagePage() {
                 <span className="text-2xl">📅</span>
                 <div>
                   <h3 className="font-bold text-gray-900">Aufgabe 2: Zeitstrahl entdecken</h3>
-                  <p className="text-sm text-gray-500">Klicken Sie auf alle 5 Ereignisse</p>
+                  <p className="text-sm text-gray-500">Klicken Sie auf alle 7 Ereignisse</p>
                 </div>
               </div>
               {completedSections.has('timeline') && (
@@ -1372,13 +1377,15 @@ export default function AusgangslagePage() {
               </p>
               <div className="relative">
                 <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-400 to-purple-500"></div>
-                
+
                 {[
                   { year: '1984', event: 'Bundesgerichtsurteil', detail: 'Das Bundesgericht erklärt die Heiratsstrafe für verfassungswidrig.' },
                   { year: '2016', event: 'CVP-Initiative abgelehnt', detail: 'Volk lehnt Initiative ab – später stellt sich heraus, dass der Bundesrat mit falschen Zahlen informiert hatte!' },
-                  { year: '2024', event: 'Parlament beschliesst Reform', detail: 'National- und Ständerat stimmen der Individualbesteuerung zu.' },
-                  { year: '2025', event: 'Kantonsreferendum', detail: '10 Kantone ergreifen das Referendum – erst das 2. Mal in der Geschichte.' },
-                  { year: '8.3.2026', event: 'Volksabstimmung', detail: 'Das Schweizer Volk entscheidet an der Urne.' }
+                  { year: '2021', event: 'FDP-Frauen lancieren Initiative', detail: 'Die FDP-Frauen reichen die «Steuergerechtigkeits-Initiative» für die Individualbesteuerung ein.' },
+                  { year: '2024', event: 'Parlament beschliesst Reform', detail: 'National- und Ständerat stimmen dem indirekten Gegenvorschlag zur Individualbesteuerung zu.' },
+                  { year: 'Sommer 2025', event: 'FDP zieht Initiative zurück', detail: 'Die FDP-Frauen ziehen ihre Initiative bedingt zurück – sie unterstützen den Gegenvorschlag, behalten sich aber vor, die Initiative bei einem Nein zu reaktivieren.' },
+                  { year: 'Herbst 2025', event: 'Kantonsreferendum', detail: '10 Kantone ergreifen das Referendum – erst das 2. Mal in der Schweizer Geschichte!' },
+                  { year: '8.3.2026', event: 'Volksabstimmung', detail: 'Das Schweizer Volk entscheidet an der Urne über die Individualbesteuerung.' }
                 ].map((item, idx) => (
                   <div 
                     key={idx}
@@ -1408,7 +1415,7 @@ export default function AusgangslagePage() {
                 ))}
               </div>
               
-              {timelineRevealed.size >= 5 && !completedSections.has('timeline') && (
+              {timelineRevealed.size >= 7 && !completedSections.has('timeline') && (
                 <button 
                   onClick={() => completeSection('timeline', 15)}
                   className="w-full py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg font-semibold"
@@ -1507,12 +1514,28 @@ export default function AusgangslagePage() {
             </div>
           </div>
 
-          {/* Quellenangabe */}
-          <div className="text-xs text-gray-500 flex items-center gap-1 justify-center">
-            <ExternalLink className="h-3 w-3" />
-            <a href="https://hls-dhs-dss.ch/de/articles/010387/2011-12-23/" target="_blank" rel="noopener" className="hover:underline">
-              Quelle: Historisches Lexikon der Schweiz (CC BY-SA)
-            </a>
+          {/* Quellenangabe & Weiterführende Informationen */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <ExternalLink className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-blue-800 text-sm font-medium mb-1">📚 Mehr erfahren</p>
+                <p className="text-blue-700 text-sm mb-2">
+                  Möchten Sie mehr über das Referendum und andere politische Instrumente der Schweiz erfahren?
+                  Das Historische Lexikon der Schweiz bietet ausführliche Informationen.
+                </p>
+                <a
+                  href="https://hls-dhs-dss.ch/de/articles/010387/2011-12-23/"
+                  target="_blank"
+                  rel="noopener"
+                  className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium hover:underline"
+                >
+                  → Zum Historischen Lexikon der Schweiz (HLS)
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+                <p className="text-blue-500 text-xs mt-1">Quelle: HLS, CC BY-SA Lizenz</p>
+              </div>
+            </div>
           </div>
 
           {/* Navigation */}

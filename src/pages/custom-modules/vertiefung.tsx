@@ -591,37 +591,6 @@ export default function VertiefungPage() {
   const partyDone = completedSections.has('party_bonus')
   const isComplete = geschichteDone && steuerzieleDone
 
-  // Lesehilfe CSS Styles
-  const readingHelpStyles = `
-    .reading-highlight-box {
-      position: relative;
-      box-shadow: 0 0 0 3px #f59e0b, 0 0 15px rgba(245, 158, 11, 0.25) !important;
-      border-radius: 12px;
-      transition: all 0.3s ease;
-    }
-    .reading-highlight-box::before {
-      content: attr(data-reading-label);
-      position: absolute;
-      top: -10px;
-      left: 12px;
-      background: #f59e0b;
-      color: white;
-      font-size: 10px;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 4px;
-      z-index: 10;
-      white-space: nowrap;
-    }
-    @keyframes reading-pulse {
-      0%, 100% { box-shadow: 0 0 0 3px #f59e0b, 0 0 15px rgba(245, 158, 11, 0.25); }
-      50% { box-shadow: 0 0 0 4px #f59e0b, 0 0 25px rgba(245, 158, 11, 0.35); }
-    }
-    .reading-active .reading-highlight-box {
-      animation: reading-pulse 2s ease-in-out infinite;
-    }
-  `
-
   // ========== CHAPTER OVERVIEW ==========
   if (!activeChapter) {
     return (

@@ -375,121 +375,84 @@ export default function AbstimmungDashboard() {
         `}} />
       )}
 
-      {/* Tutorial Overlay */}
+      {/* Tutorial Overlay - Seitlich positioniert, schmal */}
       {showTutorial && (
         <div className="fixed inset-0 z-40 pointer-events-none">
-          {/* Semi-transparent overlay - allows clicking through except on the card */}
+          {/* Semi-transparent overlay */}
           <div
-            className="absolute inset-0 bg-black/50 pointer-events-auto"
+            className="absolute inset-0 bg-black/30 pointer-events-auto"
             onClick={closeTutorial}
           />
 
-          {/* Tutorial Card - positioned based on highlighted element */}
-          <div
-            className={`fixed z-50 max-w-md w-full pointer-events-auto transition-all duration-300 ${
-              currentTutorialStep.position === 'bottom-right'
-                ? 'top-[45%] right-4 md:right-8'
-                : currentTutorialStep.position === 'bottom-left'
-                ? 'top-[45%] left-4 md:left-8'
-                : 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4'
-            }`}
-          >
-            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-              {/* Progress bar */}
-              <div className="h-1.5 bg-gray-200">
+          {/* Tutorial Panel - ganz links am Rand, schmal */}
+          <div className="fixed z-50 left-0 top-1/2 -translate-y-1/2 w-56 pointer-events-auto">
+            <div className="bg-white rounded-r-xl shadow-2xl overflow-hidden flex flex-col border-l-4 border-teal-500">
+              {/* Progress Bar */}
+              <div className="h-1 bg-gray-200 flex-shrink-0">
                 <div
                   className="h-full bg-gradient-to-r from-teal-500 to-cyan-500 transition-all duration-300"
                   style={{ width: `${((tutorialStep + 1) / TUTORIAL_STEPS.length) * 100}%` }}
                 />
               </div>
 
-              <div className="p-6">
-                {/* Close button */}
+              {/* Header - kompakt */}
+              <div className="bg-gradient-to-r from-teal-500 to-cyan-600 px-3 py-2 flex items-center justify-between flex-shrink-0">
+                <div className="flex items-center gap-1.5">
+                  <Lightbulb className="h-4 w-4 text-white" />
+                  <span className="text-white font-semibold text-xs">{tutorialStep + 1}/{TUTORIAL_STEPS.length}</span>
+                </div>
                 <button
                   onClick={closeTutorial}
-                  className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600 z-10"
+                  className="p-0.5 text-white/70 hover:text-white"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-3.5 w-3.5" />
                 </button>
+              </div>
 
-                {/* Step number badge */}
-                <div className="absolute top-4 left-4 bg-teal-100 text-teal-700 text-xs font-bold px-2 py-1 rounded-full">
-                  {tutorialStep + 1} / {TUTORIAL_STEPS.length}
-                </div>
-
-                {/* Icon */}
-                <div className="flex justify-center mb-4 mt-2">
-                  <div className="bg-gradient-to-br from-teal-100 to-cyan-100 p-4 rounded-full">
-                    <Lightbulb className="h-8 w-8 text-teal-600" />
-                  </div>
-                </div>
-
-                {/* Content */}
-                <h3 className="text-xl font-bold text-gray-900 text-center mb-3">
+              {/* Content - kompakt */}
+              <div className="p-3 flex-1">
+                <h3 className="text-sm font-bold text-gray-900 mb-1.5 leading-tight">
                   {currentTutorialStep.title}
                 </h3>
-                <p className="text-gray-600 text-center mb-6">
+                <p className="text-gray-600 text-xs mb-3 leading-relaxed">
                   {currentTutorialStep.description}
                 </p>
 
-                {/* Arrow indicator for highlighted elements */}
                 {currentTutorialStep.highlight && (
-                  <div className="flex justify-center mb-4">
-                    <div className="bg-teal-50 border border-teal-200 rounded-lg px-3 py-2 text-sm text-teal-700 flex items-center gap-2">
-                      <span>👆</span>
-                      <span>Schauen Sie auf den markierten Bereich</span>
-                    </div>
+                  <div className="bg-teal-50 border border-teal-200 rounded px-2 py-1.5 text-xs text-teal-700 flex items-center gap-1.5 mb-3">
+                    <span>👉</span>
+                    <span className="text-[10px]">Markiert</span>
                   </div>
                 )}
+              </div>
 
-                {/* Step indicator dots */}
-                <div className="flex justify-center gap-2 mb-6">
-                  {TUTORIAL_STEPS.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setTutorialStep(index)}
-                      className={`h-2 rounded-full transition-all ${
-                        index === tutorialStep
-                          ? 'bg-teal-500 w-6'
-                          : index < tutorialStep
-                          ? 'bg-teal-300 w-2'
-                          : 'bg-gray-300 w-2'
-                      }`}
-                    />
-                  ))}
-                </div>
-
-                {/* Navigation buttons */}
-                <div className="flex gap-3">
+              {/* Footer Buttons - kompakt */}
+              <div className="px-3 pb-3 flex-shrink-0">
+                <div className="flex gap-1.5">
                   {tutorialStep > 0 && (
                     <button
                       onClick={prevTutorialStep}
-                      className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors"
+                      className="flex-1 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded text-xs"
                     >
-                      Zurück
+                      ←
                     </button>
                   )}
                   <button
                     onClick={nextTutorialStep}
-                    className="flex-1 py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2"
+                    className="flex-1 py-1.5 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-medium rounded text-xs flex items-center justify-center gap-1"
                   >
                     {tutorialStep === TUTORIAL_STEPS.length - 1 ? (
-                      <>Los geht's!</>
+                      <>Start</>
                     ) : (
-                      <>
-                        Weiter
-                        <ArrowRight className="h-4 w-4" />
-                      </>
+                      <>Weiter →</>
                     )}
                   </button>
                 </div>
-
-                {/* Skip button */}
                 <button
                   onClick={closeTutorial}
-                  className="w-full mt-3 py-2 text-sm text-gray-500 hover:text-gray-700"
+                  className="w-full mt-1.5 py-1 text-[10px] text-gray-400 hover:text-gray-600"
                 >
-                  Tutorial überspringen
+                  Überspringen
                 </button>
               </div>
             </div>

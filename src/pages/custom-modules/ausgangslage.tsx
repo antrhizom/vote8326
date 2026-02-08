@@ -98,12 +98,43 @@ export default function AusgangslagePage() {
   const [readingHelpActive, setReadingHelpActive] = useState(false)
   const [currentReadingIndex, setCurrentReadingIndex] = useState(0)
 
-  // Lesehilfe Targets - definiert welche Elemente markiert werden sollen
-  const READING_TARGETS = [
-    { id: 'intro-text', label: '📖 Infotext' },
-    { id: 'info-gegenvorschlag', label: '📰 Hintergrundinfo' },
-    { id: 'info-profitiert', label: '📊 Fakten & Zahlen' },
-  ]
+  // Lesehilfe Targets - unterschiedlich je nach Kapitel
+  const getReadingTargets = () => {
+    if (!activeChapter) {
+      // Übersichtsseite
+      return [
+        { id: 'intro-text', label: '📖 Einführung', description: 'Überblick über das Modul und die Lernziele' },
+        { id: 'info-gegenvorschlag', label: '📰 Hintergrundinfo', description: 'Wichtiger Kontext zum indirekten Gegenvorschlag' },
+        { id: 'info-profitiert', label: '📊 Fakten & Zahlen', description: 'Wer profitiert von der Vorlage?' },
+      ]
+    } else if (activeChapter === 'survey') {
+      // Kapitel 1: Umfrage
+      return [
+        { id: 'survey-task', label: '📝 Aufgabe 1', description: 'Umfrage: Reflektieren Sie Ihre persönliche Steuersituation' },
+        { id: 'survey-confirm', label: '✅ Bestätigung', description: 'Bestätigen Sie, dass Sie die Umfrage ausgefüllt haben' },
+        { id: 'results-tip', label: '💡 Tipp', description: 'So nutzen Sie die Filteroptionen der Ergebnisse' },
+        { id: 'results-confirm', label: '✅ Bestätigung', description: 'Bestätigen Sie, dass Sie die Ergebnisse angeschaut haben' },
+      ]
+    } else if (activeChapter === 'referendum') {
+      // Kapitel 2: Referendum
+      return [
+        { id: 'referendum-intro', label: '📖 Einführung', description: 'Was ist ein Referendum und warum ist es wichtig?' },
+        { id: 'referendum-cards-task', label: '🎴 Aufgabe 1', description: 'Entdecken Sie die verschiedenen Referendum-Arten' },
+        { id: 'timeline-task', label: '📅 Aufgabe 2', description: 'Erkunden Sie den historischen Zeitstrahl' },
+        { id: 'matching-task', label: '🔗 Aufgabe 3', description: 'Testen Sie Ihr Wissen mit der Zuordnungsübung' },
+      ]
+    } else if (activeChapter === 'video') {
+      // Kapitel 3: Video
+      return [
+        { id: 'video-intro', label: '📖 Einführung', description: 'Hintergrund zum Video über die Heiratsstrafe' },
+        { id: 'flipcards-task', label: '🎴 Aufgabe 1', description: 'Lernen Sie wichtige Schlüsselbegriffe kennen' },
+        { id: 'videoquiz-task', label: '❓ Aufgabe 2', description: 'Beantworten Sie Verständnisfragen zum Video' },
+      ]
+    }
+    return []
+  }
+
+  const READING_TARGETS = getReadingTargets()
 
   // Tutorial Position basierend auf hervorgehobenem Element
   const [tutorialTopOffset, setTutorialTopOffset] = useState<number | null>(null)
@@ -159,6 +190,13 @@ export default function AusgangslagePage() {
     setCurrentReadingIndex(0)
     setReadingHelpPosition(null)
   }
+
+  // Reset reading help when chapter changes
+  useEffect(() => {
+    setReadingHelpActive(false)
+    setCurrentReadingIndex(0)
+    setReadingHelpPosition(null)
+  }, [activeChapter])
 
   // Lesehilfe Button Position - schwebt mit dem aktuellen Element
   const [readingHelpPosition, setReadingHelpPosition] = useState<{ top: number } | null>(null)
@@ -552,11 +590,12 @@ export default function AusgangslagePage() {
               </div>
             )}
 
-            {/* Tooltip mit aktuellem Label */}
+            {/* Tooltip mit aktuellem Label und Beschreibung */}
             {readingHelpActive && (
-              <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-amber-600 text-white text-sm px-3 py-2 rounded-lg shadow-lg whitespace-nowrap">
+              <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-amber-600 text-white text-sm px-3 py-2 rounded-lg shadow-lg max-w-[200px]">
                 <div className="font-semibold text-xs">{READING_TARGETS[currentReadingIndex]?.label}</div>
-                <div className="text-[10px] text-amber-200 mt-0.5">Klicken → weiter</div>
+                <div className="text-[10px] text-amber-200 mt-0.5">{READING_TARGETS[currentReadingIndex]?.description}</div>
+                <div className="text-[10px] text-amber-300 mt-1">Klicken → weiter</div>
                 {/* Pfeil */}
                 <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
                   <div className="border-8 border-transparent border-l-amber-600"></div>
@@ -639,7 +678,7 @@ export default function AusgangslagePage() {
                     </span>
                   </p>
                   <p className="text-amber-700 text-xs">
-                    Aktuell: <strong>{READING_TARGETS[currentReadingIndex]?.label}</strong> — Klicken Sie auf den Button rechts für den nächsten Bereich
+                    <strong>{READING_TARGETS[currentReadingIndex]?.label}</strong> — {READING_TARGETS[currentReadingIndex]?.description}
                   </p>
                 </div>
               </div>
@@ -866,18 +905,61 @@ export default function AusgangslagePage() {
       <div className={`min-h-screen bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 ${readingHelpActive ? 'reading-active' : ''}`}>
         <style dangerouslySetInnerHTML={{ __html: styles }} />
 
-        {/* Lesehilfe Button */}
-        <button
-          onClick={() => setReadingHelpActive(!readingHelpActive)}
-          className={`fixed bottom-6 right-6 z-30 p-4 rounded-full shadow-lg hover:shadow-xl transition-all ${
-            readingHelpActive
-              ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
-              : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
-          }`}
-          title={readingHelpActive ? 'Lesehilfe deaktivieren' : 'Lesehilfe aktivieren'}
+        {/* Floating Lesehilfe Button - schwebt mit dem Element */}
+        <div
+          className="fixed z-30 right-4 transition-all duration-300 ease-out"
+          style={{
+            top: readingHelpActive && readingHelpPosition ? `${readingHelpPosition.top}px` : 'auto',
+            bottom: readingHelpActive && readingHelpPosition ? 'auto' : '2rem'
+          }}
         >
-          <Glasses className="h-6 w-6" />
-        </button>
+          <div className="relative">
+            <button
+              onClick={navigateReadingHelp}
+              className={`p-4 rounded-full shadow-lg hover:shadow-xl transition-all ${
+                readingHelpActive
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
+                  : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
+              }`}
+              title={readingHelpActive ? `${currentReadingIndex + 1}/${READING_TARGETS.length} - Klicken für nächstes` : 'Lesehilfe aktivieren'}
+            >
+              <Glasses className="h-6 w-6" />
+            </button>
+
+            {/* Zähler Badge */}
+            {readingHelpActive && (
+              <div className="absolute -top-2 -right-2 bg-amber-600 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[2.5rem] text-center shadow-md animate-pulse">
+                {currentReadingIndex + 1}/{READING_TARGETS.length}
+              </div>
+            )}
+
+            {/* Tooltip mit aktuellem Label */}
+            {readingHelpActive && (
+              <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-amber-600 text-white text-sm px-3 py-2 rounded-lg shadow-lg whitespace-nowrap max-w-[200px]">
+                <div className="font-semibold text-xs">{READING_TARGETS[currentReadingIndex]?.label}</div>
+                <div className="text-[10px] text-amber-200 mt-0.5">{READING_TARGETS[currentReadingIndex]?.description}</div>
+                <div className="text-[10px] text-amber-300 mt-1">Klicken → weiter</div>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
+                  <div className="border-8 border-transparent border-l-amber-600"></div>
+                </div>
+              </div>
+            )}
+
+            {/* Schliessen-Button wenn aktiv */}
+            {readingHelpActive && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  closeReadingHelp()
+                }}
+                className="absolute -top-1 -left-1 bg-gray-700 hover:bg-gray-800 text-white rounded-full p-1 shadow-md"
+                title="Lesehilfe beenden"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+        </div>
 
         <header className="bg-gradient-to-r from-purple-600 to-purple-700 text-white sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
@@ -897,12 +979,24 @@ export default function AusgangslagePage() {
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
           {/* Lesehilfe Info-Banner */}
           {readingHelpActive && (
-            <div className="bg-amber-100 border border-amber-300 rounded-xl p-4 flex items-center gap-3">
-              <Glasses className="h-6 w-6 text-amber-600 flex-shrink-0" />
-              <div>
-                <p className="text-amber-800 font-semibold text-sm">Lesehilfe aktiv</p>
-                <p className="text-amber-700 text-xs">Die gelb markierten Bereiche enthalten wichtige Informationen.</p>
+            <div className="bg-amber-100 border border-amber-300 rounded-xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Glasses className="h-6 w-6 text-amber-600 flex-shrink-0" />
+                <div>
+                  <p className="text-amber-800 font-semibold text-sm flex items-center gap-2">
+                    Lesehilfe aktiv
+                    <span className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full">
+                      {currentReadingIndex + 1}/{READING_TARGETS.length}
+                    </span>
+                  </p>
+                  <p className="text-amber-700 text-xs">
+                    <strong>{READING_TARGETS[currentReadingIndex]?.label}</strong> — {READING_TARGETS[currentReadingIndex]?.description}
+                  </p>
+                </div>
               </div>
+              <button onClick={closeReadingHelp} className="text-amber-600 hover:text-amber-800 p-1" title="Lesehilfe beenden">
+                <X className="h-5 w-5" />
+              </button>
             </div>
           )}
 
@@ -923,12 +1017,14 @@ export default function AusgangslagePage() {
             
             <div className="p-6">
               <div
-                className={`bg-purple-50 border-l-4 border-purple-500 p-4 mb-4 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
-                data-reading-label="📝 Aufgabenstellung"
+                id="survey-task"
+                className={`bg-purple-50 border-l-4 border-purple-500 p-4 mb-4 transition-all ${readingHelpActive && currentReadingIndex === 0 ? 'reading-highlight-box' : ''}`}
+                data-reading-label="📝 Aufgabe 1: Umfrage"
               >
                 <p className="text-purple-800 text-sm">
                   <strong>🎯 Warum diese Umfrage?</strong> Bevor Sie in die Inhalte eintauchen, interessiert uns Ihre
-                  persönliche Ausgangslage. Die Umfrage hilft Ihnen, Ihre eigene Position zu reflektieren.
+                  persönliche Ausgangslage. Die Umfrage hilft Ihnen, Ihre eigene Position zu reflektieren und zu verstehen,
+                  wie die Vorlage Sie persönlich betreffen könnte.
                 </p>
               </div>
               
@@ -942,7 +1038,8 @@ export default function AusgangslagePage() {
               
               {!completedSections.has('survey') && (
                 <div
-                  className={`mt-4 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
+                  id="survey-confirm"
+                  className={`mt-4 transition-all ${readingHelpActive && currentReadingIndex === 1 ? 'reading-highlight-box' : ''}`}
                   data-reading-label="✅ Bestätigung"
                 >
                   <button
@@ -973,13 +1070,14 @@ export default function AusgangslagePage() {
             
             <div className="p-6">
               <div
-                className={`bg-amber-50 border-l-4 border-amber-400 p-4 mb-4 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
-                data-reading-label="💡 Tipp"
+                id="results-tip"
+                className={`bg-amber-50 border-l-4 border-amber-400 p-4 mb-4 transition-all ${readingHelpActive && currentReadingIndex === 2 ? 'reading-highlight-box' : ''}`}
+                data-reading-label="💡 Tipp: Ergebnisse filtern"
               >
                 <p className="text-amber-800 text-sm">
-                  <strong>💡 Tipp:</strong> In der Ergebnisansicht können Sie auf die <strong>Antwortbezeichnungen</strong> klicken,
-                  um die Ergebnisse entsprechend zu filtern. So sehen Sie z.B. nur die Antworten von Personen,
-                  die bereits Steuern zahlen, oder von bestimmten Altersgruppen.
+                  <strong>💡 Aufgabe 2: Ergebnisse erkunden</strong> – In der Ergebnisansicht können Sie auf die <strong>Antwortbezeichnungen</strong> klicken,
+                  um die Ergebnisse zu filtern. So vergleichen Sie z.B. die Antworten von Personen,
+                  die bereits Steuern zahlen, mit denen anderer Altersgruppen. Entdecken Sie Muster!
                 </p>
               </div>
               
@@ -997,7 +1095,8 @@ export default function AusgangslagePage() {
               
               {!completedSections.has('results') && (
                 <div
-                  className={`mt-4 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
+                  id="results-confirm"
+                  className={`mt-4 transition-all ${readingHelpActive && currentReadingIndex === 3 ? 'reading-highlight-box' : ''}`}
                   data-reading-label="✅ Bestätigung"
                 >
                   <button
@@ -1037,18 +1136,61 @@ export default function AusgangslagePage() {
       <div className={`min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50 ${readingHelpActive ? 'reading-active' : ''}`}>
         <style dangerouslySetInnerHTML={{ __html: styles }} />
 
-        {/* Lesehilfe Button */}
-        <button
-          onClick={() => setReadingHelpActive(!readingHelpActive)}
-          className={`fixed bottom-6 right-6 z-30 p-4 rounded-full shadow-lg hover:shadow-xl transition-all ${
-            readingHelpActive
-              ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
-              : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
-          }`}
-          title={readingHelpActive ? 'Lesehilfe deaktivieren' : 'Lesehilfe aktivieren'}
+        {/* Floating Lesehilfe Button - schwebt mit dem Element */}
+        <div
+          className="fixed z-30 right-4 transition-all duration-300 ease-out"
+          style={{
+            top: readingHelpActive && readingHelpPosition ? `${readingHelpPosition.top}px` : 'auto',
+            bottom: readingHelpActive && readingHelpPosition ? 'auto' : '2rem'
+          }}
         >
-          <Glasses className="h-6 w-6" />
-        </button>
+          <div className="relative">
+            <button
+              onClick={navigateReadingHelp}
+              className={`p-4 rounded-full shadow-lg hover:shadow-xl transition-all ${
+                readingHelpActive
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
+                  : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
+              }`}
+              title={readingHelpActive ? `${currentReadingIndex + 1}/${READING_TARGETS.length} - Klicken für nächstes` : 'Lesehilfe aktivieren'}
+            >
+              <Glasses className="h-6 w-6" />
+            </button>
+
+            {/* Zähler Badge */}
+            {readingHelpActive && (
+              <div className="absolute -top-2 -right-2 bg-amber-600 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[2.5rem] text-center shadow-md animate-pulse">
+                {currentReadingIndex + 1}/{READING_TARGETS.length}
+              </div>
+            )}
+
+            {/* Tooltip mit aktuellem Label */}
+            {readingHelpActive && (
+              <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-amber-600 text-white text-sm px-3 py-2 rounded-lg shadow-lg whitespace-nowrap max-w-[200px]">
+                <div className="font-semibold text-xs">{READING_TARGETS[currentReadingIndex]?.label}</div>
+                <div className="text-[10px] text-amber-200 mt-0.5">{READING_TARGETS[currentReadingIndex]?.description}</div>
+                <div className="text-[10px] text-amber-300 mt-1">Klicken → weiter</div>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
+                  <div className="border-8 border-transparent border-l-amber-600"></div>
+                </div>
+              </div>
+            )}
+
+            {/* Schliessen-Button wenn aktiv */}
+            {readingHelpActive && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  closeReadingHelp()
+                }}
+                className="absolute -top-1 -left-1 bg-gray-700 hover:bg-gray-800 text-white rounded-full p-1 shadow-md"
+                title="Lesehilfe beenden"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+        </div>
 
         <header className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
@@ -1068,51 +1210,73 @@ export default function AusgangslagePage() {
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
           {/* Lesehilfe Info-Banner */}
           {readingHelpActive && (
-            <div className="bg-amber-100 border border-amber-300 rounded-xl p-4 flex items-center gap-3">
-              <Glasses className="h-6 w-6 text-amber-600 flex-shrink-0" />
-              <div>
-                <p className="text-amber-800 font-semibold text-sm">Lesehilfe aktiv</p>
-                <p className="text-amber-700 text-xs">Die gelb markierten Bereiche enthalten wichtige Informationen.</p>
+            <div className="bg-amber-100 border border-amber-300 rounded-xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Glasses className="h-6 w-6 text-amber-600 flex-shrink-0" />
+                <div>
+                  <p className="text-amber-800 font-semibold text-sm flex items-center gap-2">
+                    Lesehilfe aktiv
+                    <span className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full">
+                      {currentReadingIndex + 1}/{READING_TARGETS.length}
+                    </span>
+                  </p>
+                  <p className="text-amber-700 text-xs">
+                    <strong>{READING_TARGETS[currentReadingIndex]?.label}</strong> — {READING_TARGETS[currentReadingIndex]?.description}
+                  </p>
+                </div>
               </div>
+              <button onClick={closeReadingHelp} className="text-amber-600 hover:text-amber-800 p-1" title="Lesehilfe beenden">
+                <X className="h-5 w-5" />
+              </button>
             </div>
           )}
 
           {/* Einführung */}
           <div
-            className={`bg-white rounded-xl p-6 shadow-sm transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
-            data-reading-label="📖 Infotext"
+            id="referendum-intro"
+            className={`bg-white rounded-xl p-6 shadow-sm transition-all ${readingHelpActive && currentReadingIndex === 0 ? 'reading-highlight-box' : ''}`}
+            data-reading-label="📖 Einführung: Referendum"
           >
             <p className="text-gray-700 mb-3">
               Das Referendum ist ein zentrales Instrument der <strong>direkten Demokratie</strong> in der Schweiz.
               Es ermöglicht den Stimmberechtigten, über Entscheide des Parlaments das letzte Wort zu haben.
+              In diesem Kapitel lernen Sie die verschiedenen Arten von Referenden kennen.
             </p>
             <p className="text-gray-700 mb-3">
-              Im interaktiven <strong>Zeitstrahl</strong> unten sehen Sie, wie sich die Diskussion um die Individualbesteuerung
-              über die Jahre entwickelt hat. Von der ersten Idee über parlamentarische Debatten bis zur Volksabstimmung
-              dauert es oft <strong>Jahrzehnte</strong> – diese Darstellung zeigt Ihnen, wie lange der Weg zur Gesetzesänderung sein kann.
+              Im interaktiven <strong>Zeitstrahl</strong> sehen Sie, wie sich die Diskussion um die Individualbesteuerung
+              über die Jahre entwickelt hat. Von der ersten Idee bis zur Volksabstimmung dauern politische Prozesse
+              oft <strong>Jahrzehnte</strong> – ein wichtiger Aspekt der Schweizer Demokratie.
             </p>
             <p className="text-gray-700">
-              Klicken Sie auf die Ereignisse, um zu verstehen, welche Hürden genommen werden mussten und welche
-              politischen Kräfte die Entwicklung beeinflusst haben.
+              <strong>Lernziel:</strong> Sie verstehen, wie Referenden funktionieren und warum der aktuelle
+              Abstimmungstermin am 8. März 2026 das Ergebnis eines langen politischen Prozesses ist.
             </p>
           </div>
 
           {/* Aufgabe 1: Info-Karten */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div
+            id="referendum-cards-task"
+            className={`bg-white rounded-xl shadow-sm overflow-hidden transition-all ${readingHelpActive && currentReadingIndex === 1 ? 'reading-highlight-box' : ''}`}
+            data-reading-label="🎴 Aufgabe 1: Referendum-Arten"
+          >
             <div className="bg-indigo-50 p-4 border-b flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">🎴</span>
                 <div>
                   <h3 className="font-bold text-gray-900">Aufgabe 1: Referendum-Arten entdecken</h3>
-                  <p className="text-sm text-gray-500">Klicken Sie alle Karten auf</p>
+                  <p className="text-sm text-gray-500">Klicken Sie alle 4 Karten auf, um die Unterschiede zu verstehen</p>
                 </div>
               </div>
               {completedSections.has('referendum_info') && (
                 <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">+15P ✓</span>
               )}
             </div>
-            
+
             <div className="p-6">
+              <p className="text-gray-600 text-sm mb-4">
+                <strong>🎯 Ziel:</strong> Lernen Sie die drei Referendum-Arten kennen und verstehen Sie,
+                warum das aktuelle Kantonsreferendum so besonders ist – es ist erst das zweite in der Schweizer Geschichte!
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[
                   { id: 'obligatorisch', icon: Scale, color: 'blue', title: 'Obligatorisches Referendum',
@@ -1183,21 +1347,29 @@ export default function AusgangslagePage() {
           </div>
 
           {/* Aufgabe 2: Timeline */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div
+            id="timeline-task"
+            className={`bg-white rounded-xl shadow-sm overflow-hidden transition-all ${readingHelpActive && currentReadingIndex === 2 ? 'reading-highlight-box' : ''}`}
+            data-reading-label="📅 Aufgabe 2: Zeitstrahl"
+          >
             <div className="bg-indigo-50 p-4 border-b flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">📅</span>
                 <div>
                   <h3 className="font-bold text-gray-900">Aufgabe 2: Zeitstrahl entdecken</h3>
-                  <p className="text-sm text-gray-500">Klicken Sie auf die Ereignisse</p>
+                  <p className="text-sm text-gray-500">Klicken Sie auf alle 5 Ereignisse</p>
                 </div>
               </div>
               {completedSections.has('timeline') && (
                 <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">+15P ✓</span>
               )}
             </div>
-            
+
             <div className="p-6">
+              <p className="text-gray-600 text-sm mb-4">
+                <strong>🎯 Ziel:</strong> Verstehen Sie, wie lange politische Prozesse in der Schweiz dauern können.
+                Seit 1984 ist die Heiratsstrafe verfassungswidrig – über 40 Jahre bis zur Abstimmung!
+              </p>
               <div className="relative">
                 <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-400 to-purple-500"></div>
                 
@@ -1248,21 +1420,29 @@ export default function AusgangslagePage() {
           </div>
 
           {/* Aufgabe 3: Zuordnung */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div
+            id="matching-task"
+            className={`bg-white rounded-xl shadow-sm overflow-hidden transition-all ${readingHelpActive && currentReadingIndex === 3 ? 'reading-highlight-box' : ''}`}
+            data-reading-label="🔗 Aufgabe 3: Quiz"
+          >
             <div className="bg-indigo-50 p-4 border-b flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">🔗</span>
                 <div>
                   <h3 className="font-bold text-gray-900">Aufgabe 3: Begriffe zuordnen</h3>
-                  <p className="text-sm text-gray-500">Testen Sie Ihr Wissen</p>
+                  <p className="text-sm text-gray-500">Testen Sie Ihr Wissen über Referenden</p>
                 </div>
               </div>
               {completedSections.has('matching') && (
                 <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">+20P ✓</span>
               )}
             </div>
-            
+
             <div className="p-6">
+              <p className="text-gray-600 text-sm mb-4">
+                <strong>🎯 Ziel:</strong> Wenden Sie Ihr neues Wissen an! Ordnen Sie die Begriffe den richtigen
+                Referendum-Arten zu. Diese Übung hilft Ihnen, die Unterschiede zu festigen.
+              </p>
               <div className="space-y-3">
                 {[
                   { term: '50\'000 Unterschriften', options: ['Obligatorisches Ref.', 'Fakultatives Ref.', 'Kantonsreferendum'], correct: 'Fakultatives Ref.' },
@@ -1361,18 +1541,61 @@ export default function AusgangslagePage() {
       <div className={`min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 ${readingHelpActive ? 'reading-active' : ''}`}>
         <style dangerouslySetInnerHTML={{ __html: styles }} />
 
-        {/* Lesehilfe Button */}
-        <button
-          onClick={() => setReadingHelpActive(!readingHelpActive)}
-          className={`fixed bottom-6 right-6 z-30 p-4 rounded-full shadow-lg hover:shadow-xl transition-all ${
-            readingHelpActive
-              ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
-              : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
-          }`}
-          title={readingHelpActive ? 'Lesehilfe deaktivieren' : 'Lesehilfe aktivieren'}
+        {/* Floating Lesehilfe Button - schwebt mit dem Element */}
+        <div
+          className="fixed z-30 right-4 transition-all duration-300 ease-out"
+          style={{
+            top: readingHelpActive && readingHelpPosition ? `${readingHelpPosition.top}px` : 'auto',
+            bottom: readingHelpActive && readingHelpPosition ? 'auto' : '2rem'
+          }}
         >
-          <Glasses className="h-6 w-6" />
-        </button>
+          <div className="relative">
+            <button
+              onClick={navigateReadingHelp}
+              className={`p-4 rounded-full shadow-lg hover:shadow-xl transition-all ${
+                readingHelpActive
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
+                  : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
+              }`}
+              title={readingHelpActive ? `${currentReadingIndex + 1}/${READING_TARGETS.length} - Klicken für nächstes` : 'Lesehilfe aktivieren'}
+            >
+              <Glasses className="h-6 w-6" />
+            </button>
+
+            {/* Zähler Badge */}
+            {readingHelpActive && (
+              <div className="absolute -top-2 -right-2 bg-amber-600 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[2.5rem] text-center shadow-md animate-pulse">
+                {currentReadingIndex + 1}/{READING_TARGETS.length}
+              </div>
+            )}
+
+            {/* Tooltip mit aktuellem Label */}
+            {readingHelpActive && (
+              <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-amber-600 text-white text-sm px-3 py-2 rounded-lg shadow-lg whitespace-nowrap max-w-[200px]">
+                <div className="font-semibold text-xs">{READING_TARGETS[currentReadingIndex]?.label}</div>
+                <div className="text-[10px] text-amber-200 mt-0.5">{READING_TARGETS[currentReadingIndex]?.description}</div>
+                <div className="text-[10px] text-amber-300 mt-1">Klicken → weiter</div>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
+                  <div className="border-8 border-transparent border-l-amber-600"></div>
+                </div>
+              </div>
+            )}
+
+            {/* Schliessen-Button wenn aktiv */}
+            {readingHelpActive && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  closeReadingHelp()
+                }}
+                className="absolute -top-1 -left-1 bg-gray-700 hover:bg-gray-800 text-white rounded-full p-1 shadow-md"
+                title="Lesehilfe beenden"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+        </div>
 
         <header className="bg-gradient-to-r from-rose-600 to-rose-700 text-white sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
@@ -1392,12 +1615,24 @@ export default function AusgangslagePage() {
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
           {/* Lesehilfe Info-Banner */}
           {readingHelpActive && (
-            <div className="bg-amber-100 border border-amber-300 rounded-xl p-4 flex items-center gap-3">
-              <Glasses className="h-6 w-6 text-amber-600 flex-shrink-0" />
-              <div>
-                <p className="text-amber-800 font-semibold text-sm">Lesehilfe aktiv</p>
-                <p className="text-amber-700 text-xs">Die gelb markierten Bereiche enthalten wichtige Informationen.</p>
+            <div className="bg-amber-100 border border-amber-300 rounded-xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Glasses className="h-6 w-6 text-amber-600 flex-shrink-0" />
+                <div>
+                  <p className="text-amber-800 font-semibold text-sm flex items-center gap-2">
+                    Lesehilfe aktiv
+                    <span className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full">
+                      {currentReadingIndex + 1}/{READING_TARGETS.length}
+                    </span>
+                  </p>
+                  <p className="text-amber-700 text-xs">
+                    <strong>{READING_TARGETS[currentReadingIndex]?.label}</strong> — {READING_TARGETS[currentReadingIndex]?.description}
+                  </p>
+                </div>
               </div>
+              <button onClick={closeReadingHelp} className="text-amber-600 hover:text-amber-800 p-1" title="Lesehilfe beenden">
+                <X className="h-5 w-5" />
+              </button>
             </div>
           )}
 
@@ -1415,19 +1650,21 @@ export default function AusgangslagePage() {
 
             <div className="p-6">
               <div
-                className={`bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-4 transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
-                data-reading-label="📖 Infotext"
+                id="video-intro"
+                className={`bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-4 transition-all ${readingHelpActive && currentReadingIndex === 0 ? 'reading-highlight-box' : ''}`}
+                data-reading-label="📖 Einführung: Video"
               >
                 <p className="text-amber-800 text-sm mb-2">
                   <strong>📖 Worum geht es?</strong> Dieses Video erklärt die bewegte Geschichte der Heiratsstrafe in der Schweiz.
+                  Schauen Sie es aufmerksam an – die Fragen danach beziehen sich auf den Inhalt.
                 </p>
                 <p className="text-amber-800 text-sm mb-2">
                   Seit <strong>1984</strong> ist das heutige Steuersystem laut Bundesgericht verfassungswidrig – trotzdem hat es über
                   <strong> 40 Jahre</strong> gedauert, bis eine Lösung zur Abstimmung kommt. Warum?
                 </p>
                 <p className="text-amber-800 text-sm">
-                  Das Video zeigt die wichtigsten Meilensteine: Von der CVP-Initiative 2016 (bei der der Bundesrat mit
-                  <strong> falschen Zahlen</strong> informierte) bis zur aktuellen Vorlage.
+                  <strong>Lernziel:</strong> Sie verstehen die historischen Hintergründe und warum der Bundesrat 2016
+                  mit falschen Zahlen informierte – ein politischer Skandal!
                 </p>
               </div>
               <div className="bg-gray-900 rounded-lg overflow-hidden">
@@ -1447,21 +1684,29 @@ export default function AusgangslagePage() {
           </div>
 
           {/* Aufgabe 1: Flipcards */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div
+            id="flipcards-task"
+            className={`bg-white rounded-xl shadow-sm overflow-hidden transition-all ${readingHelpActive && currentReadingIndex === 1 ? 'reading-highlight-box' : ''}`}
+            data-reading-label="🎴 Aufgabe 1: Schlüsselbegriffe"
+          >
             <div className="bg-rose-50 p-4 border-b flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">🎴</span>
                 <div>
                   <h3 className="font-bold text-gray-900">Aufgabe 1: Schlüsselbegriffe</h3>
-                  <p className="text-sm text-gray-500">Drehen Sie alle Karten um</p>
+                  <p className="text-sm text-gray-500">Drehen Sie alle 3 Karten um</p>
                 </div>
               </div>
               {completedSections.has('flipcards') && (
                 <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">+15P ✓</span>
               )}
             </div>
-            
+
             <div className="p-6">
+              <p className="text-gray-600 text-sm mb-4">
+                <strong>🎯 Ziel:</strong> Verstehen Sie die zentralen Begriffe der Debatte. Diese Konzepte
+                sind wichtig, um die Vorlage und ihre Auswirkungen zu verstehen.
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
                   { front: 'Heiratsstrafe', back: 'Ehepaare zahlen mehr Steuern als unverheiratete Paare mit gleichem Einkommen.', emoji: '💍' },
@@ -1504,21 +1749,29 @@ export default function AusgangslagePage() {
           </div>
 
           {/* Aufgabe 2: Video-Quiz */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div
+            id="videoquiz-task"
+            className={`bg-white rounded-xl shadow-sm overflow-hidden transition-all ${readingHelpActive && currentReadingIndex === 2 ? 'reading-highlight-box' : ''}`}
+            data-reading-label="❓ Aufgabe 2: Video-Quiz"
+          >
             <div className="bg-rose-50 p-4 border-b flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">❓</span>
                 <div>
                   <h3 className="font-bold text-gray-900">Aufgabe 2: Verständnisfragen zum Video</h3>
-                  <p className="text-sm text-gray-500">Fragen in chronologischer Reihenfolge</p>
+                  <p className="text-sm text-gray-500">3 Fragen in chronologischer Reihenfolge</p>
                 </div>
               </div>
               {completedSections.has('videoquiz') && (
                 <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">+30P ✓</span>
               )}
             </div>
-            
+
             <div className="p-6 space-y-4">
+              <p className="text-gray-600 text-sm mb-2">
+                <strong>🎯 Ziel:</strong> Testen Sie Ihr Verständnis des Videos. Die Fragen folgen dem
+                chronologischen Ablauf – von 1984 bis zur aktuellen Vorlage.
+              </p>
               {/* Frage 1 - Anfang Video */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="font-medium text-gray-800 mb-3">

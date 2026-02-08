@@ -531,71 +531,77 @@ export default function AusgangslagePage() {
               onClick={closeTutorial}
             />
 
-            {/* Tutorial Panel - ganz links am Rand, schmal, dynamische Höhe */}
+            {/* Tutorial Panel - Mobile: unten zentriert, Desktop: links */}
             <div
-              className="fixed z-50 left-0 w-56 pointer-events-auto transition-all duration-300"
+              className="fixed z-50 pointer-events-auto transition-all duration-300
+                         bottom-4 left-4 right-4 w-auto
+                         md:bottom-auto md:left-0 md:right-auto md:w-64"
               style={{
-                top: tutorialTopOffset !== null ? `${tutorialTopOffset}px` : '50%',
-                transform: tutorialTopOffset !== null ? 'none' : 'translateY(-50%)'
+                top: typeof window !== 'undefined' && window.innerWidth >= 768
+                  ? (tutorialTopOffset !== null ? `${tutorialTopOffset}px` : '50%')
+                  : 'auto',
+                transform: typeof window !== 'undefined' && window.innerWidth >= 768 && tutorialTopOffset === null
+                  ? 'translateY(-50%)'
+                  : 'none'
               }}
             >
-              <div className="bg-white rounded-r-xl shadow-2xl overflow-hidden flex flex-col border-l-4 border-purple-500">
+              <div className="bg-white rounded-xl md:rounded-r-xl md:rounded-l-none shadow-2xl overflow-hidden flex flex-col border-4 border-purple-500 md:border-l-4 md:border-t-0 md:border-r-0 md:border-b-0">
                 {/* Progress Bar */}
-                <div className="h-1 bg-gray-200 flex-shrink-0">
+                <div className="h-1.5 md:h-1 bg-gray-200 flex-shrink-0">
                   <div
                     className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-300"
                     style={{ width: `${((tutorialStep + 1) / TUTORIAL_STEPS.length) * 100}%` }}
                   />
                 </div>
 
-                {/* Header - kompakt */}
-                <div className="bg-gradient-to-r from-purple-500 to-indigo-600 px-3 py-2 flex items-center justify-between flex-shrink-0">
-                  <div className="flex items-center gap-1.5">
-                    <Lightbulb className="h-4 w-4 text-white" />
-                    <span className="text-white font-semibold text-xs">{tutorialStep + 1}/{TUTORIAL_STEPS.length}</span>
+                {/* Header */}
+                <div className="bg-gradient-to-r from-purple-500 to-indigo-600 px-4 py-3 md:px-3 md:py-2 flex items-center justify-between flex-shrink-0">
+                  <div className="flex items-center gap-2 md:gap-1.5">
+                    <Lightbulb className="h-5 w-5 md:h-4 md:w-4 text-white" />
+                    <span className="text-white font-semibold text-sm md:text-xs">{tutorialStep + 1}/{TUTORIAL_STEPS.length}</span>
                   </div>
                   <button
                     onClick={closeTutorial}
-                    className="p-0.5 text-white/70 hover:text-white"
+                    className="p-1.5 md:p-0.5 text-white/70 hover:text-white active:text-white"
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="h-5 w-5 md:h-3.5 md:w-3.5" />
                   </button>
                 </div>
 
-                {/* Content - kompakt */}
-                <div className="p-3 flex-1">
-                  <h3 className="text-sm font-bold text-gray-900 mb-1.5 leading-tight">
+                {/* Content */}
+                <div className="p-4 md:p-3 flex-1">
+                  <h3 className="text-base md:text-sm font-bold text-gray-900 mb-2 md:mb-1.5 leading-tight">
                     {currentTutorialStep.title}
                   </h3>
-                  <p className="text-gray-600 text-xs mb-3 leading-relaxed">
+                  <p className="text-gray-600 text-sm md:text-xs mb-4 md:mb-3 leading-relaxed">
                     {currentTutorialStep.description}
                   </p>
 
                   {currentTutorialStep.highlight && (
-                    <div className="bg-purple-50 border border-purple-200 rounded px-2 py-1.5 text-xs text-purple-700 flex items-center gap-1.5 mb-3">
+                    <div className="bg-purple-50 border border-purple-200 rounded px-3 py-2 md:px-2 md:py-1.5 text-sm md:text-xs text-purple-700 flex items-center gap-2 md:gap-1.5 mb-4 md:mb-3">
                       <span>👉</span>
-                      <span className="text-[10px]">Markiert</span>
+                      <span>Element markiert</span>
                     </div>
                   )}
                 </div>
 
-                {/* Footer Buttons - kompakt */}
-                <div className="px-3 pb-3 flex-shrink-0">
-                  <div className="flex gap-1.5">
+                {/* Footer Buttons - grössere Touch-Targets für Mobile */}
+                <div className="px-4 pb-4 md:px-3 md:pb-3 flex-shrink-0">
+                  <div className="flex gap-2 md:gap-1.5">
                     {tutorialStep > 0 && (
                       <button
                         onClick={prevTutorialStep}
-                        className="flex-1 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded text-xs"
+                        className="flex-1 py-3 md:py-1.5 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-gray-700 font-medium rounded-lg md:rounded text-base md:text-xs min-h-[44px] md:min-h-0"
                       >
                         ←
                       </button>
                     )}
                     <button
                       onClick={nextTutorialStep}
-                      className="flex-1 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-medium rounded text-xs flex items-center justify-center gap-1"
+                      className="flex-1 py-3 md:py-1.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 active:from-purple-700 active:to-indigo-800 text-white font-medium rounded-lg md:rounded text-base md:text-xs flex items-center justify-center gap-1 min-h-[44px] md:min-h-0"
                     >
                       {tutorialStep === TUTORIAL_STEPS.length - 1 ? (
-                        <>Start</>
+                        <>Starten 🚀</>
                       ) : (
                         <>Weiter →</>
                       )}

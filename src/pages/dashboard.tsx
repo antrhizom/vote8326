@@ -838,7 +838,7 @@ function LearningAreaCard({ area, progress, modules, userData, onModuleClick, on
           ))}
         </div>
 
-        {/* Modul-Badges - für Module mit ≥60% Lernerfolg */}
+        {/* Modul-Badges - alle Module anzeigen, freigeschaltete farbig */}
         <div
           id="badges-section"
           className={`mt-6 pt-6 border-t border-gray-200 transition-all rounded-lg ${
@@ -846,41 +846,49 @@ function LearningAreaCard({ area, progress, modules, userData, onModuleClick, on
           }`}
         >
           {(() => {
-            // Berechne welche Module einen Badge verdient haben (≥60%)
-            const modulesWithBadge = modulesList.filter(m => {
+            // Berechne Badge-Status für jedes Modul
+            const badgeCount = modulesList.filter(m => {
               const maxPts = moduleData[m.id]?.maxPoints || 100
               const pct = maxPts > 0 ? Math.round((m.score / maxPts) * 100) : 0
               return pct >= 60
-            })
+            }).length
 
-            if (modulesWithBadge.length > 0) {
-              return (
-                <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3">🏅 Meine Modul-Badges ({modulesWithBadge.length})</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {modulesWithBadge.map((m) => {
-                      const maxPts = moduleData[m.id]?.maxPoints || 100
-                      const pct = Math.round((m.score / maxPts) * 100)
-                      const level = pct >= 90 ? '🥇' : pct >= 75 ? '🥈' : '🥉'
-                      return (
-                        <button
-                          key={m.id}
-                          onClick={() => router.push(`/badges/${m.id}`)}
-                          className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 border border-yellow-200 transition-all text-left"
-                        >
-                          <span className="text-xl">{level}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 text-xs truncate">{moduleData[m.id]?.title.split('.')[1]?.trim() || m.id}</p>
-                            <p className="text-xs text-gray-500">{pct}%</p>
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
+            return (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">🏅 Meine Modul-Badges ({badgeCount}/{modulesList.length})</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {modulesList.map((m) => {
+                    const maxPts = moduleData[m.id]?.maxPoints || 100
+                    const pct = maxPts > 0 ? Math.round((m.score / maxPts) * 100) : 0
+                    const isUnlocked = pct >= 60
+                    const level = pct >= 90 ? '🥇' : pct >= 75 ? '🥈' : pct >= 60 ? '🥉' : '🔒'
+
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() => isUnlocked && router.push(`/badges/${m.id}`)}
+                        disabled={!isUnlocked}
+                        className={`flex items-center gap-2 p-3 rounded-lg border transition-all text-left ${
+                          isUnlocked
+                            ? 'bg-gradient-to-r from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 border-yellow-200 cursor-pointer'
+                            : 'bg-gray-100 border-gray-200 cursor-not-allowed opacity-60'
+                        }`}
+                      >
+                        <span className={`text-xl ${!isUnlocked ? 'grayscale' : ''}`}>{level}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className={`font-medium text-xs truncate ${isUnlocked ? 'text-gray-900' : 'text-gray-500'}`}>
+                            {moduleData[m.id]?.title.split('.')[1]?.trim() || m.id}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {isUnlocked ? `${pct}%` : `${pct}% (mind. 60%)`}
+                          </p>
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
-              )
-            }
-            return null
+              </div>
+            )
           })()}
 
           {/* Zertifikat-Button */}

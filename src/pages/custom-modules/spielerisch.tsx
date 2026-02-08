@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
-import { ArrowLeft, Award, Gamepad2, CheckCircle2, Trophy, RefreshCw, ClipboardCheck } from 'lucide-react'
+import { ArrowLeft, Award, Gamepad2, CheckCircle2, Trophy, RefreshCw, ClipboardCheck, Glasses, X } from 'lucide-react'
 import MillionenSpiel from '@/components/MillionenSpiel'
 import Lernkontrolle from '@/components/Lernkontrolle'
 
@@ -26,12 +26,101 @@ export default function SpielerischPage() {
   const [showCelebration, setShowCelebration] = useState(false)
   const [celebrationText, setCelebrationText] = useState('')
 
+  // Lesehilfe State
+  const [readingHelpActive, setReadingHelpActive] = useState(false)
+  const [currentReadingIndex, setCurrentReadingIndex] = useState(0)
+  const [readingHelpPosition, setReadingHelpPosition] = useState<{ top: number } | null>(null)
+
   // Ref um userId in Callbacks zu verwenden
   const userIdRef = useRef<string | null>(null)
 
   const maxPointsMillionenspiel = 50
   const maxPointsLernkontrolle = 50
   const maxPoints = maxPointsMillionenspiel + maxPointsLernkontrolle
+
+  // Lesehilfe Targets
+  const READING_TARGETS = [
+    { id: 'intro-text', label: '📖 Einführung', description: 'Modul-Überblick' },
+    { id: 'millionenspiel-card', label: '🎮 Aufgabe 1', description: 'Millionenspiel' },
+    { id: 'lernkontrolle-card', label: '📝 Aufgabe 2', description: 'Lernkontrolle' },
+  ]
+
+  const navigateReadingHelp = () => {
+    if (!readingHelpActive) {
+      setReadingHelpActive(true)
+      setCurrentReadingIndex(0)
+      scrollToReadingTarget(0)
+    } else {
+      const nextIndex = (currentReadingIndex + 1) % READING_TARGETS.length
+      setCurrentReadingIndex(nextIndex)
+      scrollToReadingTarget(nextIndex)
+    }
+  }
+
+  const scrollToReadingTarget = (index: number) => {
+    const target = READING_TARGETS[index]
+    if (target) {
+      const element = document.getElementById(target.id)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+  }
+
+  const closeReadingHelp = () => {
+    setReadingHelpActive(false)
+    setCurrentReadingIndex(0)
+    setReadingHelpPosition(null)
+  }
+
+  useEffect(() => {
+    const updatePosition = () => {
+      if (readingHelpActive && READING_TARGETS[currentReadingIndex]) {
+        const element = document.getElementById(READING_TARGETS[currentReadingIndex].id)
+        if (element) {
+          const rect = element.getBoundingClientRect()
+          const targetTop = rect.top + (rect.height / 2) - 30
+          const clampedTop = Math.max(80, Math.min(targetTop, window.innerHeight - 100))
+          setReadingHelpPosition({ top: clampedTop })
+        }
+      } else {
+        setReadingHelpPosition(null)
+      }
+    }
+    updatePosition()
+    if (readingHelpActive) {
+      window.addEventListener('scroll', updatePosition)
+      return () => window.removeEventListener('scroll', updatePosition)
+    }
+  }, [readingHelpActive, currentReadingIndex])
+
+  // Lesehilfe Styles
+  const readingHelpStyles = `
+    .reading-highlight-box {
+      position: relative;
+      box-shadow: 0 0 0 4px #f59e0b, 0 0 20px rgba(245, 158, 11, 0.4) !important;
+      border-radius: 12px;
+      animation: reading-pulse 2s ease-in-out infinite;
+    }
+    .reading-highlight-box::before {
+      content: attr(data-reading-label);
+      position: absolute;
+      top: -12px;
+      left: 12px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 6px;
+      z-index: 10;
+      white-space: nowrap;
+    }
+    @keyframes reading-pulse {
+      0%, 100% { box-shadow: 0 0 0 4px #f59e0b, 0 0 20px rgba(245, 158, 11, 0.4); }
+      50% { box-shadow: 0 0 0 6px #f59e0b, 0 0 35px rgba(245, 158, 11, 0.6); }
+    }
+  `
 
   // Auth State Listener - wartet auf Authentifizierung
   useEffect(() => {
@@ -247,6 +336,48 @@ export default function SpielerischPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-orange-50">
+      <style dangerouslySetInnerHTML={{ __html: readingHelpStyles }} />
+
+      {/* Lesehilfe Button */}
+      <div
+        className="fixed z-30 right-4 transition-all duration-300 ease-out"
+        style={{
+          top: readingHelpActive && readingHelpPosition ? `${readingHelpPosition.top}px` : 'auto',
+          bottom: readingHelpActive && readingHelpPosition ? 'auto' : '2rem'
+        }}
+      >
+        <div className="relative">
+          <button
+            onClick={navigateReadingHelp}
+            className={`p-4 rounded-full shadow-lg hover:shadow-xl transition-all ${
+              readingHelpActive
+                ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
+                : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
+            }`}
+          >
+            <Glasses className="h-6 w-6" />
+          </button>
+          {readingHelpActive && (
+            <>
+              <div className="absolute -top-2 -right-2 bg-amber-600 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[2.5rem] text-center shadow-md animate-pulse">
+                {currentReadingIndex + 1}/{READING_TARGETS.length}
+              </div>
+              <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-amber-600 text-white text-sm px-3 py-2 rounded-lg shadow-lg max-w-[180px]">
+                <div className="font-semibold text-xs">{READING_TARGETS[currentReadingIndex]?.label}</div>
+                <div className="text-[10px] text-amber-200 mt-0.5">{READING_TARGETS[currentReadingIndex]?.description}</div>
+                <div className="text-[10px] text-amber-300 mt-1">Klicken → weiter</div>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
+                  <div className="border-8 border-transparent border-l-amber-600"></div>
+                </div>
+              </div>
+              <button onClick={(e) => { e.stopPropagation(); closeReadingHelp(); }} className="absolute -top-1 -left-1 bg-gray-700 hover:bg-gray-800 text-white rounded-full p-1 shadow-md">
+                <X className="h-3 w-3" />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Celebration Overlay */}
       {showCelebration && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-fade-in">
@@ -288,8 +419,28 @@ export default function SpielerischPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+        {/* Lesehilfe Banner */}
+        {readingHelpActive && (
+          <div className="bg-amber-100 border border-amber-300 rounded-xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Glasses className="h-6 w-6 text-amber-600" />
+              <div>
+                <p className="text-amber-800 font-semibold text-sm">
+                  Lesehilfe: <span className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full ml-1">{currentReadingIndex + 1}/{READING_TARGETS.length}</span>
+                </p>
+                <p className="text-amber-700 text-xs">{READING_TARGETS[currentReadingIndex]?.label} — {READING_TARGETS[currentReadingIndex]?.description}</p>
+              </div>
+            </div>
+            <button onClick={closeReadingHelp} className="text-amber-600 hover:text-amber-800"><X className="h-5 w-5" /></button>
+          </div>
+        )}
+
         {/* Einleitung */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div
+          id="intro-text"
+          className={`bg-white rounded-xl shadow-sm p-6 transition-all ${readingHelpActive && currentReadingIndex === 0 ? 'reading-highlight-box' : ''}`}
+          data-reading-label="📖 Einführung"
+        >
           <div className="flex items-start gap-4">
             <div className="bg-pink-100 p-3 rounded-xl">
               <Gamepad2 className="h-6 w-6 text-pink-600" />
@@ -357,7 +508,11 @@ export default function SpielerischPage() {
         )}
 
         {/* Quiz 1: Millionenspiel */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div
+          id="millionenspiel-card"
+          className={`bg-white rounded-xl shadow-sm overflow-hidden transition-all ${readingHelpActive && currentReadingIndex === 1 ? 'reading-highlight-box' : ''}`}
+          data-reading-label="🎮 Aufgabe 1"
+        >
           <div className="bg-purple-50 p-4 border-b">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -400,7 +555,11 @@ export default function SpielerischPage() {
         </div>
 
         {/* Quiz 2: Lernkontrolle */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div
+          id="lernkontrolle-card"
+          className={`bg-white rounded-xl shadow-sm overflow-hidden transition-all ${readingHelpActive && currentReadingIndex === 2 ? 'reading-highlight-box' : ''}`}
+          data-reading-label="📝 Aufgabe 2"
+        >
           <div className="bg-teal-50 p-4 border-b">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">

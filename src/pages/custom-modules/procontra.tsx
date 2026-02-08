@@ -6,7 +6,7 @@ import {
   ArrowLeft, CheckCircle2, Award, XCircle,
   Building2, Users, MapPin, ThumbsUp, ThumbsDown,
   Eye, EyeOff, Quote, BookOpen, ChevronDown, ChevronUp, X,
-  RotateCcw, Sparkles, ArrowRight, Clock, Building, ExternalLink
+  RotateCcw, Sparkles, ArrowRight, Clock, Building, ExternalLink, Glasses
 } from 'lucide-react'
 
 // ===========================================
@@ -386,7 +386,7 @@ const SECTIONS: Section[] = [
     icon: 'Building',
     colorClass: 'from-purple-500 to-purple-600',
     bgColor: 'bg-purple-500',
-    intro: 'Anders als die Kantone begrüssen die Städte die Individualbesteuerung. Die Konferenz der städtischen Finanzdirektoren sieht darin eine Vereinfachung des Steuersystems: Keine Sonderregeln mehr für Ehepaare, keine Systemwechsel bei Heirat oder Scheidung. Die Stadt Winterthur – eines der grössten Steuerämter der Schweiz – rechnet vor, dass der Prüfaufwand langfristig sinken wird.',
+    intro: 'Anders als die Kantone begrüssen die Städte die Individualbesteuerung. Die Konferenz der städtischen Finanzdirektoren sieht darin eine Vereinfachung des Steuersystems: Keine Sonderregeln mehr für Ehepaare, keine Systemwechsel bei Heirat oder Scheidung. Grosse Steuerämter rechnen vor, dass der Prüfaufwand langfristig sinken wird.',
     videoUrl: '',
     videoTitle: '',
     totalPoints: 40,
@@ -404,7 +404,7 @@ const SECTIONS: Section[] = [
         cards: [
           { front: 'Warum wird es einfacher?', back: 'Keine Sonderregeln mehr für Ehepaare: Ein einheitliches System für alle, unabhängig vom Zivilstand. Das Steuersystem bleibt für jede Person durchgehend gleich.', emoji: '📋' },
           { front: 'Was passiert heute bei Heirat/Scheidung?', back: 'Systemwechsel: Von Einzelveranlagung zur gemeinsamen Veranlagung und zurück. Vermögen müssen aufgeteilt werden, neue Tarife gelten – das verursacht Mehraufwand.', emoji: '💍' },
-          { front: 'Was sagt Winterthur?', back: 'Die Regeln sind klar: Einkommen wird der Person zugerechnet, die es erzielt. Vermögen gehört dem Eigentümer. Mit Digitalisierung kann die Mehrarbeit aufgefangen werden.', emoji: '🏙️' }
+          { front: 'Wie funktioniert die Zuordnung?', back: 'Die Regeln sind klar: Einkommen wird der Person zugerechnet, die es erzielt. Vermögen gehört dem Eigentümer. Mit Digitalisierung kann die Mehrarbeit aufgefangen werden.', emoji: '🏙️' }
         ],
         points: 15
       },
@@ -1193,7 +1193,109 @@ export default function ProContraPage() {
   const [sectionData, setSectionData] = useState<{ [key: string]: { completedSlides: number[] } }>({})
   const [totalScore, setTotalScore] = useState(0)
 
+  // Lesehilfe State
+  const [readingHelpActive, setReadingHelpActive] = useState(false)
+  const [currentReadingIndex, setCurrentReadingIndex] = useState(0)
+  const [readingHelpPosition, setReadingHelpPosition] = useState<{ top: number } | null>(null)
+
   const maxPoints = SECTIONS.reduce((sum, s) => sum + s.totalPoints, 0)
+
+  // Lesehilfe Targets
+  const getReadingTargets = () => {
+    if (!activeSection) {
+      return [
+        { id: 'intro-text', label: '📖 Einführung', description: 'Modul-Überblick' },
+        ...SECTIONS.map((s, i) => ({ id: `section-${s.id}`, label: `${s.icon} ${s.shortTitle}`, description: s.shortTitle }))
+      ]
+    }
+    return [
+      { id: 'section-content', label: '📝 Inhalt', description: 'Argumente lesen' },
+    ]
+  }
+
+  const READING_TARGETS = getReadingTargets()
+
+  const navigateReadingHelp = () => {
+    if (!readingHelpActive) {
+      setReadingHelpActive(true)
+      setCurrentReadingIndex(0)
+      scrollToReadingTarget(0)
+    } else {
+      const nextIndex = (currentReadingIndex + 1) % READING_TARGETS.length
+      setCurrentReadingIndex(nextIndex)
+      scrollToReadingTarget(nextIndex)
+    }
+  }
+
+  const scrollToReadingTarget = (index: number) => {
+    const target = READING_TARGETS[index]
+    if (target) {
+      const element = document.getElementById(target.id)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+  }
+
+  const closeReadingHelp = () => {
+    setReadingHelpActive(false)
+    setCurrentReadingIndex(0)
+    setReadingHelpPosition(null)
+  }
+
+  useEffect(() => {
+    setReadingHelpActive(false)
+    setCurrentReadingIndex(0)
+  }, [activeSection])
+
+  useEffect(() => {
+    const updatePosition = () => {
+      if (readingHelpActive && READING_TARGETS[currentReadingIndex]) {
+        const element = document.getElementById(READING_TARGETS[currentReadingIndex].id)
+        if (element) {
+          const rect = element.getBoundingClientRect()
+          const targetTop = rect.top + (rect.height / 2) - 30
+          const clampedTop = Math.max(80, Math.min(targetTop, window.innerHeight - 100))
+          setReadingHelpPosition({ top: clampedTop })
+        }
+      } else {
+        setReadingHelpPosition(null)
+      }
+    }
+    updatePosition()
+    if (readingHelpActive) {
+      window.addEventListener('scroll', updatePosition)
+      return () => window.removeEventListener('scroll', updatePosition)
+    }
+  }, [readingHelpActive, currentReadingIndex, READING_TARGETS])
+
+  // Lesehilfe Styles
+  const readingHelpStyles = `
+    .reading-highlight-box {
+      position: relative;
+      box-shadow: 0 0 0 4px #f59e0b, 0 0 20px rgba(245, 158, 11, 0.4) !important;
+      border-radius: 12px;
+      animation: reading-pulse 2s ease-in-out infinite;
+    }
+    .reading-highlight-box::before {
+      content: attr(data-reading-label);
+      position: absolute;
+      top: -12px;
+      left: 12px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 6px;
+      z-index: 10;
+      white-space: nowrap;
+    }
+    @keyframes reading-pulse {
+      0%, 100% { box-shadow: 0 0 0 4px #f59e0b, 0 0 20px rgba(245, 158, 11, 0.4); }
+      50% { box-shadow: 0 0 0 6px #f59e0b, 0 0 35px rgba(245, 158, 11, 0.6); }
+    }
+  `
 
   useEffect(() => {
     const load = async () => {
@@ -1275,8 +1377,48 @@ export default function ProContraPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
-      <style dangerouslySetInnerHTML={{ __html: flipCardStyles }} />
-      
+      <style dangerouslySetInnerHTML={{ __html: flipCardStyles + readingHelpStyles }} />
+
+      {/* Lesehilfe Button */}
+      <div
+        className="fixed z-30 right-4 transition-all duration-300 ease-out"
+        style={{
+          top: readingHelpActive && readingHelpPosition ? `${readingHelpPosition.top}px` : 'auto',
+          bottom: readingHelpActive && readingHelpPosition ? 'auto' : '2rem'
+        }}
+      >
+        <div className="relative">
+          <button
+            onClick={navigateReadingHelp}
+            className={`p-4 rounded-full shadow-lg hover:shadow-xl transition-all ${
+              readingHelpActive
+                ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
+                : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
+            }`}
+          >
+            <Glasses className="h-6 w-6" />
+          </button>
+          {readingHelpActive && (
+            <>
+              <div className="absolute -top-2 -right-2 bg-amber-600 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[2.5rem] text-center shadow-md animate-pulse">
+                {currentReadingIndex + 1}/{READING_TARGETS.length}
+              </div>
+              <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-amber-600 text-white text-sm px-3 py-2 rounded-lg shadow-lg max-w-[180px]">
+                <div className="font-semibold text-xs">{READING_TARGETS[currentReadingIndex]?.label}</div>
+                <div className="text-[10px] text-amber-200 mt-0.5">{READING_TARGETS[currentReadingIndex]?.description}</div>
+                <div className="text-[10px] text-amber-300 mt-1">Klicken → weiter</div>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
+                  <div className="border-8 border-transparent border-l-amber-600"></div>
+                </div>
+              </div>
+              <button onClick={(e) => { e.stopPropagation(); closeReadingHelp(); }} className="absolute -top-1 -left-1 bg-gray-700 hover:bg-gray-800 text-white rounded-full p-1 shadow-md">
+                <X className="h-3 w-3" />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
       <header className="bg-white shadow-md sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
@@ -1294,7 +1436,11 @@ export default function ProContraPage() {
           <p className="text-gray-600">Abstimmung vom 8. März 2026: Individualbesteuerung</p>
         </div>
 
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-6">
+        <div
+          id="intro-text"
+          className={`bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-6 transition-all ${readingHelpActive && currentReadingIndex === 0 ? 'reading-highlight-box' : ''}`}
+          data-reading-label="📖 Einführung"
+        >
           <p className="text-amber-800 mb-2">
             <strong>📣 Bei Abstimmungen gehen die Meinungen auseinander.</strong>
           </p>
@@ -1315,14 +1461,20 @@ export default function ProContraPage() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-6">
-          {SECTIONS.map((section) => {
+          {SECTIONS.map((section, sectionIndex) => {
             const Icon = IconMap[section.icon] || Users
             const progress = getSectionProgress(section.id)
+            const isHighlighted = readingHelpActive && currentReadingIndex === sectionIndex + 1
             return (
-              <button key={section.id} onClick={() => setActiveSection(section.id)}
+              <button
+                key={section.id}
+                id={`section-${section.id}`}
+                onClick={() => setActiveSection(section.id)}
                 className={`p-4 rounded-xl border-2 transition-all text-left hover:shadow-lg hover:scale-[1.02] ${
                   progress.complete ? 'bg-green-50 border-green-300' : 'bg-white border-gray-200 hover:border-gray-300'
-                }`}>
+                } ${isHighlighted ? 'reading-highlight-box' : ''}`}
+                data-reading-label={section.shortTitle}
+              >
                 <div className="flex items-center gap-3 mb-2">
                   <div className={`p-2 rounded-lg ${progress.complete ? 'bg-green-500' : section.bgColor}`}>
                     <Icon className="h-5 w-5 text-white" />

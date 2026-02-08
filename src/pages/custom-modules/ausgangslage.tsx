@@ -147,21 +147,31 @@ export default function AusgangslagePage() {
   // currentTutorialStep muss vor dem useEffect definiert werden
   const currentTutorialStep = TUTORIAL_STEPS[tutorialStep] || TUTORIAL_STEPS[0]
 
-  // Effect um Tutorial-Position zu aktualisieren
+  // Effect um Tutorial-Position zu aktualisieren (inkl. Scroll-Listener)
   useEffect(() => {
-    if (showTutorial && currentTutorialStep.highlight) {
-      const element = document.getElementById(currentTutorialStep.highlight)
-      if (element) {
-        const rect = element.getBoundingClientRect()
-        const viewportHeight = window.innerHeight
-        // Position das Tutorial-Panel so, dass es auf gleicher Höhe wie das hervorgehobene Element ist
-        const targetTop = Math.max(80, Math.min(rect.top, viewportHeight - 400))
-        setTutorialTopOffset(targetTop)
+    const updateTutorialPosition = () => {
+      if (showTutorial && currentTutorialStep.highlight) {
+        const element = document.getElementById(currentTutorialStep.highlight)
+        if (element) {
+          const rect = element.getBoundingClientRect()
+          // Position das Tutorial-Panel so, dass es auf gleicher Höhe wie das hervorgehobene Element ist
+          const targetTop = rect.top + (rect.height / 2) - 100
+          const clampedTop = Math.max(80, Math.min(targetTop, window.innerHeight - 300))
+          setTutorialTopOffset(clampedTop)
+        } else {
+          setTutorialTopOffset(null)
+        }
       } else {
         setTutorialTopOffset(null)
       }
-    } else {
-      setTutorialTopOffset(null)
+    }
+
+    updateTutorialPosition()
+
+    // Auch bei Scroll aktualisieren
+    if (showTutorial && currentTutorialStep.highlight) {
+      window.addEventListener('scroll', updateTutorialPosition)
+      return () => window.removeEventListener('scroll', updateTutorialPosition)
     }
   }, [showTutorial, tutorialStep, currentTutorialStep.highlight])
 

@@ -6,7 +6,7 @@ import {
   ArrowLeft, CheckCircle2, Award,
   History, Scale, Film, ChevronRight, ChevronDown,
   AlertTriangle, Calendar, Users, Star, BookOpen,
-  HelpCircle, Lightbulb, Newspaper, ExternalLink, Lock, ThumbsUp, ThumbsDown, Glasses
+  HelpCircle, Lightbulb, Newspaper, ExternalLink, Lock, ThumbsUp, ThumbsDown, Glasses, X
 } from 'lucide-react'
 
 // ===========================================
@@ -281,8 +281,116 @@ export default function VertiefungPage() {
 
   // Lesehilfe state
   const [readingHelpActive, setReadingHelpActive] = useState(false)
+  const [currentReadingIndex, setCurrentReadingIndex] = useState(0)
+  const [readingHelpPosition, setReadingHelpPosition] = useState<{ top: number } | null>(null)
 
   const maxPoints = 100
+
+  // Lesehilfe Targets je nach Kapitel
+  const getReadingTargets = () => {
+    if (!activeChapter) {
+      return [
+        { id: 'intro-text', label: '📖 Einführung', description: 'Modul-Überblick' },
+        { id: 'chapter-geschichte', label: '📅 Kapitel 1', description: 'Geschichte' },
+        { id: 'chapter-steuern', label: '⚖️ Kapitel 2', description: 'Steuerziele' },
+      ]
+    } else if (activeChapter === 'geschichte') {
+      return [
+        { id: 'timeline-intro', label: '📖 Einführung', description: 'Timeline-Info' },
+        { id: 'timeline-task', label: '📅 Aufgabe', description: 'Ereignisse erkunden' },
+      ]
+    } else if (activeChapter === 'steuerziele') {
+      return [
+        { id: 'steuer-intro', label: '📖 Einführung', description: 'Steuerziele' },
+        { id: 'steuer-task', label: '⚖️ Aufgabe', description: 'Ziele erkunden' },
+      ]
+    }
+    return []
+  }
+
+  const READING_TARGETS = getReadingTargets()
+
+  const navigateReadingHelp = () => {
+    if (!readingHelpActive) {
+      setReadingHelpActive(true)
+      setCurrentReadingIndex(0)
+      scrollToReadingTarget(0)
+    } else {
+      const nextIndex = (currentReadingIndex + 1) % READING_TARGETS.length
+      setCurrentReadingIndex(nextIndex)
+      scrollToReadingTarget(nextIndex)
+    }
+  }
+
+  const scrollToReadingTarget = (index: number) => {
+    const target = READING_TARGETS[index]
+    if (target) {
+      const element = document.getElementById(target.id)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+  }
+
+  const closeReadingHelp = () => {
+    setReadingHelpActive(false)
+    setCurrentReadingIndex(0)
+    setReadingHelpPosition(null)
+  }
+
+  useEffect(() => {
+    setReadingHelpActive(false)
+    setCurrentReadingIndex(0)
+  }, [activeChapter])
+
+  useEffect(() => {
+    const updatePosition = () => {
+      if (readingHelpActive && READING_TARGETS[currentReadingIndex]) {
+        const element = document.getElementById(READING_TARGETS[currentReadingIndex].id)
+        if (element) {
+          const rect = element.getBoundingClientRect()
+          const targetTop = rect.top + (rect.height / 2) - 30
+          const clampedTop = Math.max(80, Math.min(targetTop, window.innerHeight - 100))
+          setReadingHelpPosition({ top: clampedTop })
+        }
+      } else {
+        setReadingHelpPosition(null)
+      }
+    }
+    updatePosition()
+    if (readingHelpActive) {
+      window.addEventListener('scroll', updatePosition)
+      return () => window.removeEventListener('scroll', updatePosition)
+    }
+  }, [readingHelpActive, currentReadingIndex, READING_TARGETS])
+
+  // Lesehilfe Styles
+  const readingHelpStyles = `
+    .reading-highlight-box {
+      position: relative;
+      box-shadow: 0 0 0 4px #f59e0b, 0 0 20px rgba(245, 158, 11, 0.4) !important;
+      border-radius: 12px;
+      animation: reading-pulse 2s ease-in-out infinite;
+    }
+    .reading-highlight-box::before {
+      content: attr(data-reading-label);
+      position: absolute;
+      top: -12px;
+      left: 12px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 6px;
+      z-index: 10;
+      white-space: nowrap;
+    }
+    @keyframes reading-pulse {
+      0%, 100% { box-shadow: 0 0 0 4px #f59e0b, 0 0 20px rgba(245, 158, 11, 0.4); }
+      50% { box-shadow: 0 0 0 6px #f59e0b, 0 0 35px rgba(245, 158, 11, 0.6); }
+    }
+  `
 
   useEffect(() => {
     const load = async () => {
@@ -521,20 +629,44 @@ export default function VertiefungPage() {
         <style dangerouslySetInnerHTML={{ __html: readingHelpStyles }} />
 
         {/* Lesehilfe Button */}
-        <button
-          onClick={() => setReadingHelpActive(!readingHelpActive)}
-          className={`fixed bottom-6 right-6 z-30 p-4 rounded-full shadow-lg hover:shadow-xl transition-all group ${
-            readingHelpActive
-              ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
-              : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
-          }`}
-          title={readingHelpActive ? 'Lesehilfe deaktivieren' : 'Lesehilfe aktivieren'}
+        <div
+          className="fixed z-30 right-4 transition-all duration-300 ease-out"
+          style={{
+            top: readingHelpActive && readingHelpPosition ? `${readingHelpPosition.top}px` : 'auto',
+            bottom: readingHelpActive && readingHelpPosition ? 'auto' : '2rem'
+          }}
         >
-          <Glasses className="h-6 w-6" />
-          <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-            {readingHelpActive ? 'Lesehilfe aus' : 'Lesehilfe an'}
-          </span>
-        </button>
+          <div className="relative">
+            <button
+              onClick={navigateReadingHelp}
+              className={`p-4 rounded-full shadow-lg hover:shadow-xl transition-all ${
+                readingHelpActive
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
+                  : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
+              }`}
+            >
+              <Glasses className="h-6 w-6" />
+            </button>
+            {readingHelpActive && (
+              <>
+                <div className="absolute -top-2 -right-2 bg-amber-600 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[2.5rem] text-center shadow-md animate-pulse">
+                  {currentReadingIndex + 1}/{READING_TARGETS.length}
+                </div>
+                <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-amber-600 text-white text-sm px-3 py-2 rounded-lg shadow-lg max-w-[180px]">
+                  <div className="font-semibold text-xs">{READING_TARGETS[currentReadingIndex]?.label}</div>
+                  <div className="text-[10px] text-amber-200 mt-0.5">{READING_TARGETS[currentReadingIndex]?.description}</div>
+                  <div className="text-[10px] text-amber-300 mt-1">Klicken → weiter</div>
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
+                    <div className="border-8 border-transparent border-l-amber-600"></div>
+                  </div>
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); closeReadingHelp(); }} className="absolute -top-1 -left-1 bg-gray-700 hover:bg-gray-800 text-white rounded-full p-1 shadow-md">
+                  <X className="h-3 w-3" />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
 
         <header className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
           <div className="max-w-4xl mx-auto px-4 py-4">
@@ -563,18 +695,24 @@ export default function VertiefungPage() {
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
           {/* Lesehilfe Info-Banner */}
           {readingHelpActive && (
-            <div className="bg-amber-100 border border-amber-300 rounded-xl p-4 flex items-center gap-3">
-              <Glasses className="h-6 w-6 text-amber-600 flex-shrink-0" />
-              <div>
-                <p className="text-amber-800 font-semibold text-sm">Lesehilfe aktiv</p>
-                <p className="text-amber-700 text-xs">Die gelb markierten Bereiche enthalten wichtige Informationen, die Sie lesen sollten.</p>
+            <div className="bg-amber-100 border border-amber-300 rounded-xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Glasses className="h-6 w-6 text-amber-600 flex-shrink-0" />
+                <div>
+                  <p className="text-amber-800 font-semibold text-sm">
+                    Lesehilfe: <span className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full ml-1">{currentReadingIndex + 1}/{READING_TARGETS.length}</span>
+                  </p>
+                  <p className="text-amber-700 text-xs">{READING_TARGETS[currentReadingIndex]?.label} — {READING_TARGETS[currentReadingIndex]?.description}</p>
+                </div>
               </div>
+              <button onClick={closeReadingHelp} className="text-amber-600 hover:text-amber-800"><X className="h-5 w-5" /></button>
             </div>
           )}
 
           <div
-            className={`bg-white rounded-xl p-6 shadow-sm transition-all ${readingHelpActive ? 'reading-highlight-box' : ''}`}
-            data-reading-label="📖 Infotext"
+            id="intro-text"
+            className={`bg-white rounded-xl p-6 shadow-sm transition-all ${readingHelpActive && currentReadingIndex === 0 ? 'reading-highlight-box' : ''}`}
+            data-reading-label="📖 Einführung"
           >
             <p className="text-gray-700 mb-3">
               Tauchen Sie tiefer ein in die <strong>Hintergründe der Abstimmung</strong>. Im ersten Kapitel erfahren Sie,
@@ -598,8 +736,10 @@ export default function VertiefungPage() {
           <div className="space-y-3">
             {/* Kapitel 1: Geschichte */}
             <button
+              id="chapter-geschichte"
               onClick={() => setActiveChapter('geschichte')}
-              className="w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-emerald-200"
+              className={`w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-emerald-200 ${readingHelpActive && currentReadingIndex === 1 ? 'reading-highlight-box' : ''}`}
+              data-reading-label="📅 Kapitel 1"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -626,8 +766,10 @@ export default function VertiefungPage() {
 
             {/* Kapitel 2: Steuerziele */}
             <button
+              id="chapter-steuern"
               onClick={() => setActiveChapter('steuerziele')}
-              className="w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-emerald-200"
+              className={`w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-emerald-200 ${readingHelpActive && currentReadingIndex === 2 ? 'reading-highlight-box' : ''}`}
+              data-reading-label="⚖️ Kapitel 2"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">

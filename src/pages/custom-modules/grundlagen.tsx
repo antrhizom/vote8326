@@ -5,7 +5,7 @@ import { auth, db } from '@/lib/firebase'
 import {
   ArrowLeft, CheckCircle2, Award,
   Film, Radio, ThumbsUp, ThumbsDown, Star,
-  Volume2, ChevronRight, ListOrdered, Info
+  Volume2, ChevronRight, ListOrdered, Info, Glasses, X
 } from 'lucide-react'
 
 // ===========================================
@@ -77,7 +77,94 @@ export default function GrundlagenPage() {
   const [bonusQuizAnswers, setBonusQuizAnswers] = useState<{[key: string]: string}>({})
   const [bonusQuizSubmitted, setBonusQuizSubmitted] = useState(false)
 
+  // Lesehilfe State
+  const [readingHelpActive, setReadingHelpActive] = useState(false)
+  const [currentReadingIndex, setCurrentReadingIndex] = useState(0)
+  const [readingHelpPosition, setReadingHelpPosition] = useState<{ top: number } | null>(null)
+
   const maxPoints = 100
+
+  // Lesehilfe Targets je nach Kapitel
+  const getReadingTargets = () => {
+    if (!activeChapter) {
+      return [
+        { id: 'intro-text', label: '📖 Einführung', description: 'Modul-Überblick' },
+        { id: 'chapter-video', label: '🎬 Kapitel 1', description: 'Video anschauen' },
+        { id: 'chapter-audio', label: '🎧 Kapitel 2', description: 'Audio wählen' },
+      ]
+    } else if (activeChapter === 'video') {
+      return [
+        { id: 'video-intro', label: '📖 Einführung', description: 'Video-Info' },
+        { id: 'video-quiz', label: '❓ Quiz', description: 'Verständnisfragen' },
+      ]
+    } else if (activeChapter === 'audio') {
+      return [
+        { id: 'audio-choice', label: '🎧 Auswahl', description: 'Audio wählen' },
+        { id: 'audio-content', label: '📝 Aufgaben', description: 'Übungen' },
+      ]
+    }
+    return []
+  }
+
+  const READING_TARGETS = getReadingTargets()
+
+  // Lesehilfe Navigation
+  const navigateReadingHelp = () => {
+    if (!readingHelpActive) {
+      setReadingHelpActive(true)
+      setCurrentReadingIndex(0)
+      scrollToReadingTarget(0)
+    } else {
+      const nextIndex = (currentReadingIndex + 1) % READING_TARGETS.length
+      setCurrentReadingIndex(nextIndex)
+      scrollToReadingTarget(nextIndex)
+    }
+  }
+
+  const scrollToReadingTarget = (index: number) => {
+    const target = READING_TARGETS[index]
+    if (target) {
+      const element = document.getElementById(target.id)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+  }
+
+  const closeReadingHelp = () => {
+    setReadingHelpActive(false)
+    setCurrentReadingIndex(0)
+    setReadingHelpPosition(null)
+  }
+
+  // Reset reading help when chapter changes
+  useEffect(() => {
+    setReadingHelpActive(false)
+    setCurrentReadingIndex(0)
+    setReadingHelpPosition(null)
+  }, [activeChapter])
+
+  // Update reading help position
+  useEffect(() => {
+    const updatePosition = () => {
+      if (readingHelpActive && READING_TARGETS[currentReadingIndex]) {
+        const element = document.getElementById(READING_TARGETS[currentReadingIndex].id)
+        if (element) {
+          const rect = element.getBoundingClientRect()
+          const targetTop = rect.top + (rect.height / 2) - 30
+          const clampedTop = Math.max(80, Math.min(targetTop, window.innerHeight - 100))
+          setReadingHelpPosition({ top: clampedTop })
+        }
+      } else {
+        setReadingHelpPosition(null)
+      }
+    }
+    updatePosition()
+    if (readingHelpActive) {
+      window.addEventListener('scroll', updatePosition)
+      return () => window.removeEventListener('scroll', updatePosition)
+    }
+  }, [readingHelpActive, currentReadingIndex, READING_TARGETS])
 
   useEffect(() => {
     const load = async () => {
@@ -202,10 +289,86 @@ export default function GrundlagenPage() {
   const videoDone = completedSections.has('videoquiz')
   const isComplete = videoDone && firstAudioDone
 
+  // Lesehilfe Styles
+  const readingHelpStyles = `
+    .reading-highlight-box {
+      position: relative;
+      box-shadow: 0 0 0 4px #f59e0b, 0 0 20px rgba(245, 158, 11, 0.4) !important;
+      border-radius: 12px;
+      transition: all 0.5s ease;
+      animation: reading-pulse 2s ease-in-out infinite;
+    }
+    .reading-highlight-box::before {
+      content: attr(data-reading-label);
+      position: absolute;
+      top: -12px;
+      left: 12px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 6px;
+      z-index: 10;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+    }
+    @keyframes reading-pulse {
+      0%, 100% { box-shadow: 0 0 0 4px #f59e0b, 0 0 20px rgba(245, 158, 11, 0.4); }
+      50% { box-shadow: 0 0 0 6px #f59e0b, 0 0 35px rgba(245, 158, 11, 0.6); }
+    }
+  `
+
   // ========== CHAPTER OVERVIEW ==========
   if (!activeChapter) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <style dangerouslySetInnerHTML={{ __html: readingHelpStyles }} />
+
+        {/* Lesehilfe Button */}
+        <div
+          className="fixed z-30 right-4 transition-all duration-300 ease-out"
+          style={{
+            top: readingHelpActive && readingHelpPosition ? `${readingHelpPosition.top}px` : 'auto',
+            bottom: readingHelpActive && readingHelpPosition ? 'auto' : '2rem'
+          }}
+        >
+          <div className="relative">
+            <button
+              onClick={navigateReadingHelp}
+              className={`p-4 rounded-full shadow-lg hover:shadow-xl transition-all ${
+                readingHelpActive
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
+                  : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
+              }`}
+              title={readingHelpActive ? `${currentReadingIndex + 1}/${READING_TARGETS.length}` : 'Lesehilfe'}
+            >
+              <Glasses className="h-6 w-6" />
+            </button>
+            {readingHelpActive && (
+              <>
+                <div className="absolute -top-2 -right-2 bg-amber-600 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[2.5rem] text-center shadow-md animate-pulse">
+                  {currentReadingIndex + 1}/{READING_TARGETS.length}
+                </div>
+                <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-amber-600 text-white text-sm px-3 py-2 rounded-lg shadow-lg max-w-[180px]">
+                  <div className="font-semibold text-xs">{READING_TARGETS[currentReadingIndex]?.label}</div>
+                  <div className="text-[10px] text-amber-200 mt-0.5">{READING_TARGETS[currentReadingIndex]?.description}</div>
+                  <div className="text-[10px] text-amber-300 mt-1">Klicken → weiter</div>
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
+                    <div className="border-8 border-transparent border-l-amber-600"></div>
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); closeReadingHelp(); }}
+                  className="absolute -top-1 -left-1 bg-gray-700 hover:bg-gray-800 text-white rounded-full p-1 shadow-md"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
         <header className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
           <div className="max-w-4xl mx-auto px-4 py-4">
             <div className="flex items-center justify-between mb-2">
@@ -231,7 +394,34 @@ export default function GrundlagenPage() {
         </header>
 
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          {/* Lesehilfe Banner */}
+          {readingHelpActive && (
+            <div className="bg-amber-100 border border-amber-300 rounded-xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Glasses className="h-6 w-6 text-amber-600 flex-shrink-0" />
+                <div>
+                  <p className="text-amber-800 font-semibold text-sm flex items-center gap-2">
+                    Lesehilfe aktiv
+                    <span className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full">
+                      {currentReadingIndex + 1}/{READING_TARGETS.length}
+                    </span>
+                  </p>
+                  <p className="text-amber-700 text-xs">
+                    <strong>{READING_TARGETS[currentReadingIndex]?.label}</strong> — {READING_TARGETS[currentReadingIndex]?.description}
+                  </p>
+                </div>
+              </div>
+              <button onClick={closeReadingHelp} className="text-amber-600 hover:text-amber-800 p-1">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          )}
+
+          <div
+            id="intro-text"
+            className={`bg-white rounded-xl p-6 shadow-sm transition-all ${readingHelpActive && currentReadingIndex === 0 ? 'reading-highlight-box' : ''}`}
+            data-reading-label="📖 Einführung"
+          >
             <p className="text-gray-700 mb-3">
               In diesem Modul lernen Sie die <strong>offiziellen Informationen des Bundes</strong> und die
               <strong> Medienberichterstattung</strong> zur Individualbesteuerung kennen. Diese Quellen helfen Ihnen,
@@ -261,8 +451,10 @@ export default function GrundlagenPage() {
           <div className="space-y-3">
             {/* Kapitel 1: Video */}
             <button
+              id="chapter-video"
               onClick={() => setActiveChapter('video')}
-              className="w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-blue-200"
+              className={`w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-blue-200 ${readingHelpActive && currentReadingIndex === 1 ? 'reading-highlight-box' : ''}`}
+              data-reading-label="🎬 Kapitel 1: Video"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -289,8 +481,10 @@ export default function GrundlagenPage() {
 
             {/* Kapitel 2: Audio */}
             <button
+              id="chapter-audio"
               onClick={() => setActiveChapter('audio')}
-              className="w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-blue-200"
+              className={`w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-blue-200 ${readingHelpActive && currentReadingIndex === 2 ? 'reading-highlight-box' : ''}`}
+              data-reading-label="🎧 Kapitel 2: Audio"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -343,6 +537,47 @@ export default function GrundlagenPage() {
   if (activeChapter === 'video') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <style dangerouslySetInnerHTML={{ __html: readingHelpStyles }} />
+
+        {/* Lesehilfe Button */}
+        <div
+          className="fixed z-30 right-4 transition-all duration-300 ease-out"
+          style={{
+            top: readingHelpActive && readingHelpPosition ? `${readingHelpPosition.top}px` : 'auto',
+            bottom: readingHelpActive && readingHelpPosition ? 'auto' : '2rem'
+          }}
+        >
+          <div className="relative">
+            <button
+              onClick={navigateReadingHelp}
+              className={`p-4 rounded-full shadow-lg hover:shadow-xl transition-all ${
+                readingHelpActive
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white ring-4 ring-amber-300'
+                  : 'bg-white hover:bg-amber-50 text-amber-600 border-2 border-amber-300'
+              }`}
+            >
+              <Glasses className="h-6 w-6" />
+            </button>
+            {readingHelpActive && (
+              <>
+                <div className="absolute -top-2 -right-2 bg-amber-600 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[2.5rem] text-center shadow-md animate-pulse">
+                  {currentReadingIndex + 1}/{READING_TARGETS.length}
+                </div>
+                <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-amber-600 text-white text-sm px-3 py-2 rounded-lg shadow-lg max-w-[180px]">
+                  <div className="font-semibold text-xs">{READING_TARGETS[currentReadingIndex]?.label}</div>
+                  <div className="text-[10px] text-amber-200 mt-0.5">{READING_TARGETS[currentReadingIndex]?.description}</div>
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
+                    <div className="border-8 border-transparent border-l-amber-600"></div>
+                  </div>
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); closeReadingHelp(); }} className="absolute -top-1 -left-1 bg-gray-700 hover:bg-gray-800 text-white rounded-full p-1 shadow-md">
+                  <X className="h-3 w-3" />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
         <header className="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
@@ -359,7 +594,27 @@ export default function GrundlagenPage() {
         </header>
 
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          {/* Lesehilfe Banner */}
+          {readingHelpActive && (
+            <div className="bg-amber-100 border border-amber-300 rounded-xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Glasses className="h-6 w-6 text-amber-600" />
+                <div>
+                  <p className="text-amber-800 font-semibold text-sm">
+                    Lesehilfe: <span className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full ml-1">{currentReadingIndex + 1}/{READING_TARGETS.length}</span>
+                  </p>
+                  <p className="text-amber-700 text-xs">{READING_TARGETS[currentReadingIndex]?.label} — {READING_TARGETS[currentReadingIndex]?.description}</p>
+                </div>
+              </div>
+              <button onClick={closeReadingHelp} className="text-amber-600 hover:text-amber-800"><X className="h-5 w-5" /></button>
+            </div>
+          )}
+
+          <div
+            id="video-intro"
+            className={`bg-white rounded-xl shadow-sm overflow-hidden transition-all ${readingHelpActive && currentReadingIndex === 0 ? 'reading-highlight-box' : ''}`}
+            data-reading-label="📖 Video"
+          >
             <div className="bg-blue-50 p-4 border-b">
               <div className="flex items-center gap-3">
                 <Film className="h-6 w-6 text-blue-600" />
@@ -383,7 +638,11 @@ export default function GrundlagenPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div
+            id="video-quiz"
+            className={`bg-white rounded-xl shadow-sm overflow-hidden transition-all ${readingHelpActive && currentReadingIndex === 1 ? 'reading-highlight-box' : ''}`}
+            data-reading-label="❓ Quiz"
+          >
             <div className="bg-blue-50 p-4 border-b flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">❓</span>

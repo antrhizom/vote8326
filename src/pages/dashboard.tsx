@@ -293,21 +293,55 @@ export default function AbstimmungDashboard() {
     }
   }
 
-  // Scroll to highlighted element when tutorial step changes
+  // Tutorial Position State
+  const [tutorialTopOffset, setTutorialTopOffset] = useState<number | null>(null)
+
+  // Scroll to highlighted element and update tutorial position
   // This useEffect MUST be before any conditional returns!
   useEffect(() => {
+    const updateTutorialPosition = () => {
+      if (showTutorial) {
+        const step = TUTORIAL_STEPS[tutorialStep]
+        if (step?.highlight) {
+          const element = document.getElementById(step.highlight as string)
+          if (element) {
+            const rect = element.getBoundingClientRect()
+            // Position das Tutorial-Panel auf gleicher Höhe wie das hervorgehobene Element
+            const targetTop = rect.top + (rect.height / 2) - 100
+            const clampedTop = Math.max(80, Math.min(targetTop, window.innerHeight - 300))
+            setTutorialTopOffset(clampedTop)
+          } else {
+            setTutorialTopOffset(null)
+          }
+        } else {
+          setTutorialTopOffset(null)
+        }
+      } else {
+        setTutorialTopOffset(null)
+      }
+    }
+
+    // Initial scroll to element
     if (showTutorial) {
       const step = TUTORIAL_STEPS[tutorialStep]
       if (step?.highlight) {
-        // Delay to ensure DOM elements are rendered
         const timeoutId = setTimeout(() => {
           const element = document.getElementById(step.highlight as string)
           if (element) {
             element.scrollIntoView({ behavior: 'smooth', block: 'center' })
           }
+          updateTutorialPosition()
         }, 100)
         return () => clearTimeout(timeoutId)
       }
+    }
+
+    updateTutorialPosition()
+
+    // Update position on scroll
+    if (showTutorial && TUTORIAL_STEPS[tutorialStep]?.highlight) {
+      window.addEventListener('scroll', updateTutorialPosition)
+      return () => window.removeEventListener('scroll', updateTutorialPosition)
     }
   }, [showTutorial, tutorialStep])
 
@@ -384,10 +418,16 @@ export default function AbstimmungDashboard() {
             onClick={closeTutorial}
           />
 
-          {/* Tutorial Panel - links oder rechts je nach Position */}
-          <div className={`fixed z-50 top-1/2 -translate-y-1/2 w-56 pointer-events-auto ${
-            currentTutorialStep.position === 'bottom-right' ? 'right-0' : 'left-0'
-          }`}>
+          {/* Tutorial Panel - links oder rechts je nach Position, folgt dem Element */}
+          <div
+            className={`fixed z-50 w-56 pointer-events-auto transition-all duration-300 ${
+              currentTutorialStep.position === 'bottom-right' ? 'right-0' : 'left-0'
+            }`}
+            style={{
+              top: tutorialTopOffset !== null ? `${tutorialTopOffset}px` : '50%',
+              transform: tutorialTopOffset !== null ? 'none' : 'translateY(-50%)'
+            }}
+          >
             <div className={`bg-white shadow-2xl overflow-hidden flex flex-col ${
               currentTutorialStep.position === 'bottom-right'
                 ? 'rounded-l-xl border-r-4 border-teal-500'

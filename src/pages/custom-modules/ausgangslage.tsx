@@ -108,6 +108,9 @@ export default function AusgangslagePage() {
   // Tutorial Position basierend auf hervorgehobenem Element
   const [tutorialTopOffset, setTutorialTopOffset] = useState<number | null>(null)
 
+  // currentTutorialStep muss vor dem useEffect definiert werden
+  const currentTutorialStep = TUTORIAL_STEPS[tutorialStep] || TUTORIAL_STEPS[0]
+
   // Effect um Tutorial-Position zu aktualisieren
   useEffect(() => {
     if (showTutorial && currentTutorialStep.highlight) {
@@ -401,8 +404,6 @@ export default function AusgangslagePage() {
       setTutorialStep(tutorialStep - 1)
     }
   }
-
-  const currentTutorialStep = TUTORIAL_STEPS[tutorialStep] || TUTORIAL_STEPS[0]
 
   // ========== CHAPTER OVERVIEW ==========
   if (!activeChapter) {

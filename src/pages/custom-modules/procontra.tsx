@@ -1253,7 +1253,7 @@ export default function ProContraPage() {
     router.push(path)
   }
 
-  const handleSectionChange = (section: Section) => {
+  const handleSectionChange = (section: string | null) => {
     if (readingHelpActive) {
       closeReadingHelp()
       alert('Lesehilfe wurde geschlossen. Klicken Sie erneut, um die Sektion zu wechseln.')

@@ -952,6 +952,15 @@ const MODULE_DURATIONS: { [key: string]: string } = {
   spielerisch: '15 Min.'
 }
 
+// Lernziele für die Module
+const MODULE_GOALS: { [key: string]: string } = {
+  ausgangslage: 'Eigene Betroffenheit erkennen & Referendum verstehen',
+  grundlagen: 'Kernargumente aus Medien erfassen',
+  procontra: 'Pro- und Contra-Argumente gegenüberstellen',
+  vertiefung: 'Historische Einordnung & Steuerziele verstehen',
+  spielerisch: 'Wissen festigen & überprüfen'
+}
+
 // Komponente für Modul-Button
 interface ModuleButtonProps {
   moduleId: string
@@ -964,6 +973,7 @@ interface ModuleButtonProps {
 
 function ModuleButton({ moduleId, moduleTitle, completed, score, progress, onClick }: ModuleButtonProps) {
   const duration = MODULE_DURATIONS[moduleId] || '15 Min.'
+  const goal = MODULE_GOALS[moduleId] || ''
 
   return (
     <button
@@ -978,7 +988,7 @@ function ModuleButton({ moduleId, moduleTitle, completed, score, progress, onCli
     >
       <div className="flex items-center gap-4">
         <div
-          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${
             completed
               ? 'bg-green-500 text-white'
               : progress > 0
@@ -990,6 +1000,7 @@ function ModuleButton({ moduleId, moduleTitle, completed, score, progress, onCli
         </div>
         <div className="text-left">
           <div className="font-semibold text-gray-900">{moduleTitle}</div>
+          <div className="text-xs text-gray-500 mb-1">🎯 {goal}</div>
           <div className="text-sm text-gray-600 flex items-center gap-2">
             <span className="flex items-center gap-1">
               <Clock className="h-3.5 w-3.5" />

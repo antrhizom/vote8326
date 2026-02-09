@@ -177,7 +177,7 @@ const NEWSPAPER_ARTICLES = [
     date: '6. Februar 2026',
     url: 'https://www.republik.ch/2026/02/06/heiratsstrafe-in-guten-wie-in-teuren-tagen',
     description: 'Umfassende Erklärung zur Vorlage: Woher kommt sie? Wer profitiert? Was sind die Argumente? Ein sehr gut recherchierter Überblicksartikel.',
-    hasPaywall: true,
+    hasPaywall: false,
     color: 'purple'
   },
   {
@@ -187,7 +187,7 @@ const NEWSPAPER_ARTICLES = [
     date: '2026',
     url: 'https://www.woz.ch/2605/individualbesteuerung/angriff-auf-den-einzelernaehrer/!TTGR99PS2AFA',
     description: 'Kritische Perspektive aus linker Sicht: Wie verändert die Reform die Arbeitsteilung in Familien? Welche gesellschaftlichen Folgen hat sie?',
-    hasPaywall: true,
+    hasPaywall: false,
     color: 'red'
   },
   {
@@ -822,6 +822,12 @@ export default function VertiefungPage() {
                   <strong>💡 Hinweis:</strong> Diese Artikel sind z.T. hinter einer <strong>Paywall</strong>.
                   Als Lernende können Sie diese über <strong>Swissdox</strong> kostenlos lesen.
                   Fragen Sie Ihre Lehrperson nach dem Zugang.
+                </p>
+              </div>
+              <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-lg mb-4">
+                <p className="text-blue-800 text-sm">
+                  <strong>🎧 Tipp:</strong> Die Artikel von <strong>Republik</strong> und <strong>WOZ</strong> können auch <strong>vorgelesen</strong> werden –
+                  ideal zum Anhören unterwegs!
                 </p>
               </div>
 

@@ -836,7 +836,7 @@ export default function GrundlagenPage() {
                       <p className="text-sm text-gray-500">ca. 4 Minuten</p>
                     </div>
                   </div>
-                  <p className="text-gray-700 text-sm"><strong>Thema:</strong> Wer profitiert, wer verliert? Politikerinnen verschiedener Parteien beziehen Stellung – von der Mitte bis zu den Grünliberalen. Ideal, um die politische Debatte zu verstehen.</p>
+                  <p className="text-gray-700 text-sm"><strong>Thema:</strong> Wer profitiert, wer verliert? Politikerinnen und Politiker verschiedener Parteien beziehen Stellung – von der Mitte bis zu den Grünliberalen. Ideal, um die politische Debatte zu verstehen.</p>
                 </button>
 
                 <button onClick={() => setSelectedAudio('echo')}

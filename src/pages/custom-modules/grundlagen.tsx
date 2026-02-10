@@ -454,7 +454,7 @@ export default function GrundlagenPage() {
             </p>
             <p className="text-gray-700 mb-3">
               Die <strong>SRF Radio-Beiträge</strong> zeigen unterschiedliche Perspektiven: Der Beitrag «Rendez-vous»
-              erklärt, wer von der Reform profitiert und wer verliert – mit Statements von Politikerinnen verschiedener
+              erklärt, wer von der Reform profitiert und wer verliert – mit Statements von Politikerinnen und Politikern verschiedener
               Parteien. Der Beitrag «Echo der Zeit» analysiert die Auswirkungen auf den Arbeitsmarkt: Laut Studien
               könnten bis zu 16'000 neue Vollzeitstellen entstehen, da sich Mehrarbeit für Verheiratete mehr lohnen würde.
             </p>

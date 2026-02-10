@@ -31,7 +31,7 @@ const questionsByLevel: Question[][] = [
       ]
     },
     {
-      question: "Mit welchem Begriff wird bezeichnet, dass man verheiratet mehr an Einkommenssteuer bezahlt?",
+      question: "Mit welchem Begriff wird bezeichnet, dass Verheiratete höhere Einkommenssteuern bezahlen?",
       answers: [
         { text: "Heiratsstrafe", correct: true, feedback: "Richtig! Die Heiratsstrafe bezeichnet die steuerliche Benachteiligung von Ehepaaren." },
         { text: "Ringsteuer", correct: false, feedback: "Falsch. Diesen Begriff gibt es nicht." },

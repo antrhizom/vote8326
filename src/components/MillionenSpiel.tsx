@@ -64,7 +64,7 @@ const questionsByLevel: Question[][] = [
   // Stufe 3 - leicht (5'000) - Sicherheitsstufe
   [
     {
-      question: "Mit welchem politischem Instrument wurde die Abstimmung zur Individualbesteuerung 'erzwungen'?",
+      question: "Mit welchem politischen Instrument wurde die Abstimmung zur Individualbesteuerung 'erzwungen'?",
       answers: [
         { text: "Referendum", correct: true, feedback: "Richtig! Mit dem Kantonsreferendum wurde die Volksabstimmung erzwungen." },
         { text: "Radikalisierung", correct: false, feedback: "Falsch. Das ist kein politisches Instrument." },

@@ -73,7 +73,7 @@ const allQuestions: QuizQuestion[] = [
     ]
   },
   {
-    question: "Welches zentrale Argument bringen Gegner der Individualbesteuerung vor?",
+    question: "Welches zentrale Argument bringen Gegner*innen der Individualbesteuerung vor?",
     answers: [
       { text: "Der administrative Aufwand für Bevölkerung und Steuerbehörden steige stark an", correct: true, feedback: "Wenn auch Ehepaare zwei Steuererklärungen einreichen, müssen deutlich mehr Dossiers bearbeitet werden. Gegner erwarten dadurch höhere Verwaltungskosten und mehr Bürokratie." },
       { text: "Die Ehe als Institution werde durch diese Steuerreform faktisch verboten werden", correct: false, feedback: "Die Ehe bleibt rechtlich unangetastet, es geht um die Art der Besteuerung." },

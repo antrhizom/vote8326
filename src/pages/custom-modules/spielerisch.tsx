@@ -464,8 +464,8 @@ export default function SpielerischPage() {
               </p>
               <p className="text-gray-700 mb-3">
                 Das <strong>Millionenspiel</strong> fordert Sie mit 7 Fragen mit steigendem Schwierigkeitsgrad heraus –
-                nutzen Sie die Joker ab Stufe 3, um schwierige Fragen zu meistern! Die <strong>Lernkontrolle</strong> 
-                 testet Ihr Wissen mit 10 Fragen und bietet ausführliche Erklärungen zu jeder Antwort – so lernen Sie
+                nutzen Sie die Joker ab Stufe 3, um schwierige Fragen zu meistern! Die <strong>Lernkontrolle</strong> testet
+                Ihr Wissen mit 10 Fragen und bietet ausführliche Erklärungen zu jeder Antwort – so lernen Sie
                 auch aus Fehlern.
               </p>
               <p className="text-gray-700 text-sm italic">

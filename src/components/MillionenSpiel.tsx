@@ -129,7 +129,7 @@ const questionsByLevel: Question[][] = [
     {
       question: "Was ist das KONSERVATIVE Argument GEGEN die Individualbesteuerung?",
       answers: [
-        { text: "Es benachteiligt Einverdiener/innen-Familien und traditionelle Familienmodelle.", correct: true, feedback: "Richtig! Konservative sehen traditionelle Familienmodelle benachteiligt." },
+        { text: "Es benachteiligt Einverdiener*innen-Familien und traditionelle Familienmodelle.", correct: true, feedback: "Richtig! Konservative sehen traditionelle Familienmodelle benachteiligt." },
         { text: "Der Staat hat weniger Kontrolle über die Heiratspraktiken.", correct: false, feedback: "Falsch. Das ist kein Argument." },
         { text: "Es führt zu weniger Kindern.", correct: false, feedback: "Falsch. Das ist nicht das Hauptargument." },
         { text: "Die Steuereinnahmen fallen tiefer aus.", correct: false, feedback: "Falsch. Das betrifft eher den Bund." }

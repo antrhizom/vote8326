@@ -82,7 +82,7 @@ const allQuestions: QuizQuestion[] = [
     ]
   },
   {
-    question: "Warum erwarten Befürworter mehr Erwerbsanreize durch Individualbesteuerung?",
+    question: "Warum erwarten Befürworter*innen mehr Erwerbsanreize durch Individualbesteuerung?",
     answers: [
       { text: "Weil der Zweitverdienst weniger stark durch die Progression des gemeinsamen Einkommens belastet wird", correct: true, feedback: "Wenn Einkommen getrennt besteuert werden, fällt ein Teil des Progressionseffekts weg. Dadurch lohnt sich eine Pensumerhöhung für den tiefer verdienenden Partner tendenziell stärker." },
       { text: "Weil generell weniger gearbeitet werden muss, um den gleichen Nettolohn zu erreichen", correct: false, feedback: "Es geht um Anreize, nicht darum, dass weniger gearbeitet werden soll." },

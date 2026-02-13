@@ -31,7 +31,7 @@ const questionsByLevel: Question[][] = [
       ]
     },
     {
-      question: "Mit welchem Begriff wird bezeichnet, dass Verheiratete höhere Einkommenssteuern bezahlen?",
+      question: "Mit welchem Begriff wird bezeichnet, dass man verheiratet mehr an Einkommenssteuer bezahlt?",
       answers: [
         { text: "Heiratsstrafe", correct: true, feedback: "Richtig! Die Heiratsstrafe bezeichnet die steuerliche Benachteiligung von Ehepaaren." },
         { text: "Ringsteuer", correct: false, feedback: "Falsch. Diesen Begriff gibt es nicht." },
@@ -64,7 +64,7 @@ const questionsByLevel: Question[][] = [
   // Stufe 3 - leicht (5'000) - Sicherheitsstufe
   [
     {
-      question: "Mit welchem politischen Instrument wurde die Abstimmung zur Individualbesteuerung 'erzwungen'?",
+      question: "Mit welchem politischem Instrument wurde die Abstimmung zur Individualbesteuerung 'erzwungen'?",
       answers: [
         { text: "Referendum", correct: true, feedback: "Richtig! Mit dem Kantonsreferendum wurde die Volksabstimmung erzwungen." },
         { text: "Radikalisierung", correct: false, feedback: "Falsch. Das ist kein politisches Instrument." },
@@ -129,7 +129,7 @@ const questionsByLevel: Question[][] = [
     {
       question: "Was ist das KONSERVATIVE Argument GEGEN die Individualbesteuerung?",
       answers: [
-        { text: "Es benachteiligt Einverdiener*innen-Familien und traditionelle Familienmodelle.", correct: true, feedback: "Richtig! Konservative sehen traditionelle Familienmodelle benachteiligt." },
+        { text: "Es benachteiligt Einverdiener/innen-Familien und traditionelle Familienmodelle.", correct: true, feedback: "Richtig! Konservative sehen traditionelle Familienmodelle benachteiligt." },
         { text: "Der Staat hat weniger Kontrolle über die Heiratspraktiken.", correct: false, feedback: "Falsch. Das ist kein Argument." },
         { text: "Es führt zu weniger Kindern.", correct: false, feedback: "Falsch. Das ist nicht das Hauptargument." },
         { text: "Die Steuereinnahmen fallen tiefer aus.", correct: false, feedback: "Falsch. Das betrifft eher den Bund." }

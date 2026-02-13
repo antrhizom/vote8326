@@ -454,7 +454,7 @@ export default function GrundlagenPage() {
             </p>
             <p className="text-gray-700 mb-3">
               Die <strong>SRF Radio-Beiträge</strong> zeigen unterschiedliche Perspektiven: Der Beitrag «Rendez-vous»
-              erklärt, wer von der Reform profitiert und wer verliert – mit Statements von Politikerinnen und Politikern verschiedener
+              erklärt, wer von der Reform profitiert und wer verliert – mit Statements von Politikerinnen verschiedener
               Parteien. Der Beitrag «Echo der Zeit» analysiert die Auswirkungen auf den Arbeitsmarkt: Laut Studien
               könnten bis zu 16'000 neue Vollzeitstellen entstehen, da sich Mehrarbeit für Verheiratete mehr lohnen würde.
             </p>
@@ -836,7 +836,7 @@ export default function GrundlagenPage() {
                       <p className="text-sm text-gray-500">ca. 4 Minuten</p>
                     </div>
                   </div>
-                  <p className="text-gray-700 text-sm"><strong>Thema:</strong> Wer profitiert, wer verliert? Politikerinnen und Politiker verschiedener Parteien beziehen Stellung – von der Mitte bis zu den Grünliberalen. Ideal, um die politische Debatte zu verstehen.</p>
+                  <p className="text-gray-700 text-sm"><strong>Thema:</strong> Wer profitiert, wer verliert? Politikerinnen verschiedener Parteien beziehen Stellung – von der Mitte bis zu den Grünliberalen. Ideal, um die politische Debatte zu verstehen.</p>
                 </button>
 
                 <button onClick={() => setSelectedAudio('echo')}

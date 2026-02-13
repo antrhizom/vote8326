@@ -1147,9 +1147,20 @@ export default function AusgangslagePage() {
                 />
               </div>
               
-              <p className="text-xs text-gray-500 mt-2 text-center">
-                Die Ergebnisse werden laufend aktualisiert
-              </p>
+              <div className="flex items-center justify-center gap-4 mt-2">
+                <p className="text-xs text-gray-500">
+                  Die Ergebnisse werden laufend aktualisiert
+                </p>
+                <a
+                  href="https://de.findmind.ch/results/BNhB7FcjUd"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-purple-600 hover:text-purple-800 flex items-center gap-1"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  In neuem Tab öffnen
+                </a>
+              </div>
               
               {!completedSections.has('results') && (
                 <div

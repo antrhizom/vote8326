@@ -624,8 +624,9 @@ export default function AbstimmungDashboard() {
               </div>
               <div className="text-4xl font-bold text-teal-600 mb-2">{registrationStats.totalRegistered}</div>
               <p className="text-sm text-gray-600">Teilnehmende</p>
-              <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
-                🏆 {registrationStats.totalBadges} Badges vergeben
+              <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 space-y-1">
+                <div>🏆 {registrationStats.totalBadges} Badges vergeben</div>
+                <div>📜 {registrationStats.totalCertificates} Zertifikate ausgestellt</div>
               </div>
             </div>
           )}
